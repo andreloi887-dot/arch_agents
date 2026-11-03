@@ -13,10 +13,14 @@
 
 ## Tavole (layout)
 - Cartiglio di studio nel template; scala per tavola; viste multiple per foglio.
-- Export PDF vettoriale per pratiche; DWG per consulenti (verifica la mappatura layer).
+- Impaginazione drag&drop di viste, render e immagini.
+- Export PDF per pratiche; DXF/DWG/DWF per consulenti (verifica la mappatura layer); relazioni in RTF.
+- Per Vano, Involucro, Porta e Finestra il programma fornisce schede con zona, materiali, dati metrici
+  e stratigrafie: usale come base delle relazioni.
 
 ## Abachi e computi
 - Abachi di locali, infissi, muri, superfici: derivano dai dati degli stili → stili ben compilati =
   abachi corretti.
-- Computo metrico: collegamento con PriMus (diretto o via IFC). Verifica le regole di misurazione
+- Computo metrico: integrato in Edificius (voce di listino/prezzario associata all'oggetto con
+  drag&drop, aggiornamento in tempo reale) e rielaborabile in PriMus. Verifica le regole di misurazione
   (vuoto per pieno, deduzioni aperture) prima di fidarti delle quantità.

@@ -13,10 +13,13 @@
 
 ## Organizzazione
 - Un file per edificio; più edifici o grandi lotti → valuta file separati collegati via IFC/usBIM.
-- Stato di fatto vs progetto: usa le fasi/varianti offerte dal programma (gialli e rossi) invece di
-  duplicare file; verifica la funzione disponibile nella tua versione.
-- Salvataggi versionati e backup automatico attivo; per il lavoro di gruppo usa l'ambiente
-  collaborativo/usBIM anziché scambiare copie.
+- Stato di fatto vs progetto: usa l'ambiente **Gialli e Rossi** (demolisci, ricostruisci, trasforma
+  oggetti da esistenti a nuovi, confronto dinamico tra i modelli e tavole di confronto) invece di
+  duplicare file.
+- Tempi: l'ambiente **4D-Gantt** associa la proprietà tempo agli oggetti (WBS, attività, timeline in 3D).
+- Salvataggi versionati e backup automatico attivo; per il lavoro di gruppo usa la modalità
+  collaborativa "classic for usBIM" (semaforo verde/giallo/rosso, vedi 00-versione-novita.md).
+  Pianifica chi modella scale, tetti e rampe: sono operazioni esclusive, bloccate in giallo.
 
 ## Errori da evitare
 - Modellare tutto sul piano terra spostando gli oggetti in Z a mano.

@@ -10,8 +10,9 @@ Agenti e skill per software di architettura.
 | `.claude/agents/edificius-expert.md` | Subagent per Claude Code che usa la stessa knowledge base |
 
 Uso: come per Lumion (sotto). In Claude Code: "usa l'agente edificius-expert per …".
-Nota: scritta da conoscenza generale di Edificius; i nomi esatti dei comandi e le novità dell'ultima
-release vanno verificati in-app o sulle note di rilascio ACCA (l'agente cerca sul web per le novità).
+Nota: versione, novità, moduli, formati e requisiti verificati su acca.it (novembre 2026, release
+usBIM(s)), vedi `references/00-versione-novita.md`. I nomi esatti di alcuni comandi della ribbon vanno
+verificati in-app (il manuale utente ACCA richiede login).
 
 ## Lumion Pro 12.5
 

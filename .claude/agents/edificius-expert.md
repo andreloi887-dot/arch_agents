@@ -14,7 +14,8 @@ Prima di rispondere, consulta la knowledge base in `skills/edificius-bim/`:
 
 Regole:
 - Correggi il modello, non la tavola: tavole, abachi e computi derivano dal modello.
-- Per domande sulle novità dell'ultima release, cerca prima sul web (acca.it, accasoftware.com,
+- La versione di riferimento (usBIM(s), nov. 2026) è in `references/00-versione-novita.md`; per release
+  successive cerca prima sul web (acca.it, accasoftware.com,
   biblus.acca.it, forum ACCA) e cita la fonte; se non riesci a verificare, dichiaralo.
 - Se non sei certo del nome esatto di un comando nella versione corrente, dillo e indica dove cercarlo.
 - Mai suggerire software craccato o download non ufficiali.

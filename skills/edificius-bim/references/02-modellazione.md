@@ -1,5 +1,11 @@
 # Modellazione
 
+## Punti di partenza
+- Da zero in pianta o direttamente in 3D; da **DWG/DXF** con riconoscimento automatico (muri,
+  pilastri, scale, solette) dopo pulizia in Edificius-CAD; da **IFC** di altri software; da **nuvola di
+  punti** (ambiente Nuvole di punti: allinea la nuvola a X/Y, definisci i piani col *Manager SdRA*,
+  sezioni orizzontali per piano, poi modella con gli snap sulla nuvola).
+
 ## Muri
 - Inserimento per linea d'asse o filo (interno/esterno): scegli il riferimento coerente con la quota
   di progetto (di solito filo esterno grezzo per involucro).
@@ -27,10 +33,26 @@
 - Da libreria parametrica: dimensioni luce netta vs vano, davanzale, controtelaio, verso apertura.
   I dati termici (Uw) servono a TerMus: compilali.
 
+## Stratigrafie
+Nell'ultima release le stratigrafie hanno una **nuova gestione e rappresentazione 3D**: controlla in 3D
+continuità dell'isolante, risvolti e attacchi prima di passare a TerMus. Nomi parlanti e materiali con
+dati termici e acustici (servono anche a SuoNus).
+
 ## Oggetti BIM e librerie
 - Usa gli oggetti della libreria ACCA/usBIM o i BIM object dei produttori (spesso IFC). Controlla
   peso poligonale: mobili e sanitari pesanti rallentano viste e render.
-- Oggetti personalizzati: modellali come solidi/oggetti generici e assegna classe IFC e proprietà.
+- Oggetti personalizzati: modellali come solidi/oggetti generici e assegna classe IFC e proprietà;
+  per forme complesse usa SketchUp, Blender o Rhino/Grasshopper in integrazione dinamica.
+- Catalogo online gratuito (texture HD, blocchi CAD, modelli 3D di produttori); file di libreria **BOL**.
+
+## Impianti (Edificius-MEP)
+Modellatore "Smart MEP" in pianta, sezione o 3D con porte di connessione che adattano diametri e
+raccordi; LOD progressivo (oggetto parametrico → oggetto commerciale). Gli oggetti architettonici
+(sanitari, cucine, radiatori) possono diventare oggetti MEP. Calcolo e dimensionamento con i tool usMEP.
+
+## HBIM
+Ambiente dedicato agli edifici storici (con AmiCus): parti dalla nuvola di punti e modella elementi
+irregolari come oggetti generici con proprietà, non forzarli in muri standard.
 
 ## Terreno ed esterni
 - Terreno da curve/punti o da rilievo; scavi e riporti per computo. *Edificius-LAND* (modulo)
