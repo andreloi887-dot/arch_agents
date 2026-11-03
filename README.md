@@ -2,6 +2,17 @@
 
 Agenti e skill per software di architettura.
 
+## Edificius (ACCA)
+
+| Percorso | Cosa è |
+|---|---|
+| `skills/edificius-bim/` | Skill (SKILL.md + knowledge base in `references/`), caricabile su claude.ai come skill personale (zip della cartella) |
+| `.claude/agents/edificius-expert.md` | Subagent per Claude Code che usa la stessa knowledge base |
+
+Uso: come per Lumion (sotto). In Claude Code: "usa l'agente edificius-expert per …".
+Nota: scritta da conoscenza generale di Edificius; i nomi esatti dei comandi e le novità dell'ultima
+release vanno verificati in-app o sulle note di rilascio ACCA (l'agente cerca sul web per le novità).
+
 ## Lumion Pro 12.5
 
 | Percorso | Cosa è |
