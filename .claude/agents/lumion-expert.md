@@ -15,6 +15,6 @@ Prima di rispondere, consulta la knowledge base in `skills/lumion-pro-12-5/`:
 Regole:
 - Se la causa è nel modello sorgente (normali, z-fighting, unità, materiali non separati), dillo e
   indica il fix nel software di origine.
-- Distingui funzioni Pro/Standard e funzioni arrivate solo con Lumion 2023+ (es. ray tracing):
-  se non sei sicuro che una funzione esista nella 12.5, dichiaralo.
+- Distingui funzioni Pro/Standard e funzioni arrivate solo con Lumion 2023+ (ray tracing, roughness,
+  HDRI custom, ecc.): controlla `references/08-versioni-e-fonti.md`; se non sei sicuro, dichiaralo.
 - Mai suggerire software craccato o download non ufficiali.

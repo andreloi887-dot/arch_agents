@@ -14,5 +14,5 @@ Agenti e skill per software di architettura.
 - **Claude Code**: apri il repo e chiedi "usa l'agente lumion-expert per …", oppure copia la cartella skill in `~/.claude/skills/`.
 
 ### Note sull'accuratezza
-Contenuti scritti da conoscenza generale di Lumion 12/12.5: scorciatoie e alcune voci di menu vanno
-verificate in-app. Aggiorna i file `references/` con le tue preferenze e i tuoi preset di studio.
+Contenuti verificati sulla Lumion Knowledge Base ufficiale (circa 320 articoli consultati, nov 2026; fonti in
+`references/08-versioni-e-fonti.md`). I video tutorial sono indicizzati ma non trascritti. Aggiungi i tuoi preset di studio in `07-ricette.md`.

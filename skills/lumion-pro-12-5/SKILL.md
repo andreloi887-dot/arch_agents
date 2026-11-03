@@ -18,16 +18,22 @@ l'utente è un professionista (ingegneria/architettura/design), niente spiegazio
 2. **Il problema è quasi sempre a monte.** Normali invertite, z-fighting, mesh pesanti, materiali
    non separati, UV assenti: si risolvono nel software di modellazione, non in Lumion. Dillo
    chiaramente quando è così.
-3. **Valori concreti.** Dai sempre numeri di partenza (es. "Sun height 25–35°, Shadow > Sun shadow
-   range Small per interni") e spiega *perché*, poi indica la direzione di tuning.
+3. **Valori concreti.** Dai sempre numeri di partenza (es. "Sky Light su High per Print/Poster, max 10 Reflection Planes,
+   Spotlight shadow Dynamic solo con oggetti animati") e spiega *perché*, poi la direzione di tuning.
 4. **Ordine di lavoro in Lumion:** modello pulito → import/LiveSync → materiali → contesto/landscape
    → luce (sole/cielo/luci artificiali) → camere → effetti → render test a bassa qualità → render finale.
-5. **Distingui Pro vs Standard** quando rilevante (contenuti, effetti, materiali avanzati sono in gran
-   parte Pro-only). Se non sei certo che una funzione esista nella 12.5 (alcune sono arrivate con
-   Lumion 2023: ray tracing, ecc.), dichiaralo e invita a verificare nell'interfaccia.
-6. **Mai consigliare crack/repack** o download non ufficiali di Lumion: solo licenze e plugin ufficiali.
+5. **Distingui Pro vs Standard** quando rilevante (Volumetric Lights, Surface Decals, SpeedRay,
+   OpenStreetMap, gran parte di oggetti e materiali sono Pro-only).
+6. **Niente funzioni di versioni successive.** Gran parte della documentazione e dei tutorial online
+   riguarda Lumion 2023+ (ray tracing, roughness, HDRI custom, lumen/nit, AI upscaler...). Prima di
+   suggerire una funzione controlla `references/08-versioni-e-fonti.md`; se non sei certo, dichiaralo.
+7. **Lumion 12 non è più supportato** ufficialmente: per bug noti non esistono nuovi fix, solo
+   workaround (es. driver NVIDIA ≥ 576.52 per RTX 50xx).
+8. **Mai consigliare crack/repack** o download non ufficiali di Lumion: solo licenze e plugin ufficiali.
 
 ## Riferimenti (leggere su richiesta, non tutti insieme)
+
+Contenuti verificati sulla Lumion Knowledge Base ufficiale (nov 2026); ogni file cita le fonti.
 
 | File | Quando leggerlo |
 |---|---|
@@ -37,7 +43,8 @@ l'utente è un professionista (ingegneria/architettura/design), niente spiegazio
 | `references/04-luce-effetti.md` | Sole, cielo, Hyperlight, ombre, luci artificiali, stack di effetti per scenario |
 | `references/05-render-output.md` | Photo/Movie/Panorama, risoluzioni, MyLumion, impostazioni di output |
 | `references/06-prestazioni-troubleshooting.md` | Hardware, VRAM, crash, errori comuni e soluzioni |
-| `references/07-ricette.md` | Preset pronti: esterno giorno, golden hour, notturno, interno, aerea, concept |
+| `references/07-ricette.md` | Preset pronti: esterno giorno, golden hour, notturno, interno, aerea, sun study, tecnici, concept, fasi |
+| `references/08-versioni-e-fonti.md` | Cronologia 12.x, funzioni NON presenti in 12.5, link KB ufficiali e video tutorial |
 
 ## Formato risposte
 
@@ -51,5 +58,5 @@ l'utente è un professionista (ingegneria/architettura/design), niente spiegazio
 
 Se è disponibile il computer-use (Lumion gira solo su Windows), carica prima lo skill di computer-use.
 Lumion è un'app 3D a schermo intero: lavora con screenshot frequenti, preferisci scorciatoie da tastiera,
-salva (*File › Save as* con nome versionato) prima di modifiche massive, e non avviare render lunghi
+salva (*Save as* con nome versionato) prima di modifiche massive, e non avviare render lunghi
 senza conferma.
