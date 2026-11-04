@@ -1,0 +1,187 @@
+{
+ "size": 640,
+ "riprese": [
+  {
+   "id": "SV-01",
+   "da": {
+    "lat": 39.252473,
+    "lng": 9.115297
+   },
+   "bersaglio": {
+    "lat": 39.252338,
+    "lng": 9.115565
+   },
+   "pitch": 5,
+   "fov": 80,
+   "inquadra": "incrocio: lotto d'angolo E (villa E05 e recinzione)"
+  },
+  {
+   "id": "SV-02",
+   "da": {
+    "lat": 39.252213,
+    "lng": 9.115538
+   },
+   "bersaglio": {
+    "lat": 39.25214,
+    "lng": 9.11578
+   },
+   "pitch": 10,
+   "fov": 80,
+   "inquadra": "edificio grande grigio E08 da Via Tamburino Sardo"
+  },
+  {
+   "id": "SV-03",
+   "da": {
+    "lat": 39.252026,
+    "lng": 9.115699
+   },
+   "bersaglio": {
+    "lat": 39.252088,
+    "lng": 9.11586
+   },
+   "pitch": 10,
+   "fov": 80,
+   "inquadra": "E08 fronte SE / accesso"
+  },
+  {
+   "id": "SV-04",
+   "da": {
+    "lat": 39.252234,
+    "lng": 9.115485
+   },
+   "bersaglio": {
+    "lat": 39.252244,
+    "lng": 9.115216
+   },
+   "pitch": 5,
+   "fov": 80,
+   "inquadra": "lato O Via Tamburino Sardo: casa bianca E09"
+  },
+  {
+   "id": "SV-05",
+   "da": {
+    "lat": 39.252047,
+    "lng": 9.115619
+   },
+   "bersaglio": {
+    "lat": 39.252026,
+    "lng": 9.115377
+   },
+   "pitch": 5,
+   "fov": 80,
+   "inquadra": "lato O: casa coppi E10"
+  },
+  {
+   "id": "SV-06",
+   "da": {
+    "lat": 39.252577,
+    "lng": 9.115538
+   },
+   "bersaglio": {
+    "lat": 39.252462,
+    "lng": 9.115726
+   },
+   "pitch": 10,
+   "fov": 80,
+   "inquadra": "Via Moravia: palazzina bianca tetto piano E06"
+  },
+  {
+   "id": "SV-07",
+   "da": {
+    "lat": 39.25266,
+    "lng": 9.115833
+   },
+   "bersaglio": {
+    "lat": 39.25241,
+    "lng": 9.116021
+   },
+   "pitch": 10,
+   "fov": 80,
+   "inquadra": "Via Moravia: casa coppi E07"
+  },
+  {
+   "id": "SV-08",
+   "da": {
+    "lat": 39.252691,
+    "lng": 9.115377
+   },
+   "bersaglio": {
+    "lat": 39.252753,
+    "lng": 9.115136
+   },
+   "pitch": 0,
+   "fov": 90,
+   "inquadra": "Via della Menta: lotto incolto angolo N"
+  },
+  {
+   "id": "SV-09",
+   "da": {
+    "lat": 39.252815,
+    "lng": 9.115431
+   },
+   "bersaglio": {
+    "lat": 39.252753,
+    "lng": 9.115646
+   },
+   "pitch": 10,
+   "fov": 80,
+   "inquadra": "Via della Menta lato E: casa coppi E04"
+  },
+  {
+   "id": "SV-10",
+   "da": {
+    "lat": 39.25267,
+    "lng": 9.115029
+   },
+   "bersaglio": {
+    "lat": 39.25268,
+    "lng": 9.114734
+   },
+   "pitch": 5,
+   "fov": 80,
+   "inquadra": "Via Tamburino Sardo NO: villa E02"
+  },
+  {
+   "id": "SV-11",
+   "da": {
+    "lat": 39.252826,
+    "lng": 9.114868
+   },
+   "bersaglio": {
+    "lat": 39.252836,
+    "lng": 9.114559
+   },
+   "pitch": 5,
+   "fov": 80,
+   "inquadra": "Via Tamburino Sardo NO: villa E01"
+  },
+  {
+   "id": "SV-12",
+   "da": {
+    "lat": 39.252545,
+    "lng": 9.115216
+   },
+   "bersaglio": {
+    "lat": 39.252545,
+    "lng": 9.115485
+   },
+   "pitch": 0,
+   "fov": 100,
+   "inquadra": "panoramica incrocio verso E"
+  },
+  {
+   "id": "SV-13",
+   "da": {
+    "lat": 39.252379,
+    "lng": 9.115364
+   },
+   "bersaglio": {
+    "lat": 39.252369,
+    "lng": 9.115471
+   },
+   "pitch": -5,
+   "fov": 50,
+   "inquadra": "dettaglio recinzione E05 su Via Tamburino Sardo"
+  }
+ ]
+}

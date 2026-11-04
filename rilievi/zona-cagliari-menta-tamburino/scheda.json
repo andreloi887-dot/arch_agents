@@ -1,0 +1,1719 @@
+{
+  "zona": {
+    "nome": "Cagliari (Pirri) – incrocio Via della Menta / Via Tamburino Sardo / Via A. Moravia",
+    "comune": "Cagliari (CA), 09134",
+    "perimetro": [
+      {
+        "lat": 39.25294,
+        "lng": 9.114412
+      },
+      {
+        "lat": 39.25294,
+        "lng": 9.116128
+      },
+      {
+        "lat": 39.251902,
+        "lng": 9.116128
+      },
+      {
+        "lat": 39.251902,
+        "lng": 9.114412
+      }
+    ],
+    "origine": {
+      "lat": 39.2524,
+      "lng": 9.11527,
+      "descrizione": "baricentro dell'incrocio (geocoding Google)"
+    },
+    "scopo": "rilievo di prova del flusso; contesto per inserimento ambientale",
+    "lod_default": "LOD2",
+    "revisione": 1,
+    "data_rilievo": "2026-11-04",
+    "date_streetview": [
+      "2026-04"
+    ],
+    "fonti_geometria": [
+      "NESSUNA ancora: OSM/Overpass e Geoportale Sardegna non raggiungibili dall'ambiente di lavoro"
+    ],
+    "carattere": "periferia residenziale a bassa densità (Pirri): villini e palazzine 1-3 piani arretrati nei lotti; il fronte stradale è costituito quasi solo da muri di cinta e di sostegno con recinzioni; terreno in salita verso E (Via Moravia sale sensibilmente)"
+  },
+  "lacune": [
+    "Impronte e quote NON da fonti aperte: tutte le altezze sono stime da conteggio piani (media/bassa). Prima di modellare: impronte da catasto (WMS AdE) o DBMP Sardegna.",
+    "Terreno: la pendenza di Via Moravia e Via Tamburino Sardo è solo qualitativa; usare il terreno di Add Location o il DTM regionale.",
+    "Fronti interni e retri non visibili (E03, E07, E08, E09 lato giardino): ipotesi.",
+    "Colori di marciapiedi e doghe bianche da foto sovraesposte (sole pieno di aprile): confidenza bassa.",
+    "Manti di E08/E09/E05 in gran parte coperti da fotovoltaico: colore del manto stimato.",
+    "E04 ed E07 visti solo da satellite: solo volumi (LOD1)."
+  ],
+  "palette": [
+    {
+      "id": "C01",
+      "materiale": "intonaco civile",
+      "finitura": "frattazzato fine, tinta giallo paglierino",
+      "hex": "#F2D9AE",
+      "intervallo": [
+        "#C7A678",
+        "#F7DEB9"
+      ],
+      "confidenza": "media",
+      "fonte": [
+        "SV-13",
+        "SV-15",
+        "SV-17"
+      ],
+      "texture": {
+        "tipo": "intonaco",
+        "modulo_mm": [
+          1000,
+          1000
+        ],
+        "note": "intonaco 1000x1000"
+      },
+      "note": "luce piena: in ombra vira a #C7A678"
+    },
+    {
+      "id": "C02",
+      "materiale": "laterizio/cotto",
+      "finitura": "copertine dei muri e sporti di gronda",
+      "hex": "#BF7E52",
+      "intervallo": [
+        "#8E5A31",
+        "#D5B59C"
+      ],
+      "confidenza": "media",
+      "fonte": [
+        "SV-13",
+        "SV-15"
+      ],
+      "texture": null
+    },
+    {
+      "id": "C03",
+      "materiale": "tegole/coppi in laterizio",
+      "finitura": "manto rosso, leggermente invecchiato",
+      "hex": "#BE7B73",
+      "intervallo": [
+        "#A66963",
+        "#D09586"
+      ],
+      "confidenza": "bassa",
+      "fonte": [
+        "satellitare"
+      ],
+      "texture": {
+        "tipo": "coppi",
+        "modulo_mm": [
+          200,
+          400
+        ],
+        "note": "coppi 200x400"
+      },
+      "note": "letto da satellite su E02"
+    },
+    {
+      "id": "C04",
+      "materiale": "intonaco civile",
+      "finitura": "liscio, bianco",
+      "hex": "#ECE5DA",
+      "intervallo": [
+        "#E6DCCC",
+        "#F1EAE1"
+      ],
+      "confidenza": "alta",
+      "fonte": [
+        "SV-14",
+        "SV-03",
+        "SV-06"
+      ],
+      "texture": {
+        "tipo": "intonaco",
+        "modulo_mm": [
+          1000,
+          1000
+        ],
+        "note": "intonaco 1000x1000"
+      },
+      "note": "in ombra appare #A7A9AB"
+    },
+    {
+      "id": "C05",
+      "materiale": "alluminio verniciato",
+      "finitura": "doghe orizzontali bianche (recinzioni, cancelli)",
+      "hex": "#FAFAFA",
+      "intervallo": [
+        "#CCCDCA",
+        "#FFFFFF"
+      ],
+      "confidenza": "media",
+      "fonte": [
+        "SV-14",
+        "SV-07"
+      ],
+      "texture": null,
+      "note": "RAL 9010/9016 (indicativo); foto sovraesposta"
+    },
+    {
+      "id": "C06",
+      "materiale": "acciaio verniciato",
+      "finitura": "grigio (ringhiere, cancelletti)",
+      "hex": "#64696D",
+      "intervallo": [
+        "#1E2125",
+        "#7C7C7F"
+      ],
+      "confidenza": "media",
+      "fonte": [
+        "SV-01",
+        "SV-13"
+      ],
+      "texture": null,
+      "note": "RAL 7037/7046 (indicativo)"
+    },
+    {
+      "id": "C07",
+      "materiale": "intonaco civile",
+      "finitura": "liscio, salmone",
+      "hex": "#AE8260",
+      "intervallo": [
+        "#9A7251",
+        "#B48765"
+      ],
+      "confidenza": "media",
+      "fonte": [
+        "SV-04"
+      ],
+      "texture": {
+        "tipo": "intonaco",
+        "modulo_mm": [
+          1000,
+          1000
+        ],
+        "note": "intonaco 1000x1000"
+      }
+    },
+    {
+      "id": "C08",
+      "materiale": "intonaco civile",
+      "finitura": "pesca chiaro",
+      "hex": "#E5CDAF",
+      "intervallo": [
+        "#DCC2A0",
+        "#F3E0C8"
+      ],
+      "confidenza": "media",
+      "fonte": [
+        "SV-05",
+        "SV-17"
+      ],
+      "texture": {
+        "tipo": "intonaco",
+        "modulo_mm": [
+          1000,
+          1000
+        ],
+        "note": "intonaco 1000x1000"
+      }
+    },
+    {
+      "id": "C09",
+      "materiale": "intonaco rustico / cls",
+      "finitura": "grigio, grezzo, macchiato",
+      "hex": "#796E5E",
+      "intervallo": [
+        "#544C40",
+        "#93897B"
+      ],
+      "confidenza": "media",
+      "fonte": [
+        "SV-05"
+      ],
+      "texture": {
+        "tipo": "intonaco rustico / cls",
+        "modulo_mm": [
+          1000,
+          1000
+        ],
+        "note": "1000x1000"
+      }
+    },
+    {
+      "id": "C10",
+      "materiale": "blocchi di cls vibrocompresso",
+      "finitura": "a vista, giunti stilati, pilastri in cls",
+      "hex": "#7E7463",
+      "intervallo": [
+        "#615745",
+        "#9C9384"
+      ],
+      "confidenza": "alta",
+      "fonte": [
+        "SV-09",
+        "SV-10"
+      ],
+      "texture": {
+        "tipo": "blocchi",
+        "modulo_mm": [
+          1000,
+          400
+        ],
+        "note": "blocchi 500x200 (modulo 1000x400)"
+      }
+    },
+    {
+      "id": "C11",
+      "materiale": "intonaco/pannello",
+      "finitura": "grigio medio (fasce d'accento)",
+      "hex": "#767771",
+      "intervallo": [
+        "#73746B",
+        "#8E8E88"
+      ],
+      "confidenza": "media",
+      "fonte": [
+        "SV-06"
+      ],
+      "texture": null
+    },
+    {
+      "id": "C12",
+      "materiale": "pietra a opera incerta",
+      "finitura": "lastre scure grigio-bruno, giunti chiari",
+      "hex": "#545252",
+      "intervallo": [
+        "#252627",
+        "#ADB4BC"
+      ],
+      "confidenza": "media",
+      "fonte": [
+        "SV-07"
+      ],
+      "texture": {
+        "tipo": "opera",
+        "modulo_mm": [
+          1200,
+          1200
+        ],
+        "note": "opera incerta 1200x1200"
+      }
+    },
+    {
+      "id": "C13",
+      "materiale": "intonaco civile",
+      "finitura": "crema",
+      "hex": "#E2DBC9",
+      "intervallo": [
+        "#D4CBB6",
+        "#FEEEDB"
+      ],
+      "confidenza": "media",
+      "fonte": [
+        "SV-10"
+      ],
+      "texture": {
+        "tipo": "intonaco",
+        "modulo_mm": [
+          1000,
+          1000
+        ],
+        "note": "intonaco 1000x1000"
+      }
+    },
+    {
+      "id": "C14",
+      "materiale": "intonaco civile",
+      "finitura": "beige",
+      "hex": "#D4C3AA",
+      "intervallo": [
+        "#C7B59B",
+        "#DCCCB6"
+      ],
+      "confidenza": "media",
+      "fonte": [
+        "SV-11"
+      ],
+      "texture": {
+        "tipo": "intonaco",
+        "modulo_mm": [
+          1000,
+          1000
+        ],
+        "note": "intonaco 1000x1000"
+      }
+    },
+    {
+      "id": "C15",
+      "materiale": "calcestruzzo a vista",
+      "finitura": "muri di sostegno, segni di cassero",
+      "hex": "#B5A187",
+      "intervallo": [
+        "#8A7458",
+        "#D4C2A8"
+      ],
+      "confidenza": "bassa",
+      "fonte": [
+        "SV-12",
+        "SV-18"
+      ],
+      "texture": {
+        "tipo": "pannelli",
+        "modulo_mm": [
+          2500,
+          500
+        ],
+        "note": "pannelli cassero 2500x500"
+      }
+    },
+    {
+      "id": "C16",
+      "materiale": "asfalto",
+      "finitura": "usurato, grigio chiaro",
+      "hex": "#AFA698",
+      "intervallo": [
+        "#8F8478",
+        "#C4BAAB"
+      ],
+      "confidenza": "media",
+      "fonte": [
+        "SV-04"
+      ],
+      "texture": {
+        "tipo": "asfalto",
+        "modulo_mm": [
+          1000,
+          1000
+        ],
+        "note": "1000x1000"
+      },
+      "note": "luce piena"
+    },
+    {
+      "id": "C17",
+      "materiale": "marmette in cls",
+      "finitura": "rosa salmone (scacchiera)",
+      "hex": "#E5C7B1",
+      "intervallo": [
+        "#DDB789",
+        "#EAC69F"
+      ],
+      "confidenza": "bassa",
+      "fonte": [
+        "SV-13",
+        "SV-17"
+      ],
+      "texture": {
+        "tipo": "marmette",
+        "modulo_mm": [
+          400,
+          400
+        ],
+        "note": "marmette 400x400"
+      },
+      "note": "foto sovraesposta: tono reale più saturo"
+    },
+    {
+      "id": "C18",
+      "materiale": "marmette in cls",
+      "finitura": "beige (scacchiera)",
+      "hex": "#F8E5C5",
+      "intervallo": [
+        "#EDD6BD",
+        "#F7E5C9"
+      ],
+      "confidenza": "bassa",
+      "fonte": [
+        "SV-13",
+        "SV-17"
+      ],
+      "texture": {
+        "tipo": "marmette",
+        "modulo_mm": [
+          400,
+          400
+        ],
+        "note": "marmette 400x400"
+      }
+    },
+    {
+      "id": "C19",
+      "materiale": "cls",
+      "finitura": "cordoli prefabbricati",
+      "hex": "#D8D0C0",
+      "intervallo": [
+        "#DCCDB1",
+        "#F6EDD3"
+      ],
+      "confidenza": "bassa",
+      "fonte": [
+        "SV-13"
+      ],
+      "texture": null,
+      "note": "stima tra ombra e luce"
+    },
+    {
+      "id": "C20",
+      "materiale": "acciaio zincato",
+      "finitura": "pali illuminazione, reti, cancelli tubolari",
+      "hex": "#ACB0B3",
+      "intervallo": [
+        "#8E9396",
+        "#C8CCCE"
+      ],
+      "confidenza": "media",
+      "fonte": [
+        "SV-05",
+        "SV-08"
+      ],
+      "texture": null
+    },
+    {
+      "id": "C21",
+      "materiale": "moduli fotovoltaici",
+      "finitura": "blu scuro",
+      "hex": "#394A63",
+      "intervallo": [
+        "#2E3B50",
+        "#60738D"
+      ],
+      "confidenza": "media",
+      "fonte": [
+        "satellitare"
+      ],
+      "texture": null
+    },
+    {
+      "id": "C22",
+      "materiale": "vetro + profili",
+      "finitura": "vetrata vano scala blu",
+      "hex": "#343B52",
+      "intervallo": [
+        "#2B324A",
+        "#3D4359"
+      ],
+      "confidenza": "bassa",
+      "fonte": [
+        "SV-05",
+        "SV-17"
+      ],
+      "texture": null
+    },
+    {
+      "id": "C23",
+      "materiale": "intonaco/cornici",
+      "finitura": "rosso mattone (cornici finestre)",
+      "hex": "#68312E",
+      "intervallo": [
+        "#572521",
+        "#8E7173"
+      ],
+      "confidenza": "bassa",
+      "fonte": [
+        "SV-04"
+      ],
+      "texture": null
+    }
+  ],
+  "edifici": [
+    {
+      "id": "E01",
+      "indirizzo": "Via Tamburino Sardo, lato O (civ. ~120)",
+      "lod": "LOD2",
+      "tipologia": "casa unifamiliare/bifamiliare a blocco",
+      "epoca": "fine '900 – anni 2010",
+      "impronta": {
+        "fonte": "DA ACQUISIRE (catasto WMS / DBMP Sardegna / OSM)",
+        "rif": null
+      },
+      "posizione_indicativa": {
+        "lat": 39.252836,
+        "lng": 9.114546
+      },
+      "piani_ft": 3,
+      "quote": {
+        "gronda": {
+          "m": 9.0,
+          "fonte": "stima-piani",
+          "confidenza": "media",
+          "metodo": "3 piani × 3,0 m"
+        },
+        "colmo": {
+          "m": 10.8,
+          "fonte": "stima-piani",
+          "confidenza": "bassa",
+          "metodo": "capanna, falde ~35%"
+        }
+      },
+      "copertura": {
+        "forma": "a capanna",
+        "pendenza_pct": 35,
+        "manto": "C03",
+        "sporto_cm": 30,
+        "elementi": [
+          "comignolo in muratura"
+        ]
+      },
+      "facciate": [
+        {
+          "fronte": "su Via Tamburino Sardo",
+          "orientamento": "E",
+          "visibile": true,
+          "materiale": "C14",
+          "partitura": "nessuna fascia; cornice di gronda semplice",
+          "aperture": {
+            "assi": 2,
+            "allineate": true,
+            "tipo": [
+              {
+                "codice": "F1",
+                "l_m": 1.0,
+                "h_m": 1.3,
+                "oscurante": "persiane alla romana in legno",
+                "oscurante_colore": "marrone (non campionato)"
+              }
+            ],
+            "piano_terra": "portoncino ad arco a tutto sesto in legno; 2 aperture tamponate in laterizio al 1° e 2° p."
+          },
+          "aggetti": "veranda/loggia chiusa a vetri sul fronte S",
+          "riprese": [
+            "SV-11"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "id": "E02",
+      "indirizzo": "Via Tamburino Sardo, lato O",
+      "lod": "LOD2",
+      "tipologia": "palazzina bifamiliare + corpo retrostante a 3 piani",
+      "epoca": "fine '900 – anni 2010",
+      "impronta": {
+        "fonte": "DA ACQUISIRE (catasto WMS / DBMP Sardegna / OSM)",
+        "rif": null
+      },
+      "posizione_indicativa": {
+        "lat": 39.25268,
+        "lng": 9.114734
+      },
+      "piani_ft": 2,
+      "quote": {
+        "gronda": {
+          "m": 6.5,
+          "fonte": "stima-piani",
+          "confidenza": "media",
+          "metodo": "2 piani × 3,0 m + 0,5 m"
+        },
+        "colmo": {
+          "m": 8.3,
+          "fonte": "stima-piani",
+          "confidenza": "bassa",
+          "metodo": "padiglione 30%"
+        }
+      },
+      "copertura": {
+        "forma": "a padiglione",
+        "pendenza_pct": 30,
+        "manto": "C03",
+        "sporto_cm": 40,
+        "elementi": []
+      },
+      "facciate": [
+        {
+          "fronte": "su Via Tamburino Sardo",
+          "orientamento": "E/NE",
+          "visibile": true,
+          "materiale": "C13",
+          "partitura": "gronda con sporto rivestito, nessun marcapiano",
+          "aperture": {
+            "assi": 3,
+            "allineate": true,
+            "tipo": [
+              {
+                "codice": "F1",
+                "l_m": 1.2,
+                "h_m": 1.4,
+                "oscurante": "persiane alla romana in legno marrone"
+              }
+            ]
+          },
+          "aggetti": "balconi a sbalzo con parapetto pieno intonacato C13 al 1° piano (2 assi)",
+          "riprese": [
+            "SV-10"
+          ]
+        }
+      ],
+      "note": "corpo retrostante a 3 piani con abbaino/terrazza (bassa)"
+    },
+    {
+      "id": "E03",
+      "indirizzo": "Via della Menta / Via A. Moravia, lotto d'angolo NE",
+      "lod": "LOD2",
+      "tipologia": "villa unifamiliare a più corpi",
+      "epoca": "fine '900 – anni 2010",
+      "impronta": {
+        "fonte": "DA ACQUISIRE (catasto WMS / DBMP Sardegna / OSM)",
+        "rif": null
+      },
+      "posizione_indicativa": {
+        "lat": 39.252732,
+        "lng": 9.115632
+      },
+      "piani_ft": 2,
+      "quote": {
+        "gronda": {
+          "m": 6.5,
+          "fonte": "stima-piani",
+          "confidenza": "media",
+          "metodo": "2 piani"
+        },
+        "colmo": {
+          "m": 8.3,
+          "fonte": "stima-piani",
+          "confidenza": "bassa",
+          "metodo": "padiglioni multipli ~30%"
+        }
+      },
+      "copertura": {
+        "forma": "a padiglione su più corpi",
+        "pendenza_pct": 30,
+        "manto": "C03",
+        "sporto_cm": 40,
+        "elementi": [
+          "terrazzo pavimentato verso S"
+        ]
+      },
+      "facciate": [
+        {
+          "fronte": "su Via della Menta",
+          "orientamento": "O",
+          "visibile": true,
+          "materiale": "C08",
+          "partitura": "cornice di gronda bianca",
+          "aperture": {
+            "assi": 3,
+            "allineate": true,
+            "tipo": [
+              {
+                "codice": "F1",
+                "l_m": 1.0,
+                "h_m": 1.2,
+                "oscurante": "avvolgibile"
+              }
+            ]
+          },
+          "riprese": [
+            "SV-09",
+            "SV-16"
+          ]
+        }
+      ],
+      "note": "visibile solo il piano alto oltre il muro R05"
+    },
+    {
+      "id": "E04",
+      "indirizzo": "Via della Menta, lato E (a N di E03)",
+      "lod": "LOD1",
+      "tipologia": "corpo basso",
+      "epoca": "fine '900 – anni 2010",
+      "impronta": {
+        "fonte": "DA ACQUISIRE (catasto WMS / DBMP Sardegna / OSM)",
+        "rif": null
+      },
+      "posizione_indicativa": {
+        "lat": 39.252857,
+        "lng": 9.115565
+      },
+      "piani_ft": 1,
+      "quote": {
+        "gronda": {
+          "m": 3.5,
+          "fonte": "stima-piani",
+          "confidenza": "bassa",
+          "metodo": "1 piano"
+        }
+      },
+      "copertura": {
+        "forma": "piana",
+        "manto": "C04"
+      },
+      "facciate": [
+        {
+          "fronte": "su Via della Menta",
+          "orientamento": "O",
+          "visibile": false,
+          "materiale": "C04",
+          "riprese": [
+            "SV-16"
+          ]
+        }
+      ],
+      "note": "letto quasi solo da satellite"
+    },
+    {
+      "id": "E05",
+      "indirizzo": "Via A. Moravia civ. 52, lato S",
+      "lod": "LOD2",
+      "tipologia": "casa a schiera/bifamiliare contemporanea",
+      "epoca": "fine '900 – anni 2010",
+      "impronta": {
+        "fonte": "DA ACQUISIRE (catasto WMS / DBMP Sardegna / OSM)",
+        "rif": null
+      },
+      "posizione_indicativa": {
+        "lat": 39.252608,
+        "lng": 9.115927
+      },
+      "piani_ft": 2,
+      "quote": {
+        "gronda": {
+          "m": 7.0,
+          "fonte": "stima-piani",
+          "confidenza": "media",
+          "metodo": "2 piani × 3,2 m + parapetto"
+        }
+      },
+      "copertura": {
+        "forma": "piana",
+        "manto": "C04",
+        "elementi": [
+          "fotovoltaico C21"
+        ],
+        "fotovoltaico": "C21"
+      },
+      "facciate": [
+        {
+          "fronte": "su Via Moravia",
+          "orientamento": "N",
+          "visibile": true,
+          "materiale": "C04",
+          "partitura": "volume a fascia verticale rivestito in pietra a opera incerta C12 (L ~2,5 m, tutta altezza)",
+          "aperture": {
+            "assi": 2,
+            "tipo": [
+              {
+                "codice": "F1",
+                "l_m": 1.0,
+                "h_m": 1.2,
+                "oscurante": "avvolgibile bianco"
+              }
+            ]
+          },
+          "aggetti": "mensola/pensilina in cls bianco sopra il 1° piano",
+          "riprese": [
+            "SV-07"
+          ],
+          "materiali_accento": [
+            "C12"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "id": "E06",
+      "indirizzo": "Via A. Moravia, lato S (a E del lotto d'angolo)",
+      "lod": "LOD3",
+      "tipologia": "palazzina contemporanea a volumi sfalsati",
+      "epoca": "fine '900 – anni 2010",
+      "impronta": {
+        "fonte": "DA ACQUISIRE (catasto WMS / DBMP Sardegna / OSM)",
+        "rif": null
+      },
+      "posizione_indicativa": {
+        "lat": 39.252452,
+        "lng": 9.115713
+      },
+      "piani_ft": 3,
+      "quote": {
+        "gronda": {
+          "m": 10.0,
+          "fonte": "stima-piani",
+          "confidenza": "media",
+          "metodo": "3 piani × 3,1 m + parapetto"
+        }
+      },
+      "copertura": {
+        "forma": "piana",
+        "manto": "C04",
+        "elementi": [
+          "fotovoltaico C21",
+          "pergola/tettoia in copertura"
+        ],
+        "fotovoltaico": "C21"
+      },
+      "facciate": [
+        {
+          "fronte": "su Via Moravia",
+          "orientamento": "O/NO",
+          "visibile": true,
+          "materiale": "C04",
+          "partitura": "volumi cubici bianchi sfalsati; riquadro arretrato grigio C11 al 1° piano; setti verticali sporgenti",
+          "aperture": {
+            "assi": 2,
+            "tipo": [
+              {
+                "codice": "F1",
+                "l_m": 1.2,
+                "h_m": 1.4,
+                "oscurante": "avvolgibile grigio"
+              },
+              {
+                "codice": "PF",
+                "l_m": 2.4,
+                "h_m": 2.4,
+                "note": "portefinestre sui terrazzi"
+              }
+            ]
+          },
+          "aggetti": "terrazzi con parapetti in vetro/metallo; tenda da sole grigia al PT",
+          "riprese": [
+            "SV-06",
+            "SV-19"
+          ],
+          "materiali_accento": [
+            "C11"
+          ]
+        }
+      ],
+      "note": "edificio adiacente a E: stesse forme con rivestimento in pietra C12 (vedi E05)"
+    },
+    {
+      "id": "E07",
+      "indirizzo": "Via A. Moravia, lato S (interno)",
+      "lod": "LOD1",
+      "tipologia": "villa",
+      "epoca": "fine '900 – anni 2010",
+      "impronta": {
+        "fonte": "DA ACQUISIRE (catasto WMS / DBMP Sardegna / OSM)",
+        "rif": null
+      },
+      "posizione_indicativa": {
+        "lat": 39.252379,
+        "lng": 9.116021
+      },
+      "piani_ft": 2,
+      "quote": {
+        "gronda": {
+          "m": 6.5,
+          "fonte": "stima-piani",
+          "confidenza": "bassa",
+          "metodo": "2 piani"
+        },
+        "colmo": {
+          "m": 8.3,
+          "fonte": "stima-piani",
+          "confidenza": "bassa"
+        }
+      },
+      "copertura": {
+        "forma": "a padiglione",
+        "pendenza_pct": 30,
+        "manto": "C03",
+        "elementi": [
+          "fotovoltaico C21"
+        ],
+        "fotovoltaico": "C21"
+      },
+      "facciate": [
+        {
+          "fronte": "—",
+          "visibile": false,
+          "materiale": "C08",
+          "riprese": []
+        }
+      ],
+      "note": "solo satellite: fondale"
+    },
+    {
+      "id": "E08",
+      "indirizzo": "Via Tamburino Sardo civ. 67A, lato E",
+      "lod": "LOD2",
+      "tipologia": "villa a un piano su basamento terrazzato",
+      "epoca": "fine '900 – anni 2010",
+      "impronta": {
+        "fonte": "DA ACQUISIRE (catasto WMS / DBMP Sardegna / OSM)",
+        "rif": null
+      },
+      "posizione_indicativa": {
+        "lat": 39.25213,
+        "lng": 9.11578
+      },
+      "piani_ft": 1,
+      "quote": {
+        "gronda": {
+          "m": 6.5,
+          "fonte": "stima-riferimento",
+          "confidenza": "media",
+          "metodo": "muro di sostegno ~2,5 m + piano 3,3 m + attico gronda 0,7 m, misurato dal marciapiede"
+        },
+        "colmo": {
+          "m": 8.0,
+          "fonte": "stima-riferimento",
+          "confidenza": "bassa",
+          "metodo": "padiglione bassa pendenza ~20%"
+        }
+      },
+      "copertura": {
+        "forma": "a padiglione su più corpi, bassa pendenza",
+        "pendenza_pct": 20,
+        "manto": "C04",
+        "elementi": [
+          "falde in gran parte coperte da fotovoltaico C21"
+        ],
+        "fotovoltaico": "C21"
+      },
+      "facciate": [
+        {
+          "fronte": "su Via Tamburino Sardo",
+          "orientamento": "O/SO",
+          "visibile": true,
+          "materiale": "C04",
+          "partitura": "intonaco bianco liscio, frontone/cornicione bianco spesso ~40 cm",
+          "aperture": {
+            "assi": 2,
+            "tipo": [
+              {
+                "codice": "F1",
+                "l_m": 1.0,
+                "h_m": 1.2
+              }
+            ]
+          },
+          "aggetti": "terrazzo perimetrale con recinzione a doghe C05",
+          "riprese": [
+            "SV-02",
+            "SV-03",
+            "SV-14"
+          ]
+        }
+      ],
+      "note": "piano di calpestio del lotto ~2,5 m sopra il marciapiede (muro di sostegno R02)"
+    },
+    {
+      "id": "E09",
+      "indirizzo": "Via Tamburino Sardo civ. 69 / angolo Via A. Moravia",
+      "lod": "LOD3",
+      "tipologia": "complesso a schiera di 3-4 unità con portici",
+      "epoca": "fine '900 – anni 2010",
+      "impronta": {
+        "fonte": "DA ACQUISIRE (catasto WMS / DBMP Sardegna / OSM)",
+        "rif": null
+      },
+      "posizione_indicativa": {
+        "lat": 39.252338,
+        "lng": 9.115538
+      },
+      "piani_ft": 2,
+      "quote": {
+        "gronda": {
+          "m": 6.8,
+          "fonte": "stima-piani",
+          "confidenza": "media",
+          "metodo": "giardino rialzato ~1,0 m + 2 piani × 2,9 m"
+        },
+        "colmo": {
+          "m": 10.5,
+          "fonte": "stima-piani",
+          "confidenza": "media",
+          "metodo": "torretta a 3 piani con padiglione ~30%"
+        }
+      },
+      "copertura": {
+        "forma": "a padiglione su più corpi + torretta a 3 piani",
+        "pendenza_pct": 30,
+        "manto": "C03",
+        "sporto_cm": 50,
+        "elementi": [
+          "fotovoltaico C21 su falde S/O",
+          "pluviali e canali in rame/marrone",
+          "comignoli"
+        ],
+        "fotovoltaico": "C21"
+      },
+      "facciate": [
+        {
+          "fronte": "su Via Tamburino Sardo e angolo",
+          "orientamento": "O/SO",
+          "visibile": true,
+          "materiale": "C01",
+          "basamento": {
+            "h": {
+              "m": 1.0,
+              "fonte": "stima-riferimento",
+              "confidenza": "media",
+              "metodo": "rispetto al muro R01"
+            },
+            "materiale": "C01"
+          },
+          "partitura": "portici al PT con archi ribassati su pilastri/colonne bianchi C04; cornici di gronda e sottogronda in cotto C02; spigoli e cornici finestre bianchi C04",
+          "aperture": {
+            "assi": 6,
+            "allineate": false,
+            "tipo": [
+              {
+                "codice": "PF",
+                "l_m": 1.2,
+                "h_m": 2.4,
+                "serramento": "C06",
+                "oscurante": "persiane/avvolgibili",
+                "cornice": "piatta 10 cm",
+                "cornice_colore": "C04"
+              },
+              {
+                "codice": "F1",
+                "l_m": 0.9,
+                "h_m": 1.3,
+                "cornice": "piatta 10 cm",
+                "cornice_colore": "C04"
+              }
+            ]
+          },
+          "aggetti": "balconi con ringhiera in acciaio grigio C06 a montanti verticali; logge porticate al PT e 1° piano; tende a cappottina grigie",
+          "riprese": [
+            "SV-01",
+            "SV-13",
+            "SV-15",
+            "SV-17"
+          ]
+        }
+      ],
+      "note": "elemento più visibile dall'incrocio: priorità di modellazione"
+    },
+    {
+      "id": "E10",
+      "indirizzo": "Via Tamburino Sardo, lato O (a S)",
+      "lod": "LOD2",
+      "tipologia": "palazzina a 3 piani",
+      "epoca": "fine '900 – anni 2010",
+      "impronta": {
+        "fonte": "DA ACQUISIRE (catasto WMS / DBMP Sardegna / OSM)",
+        "rif": null
+      },
+      "posizione_indicativa": {
+        "lat": 39.252026,
+        "lng": 9.115377
+      },
+      "piani_ft": 3,
+      "quote": {
+        "gronda": {
+          "m": 9.3,
+          "fonte": "stima-piani",
+          "confidenza": "media",
+          "metodo": "3 piani × 3,0 m + 0,3 m"
+        },
+        "colmo": {
+          "m": 10.8,
+          "fonte": "stima-piani",
+          "confidenza": "bassa",
+          "metodo": "padiglione 30%"
+        }
+      },
+      "copertura": {
+        "forma": "a padiglione",
+        "pendenza_pct": 30,
+        "manto": "C03",
+        "sporto_cm": 50,
+        "elementi": [
+          "terrazzo coperto all'ultimo piano lato N"
+        ]
+      },
+      "facciate": [
+        {
+          "fronte": "su Via Tamburino Sardo",
+          "orientamento": "E",
+          "visibile": true,
+          "materiale": "C08",
+          "partitura": "vano scala vetrato verticale blu C22 a tutta altezza sullo spigolo NE; cornice di gronda bianca",
+          "aperture": {
+            "assi": 3,
+            "allineate": true,
+            "tipo": [
+              {
+                "codice": "F1",
+                "l_m": 1.0,
+                "h_m": 1.3,
+                "oscurante": "avvolgibile",
+                "cornice": "inferriate al PT"
+              }
+            ]
+          },
+          "aggetti": "balcone con ringhiera al 2° piano lato N",
+          "riprese": [
+            "SV-05",
+            "SV-17"
+          ],
+          "materiali_accento": [
+            "C22"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "id": "E11",
+      "indirizzo": "Via Tamburino Sardo, lato O (di fronte a E09)",
+      "lod": "LOD2",
+      "tipologia": "villa a 1-2 piani a tetto piano",
+      "epoca": "fine '900 – anni 2010",
+      "impronta": {
+        "fonte": "DA ACQUISIRE (catasto WMS / DBMP Sardegna / OSM)",
+        "rif": null
+      },
+      "posizione_indicativa": {
+        "lat": 39.252213,
+        "lng": 9.115216
+      },
+      "piani_ft": 2,
+      "quote": {
+        "gronda": {
+          "m": 6.5,
+          "fonte": "stima-riferimento",
+          "confidenza": "bassa",
+          "metodo": "oltre il muro R09 h 2,5 m"
+        }
+      },
+      "copertura": {
+        "forma": "piana",
+        "manto": "C04"
+      },
+      "facciate": [
+        {
+          "fronte": "su Via Tamburino Sardo",
+          "orientamento": "E",
+          "visibile": true,
+          "materiale": "C04",
+          "partitura": "cornicione e pilastri angolari rosso mattone C23; cornici finestre C23",
+          "aperture": {
+            "assi": 2,
+            "tipo": [
+              {
+                "codice": "F1",
+                "l_m": 1.0,
+                "h_m": 1.2,
+                "cornice": "piatta 15 cm",
+                "cornice_colore": "C23"
+              }
+            ]
+          },
+          "riprese": [
+            "SV-04"
+          ],
+          "materiali_accento": [
+            "C23"
+          ]
+        }
+      ],
+      "note": "quasi interamente nascosto dal muro R09"
+    }
+  ],
+  "recinzioni": [
+    {
+      "id": "R01",
+      "tipo": "muro intonacato a gradoni + ringhiera",
+      "lod": "LOD3",
+      "posizione": "E09: tutto il fronte su Via Tamburino Sardo, curva d'angolo (raggio ~6 m) e tratto su Via Moravia; segue la pendenza con sommità a gradoni",
+      "materiali": [
+        "C01",
+        "C02",
+        "C06"
+      ],
+      "riprese": [
+        "SV-01",
+        "SV-02",
+        "SV-13",
+        "SV-15",
+        "SV-17"
+      ],
+      "h": {
+        "m": 1.8,
+        "fonte": "stima-riferimento",
+        "confidenza": "media",
+        "metodo": "vs cancelletto pedonale h ~2,0 m e auto"
+      },
+      "parti": [
+        {
+          "elemento": "muro",
+          "h_m": "1,4–2,0 (a gradoni)",
+          "materiale": "C01",
+          "copertina": "cotto C02, sporgenza 3 cm, spessore 4 cm"
+        },
+        {
+          "elemento": "ringhiera",
+          "h_m": 1.0,
+          "materiale": "C06",
+          "disegno": "montanti tubolari verticali passo ~12 cm, corrimano piatto"
+        },
+        {
+          "elemento": "cancelletto pedonale",
+          "materiale": "C06",
+          "disegno": "lamiera piena + parte superiore a barre, 1,1 × 2,0 m"
+        }
+      ],
+      "dettagli": "nicchie contatori con sportelli; targa civico 69; sommità alternata tratti pieni (h +0,5) e tratti con ringhiera"
+    },
+    {
+      "id": "R02",
+      "tipo": "muro di sostegno intonacato + recinzione a doghe",
+      "lod": "LOD3",
+      "posizione": "E08: fronte su Via Tamburino Sardo, da R01 verso SE",
+      "materiali": [
+        "C04",
+        "C05"
+      ],
+      "riprese": [
+        "SV-02",
+        "SV-03",
+        "SV-14"
+      ],
+      "h": {
+        "m": 2.5,
+        "fonte": "stima-riferimento",
+        "confidenza": "media",
+        "metodo": "vs targa civico e palina bus"
+      },
+      "parti": [
+        {
+          "elemento": "muro di sostegno",
+          "h_m": 2.5,
+          "materiale": "C04",
+          "copertina": "intonaco, filo muro"
+        },
+        {
+          "elemento": "recinzione",
+          "h_m": 1.2,
+          "materiale": "C05",
+          "disegno": "pannelli a doghe orizzontali h 15 cm, montanti ogni ~2,0 m"
+        },
+        {
+          "elemento": "cancello carrabile",
+          "materiale": "C05",
+          "disegno": "a doghe orizzontali, rampa di accesso"
+        }
+      ]
+    },
+    {
+      "id": "R03",
+      "tipo": "muretto intonacato + ringhiera + rete",
+      "lod": "LOD2",
+      "posizione": "E06: fronte su Via Moravia, su marciapiede in salita",
+      "materiali": [
+        "C04",
+        "C06",
+        "C20"
+      ],
+      "riprese": [
+        "SV-06"
+      ],
+      "h": {
+        "m": 1.8,
+        "fonte": "stima-riferimento",
+        "confidenza": "media"
+      },
+      "parti": [
+        {
+          "elemento": "muretto",
+          "h_m": "1,0–1,4",
+          "materiale": "C04"
+        },
+        {
+          "elemento": "ringhiera",
+          "h_m": 0.8,
+          "materiale": "C06"
+        },
+        {
+          "elemento": "recinzione posto auto",
+          "materiale": "C20",
+          "disegno": "rete elettrosaldata zincata su telaio, h 1,8"
+        }
+      ]
+    },
+    {
+      "id": "R04",
+      "tipo": "muretto intonacato + recinzione a lamelle",
+      "lod": "LOD2",
+      "posizione": "E05: fronte su Via Moravia",
+      "materiali": [
+        "C04",
+        "C05"
+      ],
+      "riprese": [
+        "SV-07"
+      ],
+      "h": {
+        "m": 1.9,
+        "fonte": "stima-riferimento",
+        "confidenza": "media",
+        "metodo": "vs auto"
+      },
+      "parti": [
+        {
+          "elemento": "muretto",
+          "h_m": 0.6,
+          "materiale": "C04"
+        },
+        {
+          "elemento": "recinzione e cancelli",
+          "h_m": 1.3,
+          "materiale": "C05",
+          "disegno": "lamelle orizzontali spaziate"
+        }
+      ]
+    },
+    {
+      "id": "R05",
+      "tipo": "muro in blocchi di cls a vista",
+      "lod": "LOD2",
+      "posizione": "E03: fronte su Via della Menta",
+      "materiali": [
+        "C10"
+      ],
+      "riprese": [
+        "SV-09"
+      ],
+      "h": {
+        "m": 2.5,
+        "fonte": "stima-riferimento",
+        "confidenza": "media"
+      },
+      "dettagli": "pilastrini in cls ogni ~3 m; base degradata con distacchi; rete metallica sopra in un tratto"
+    },
+    {
+      "id": "R06",
+      "tipo": "muro di sostegno in cls + rete",
+      "lod": "LOD2",
+      "posizione": "lotto incolto P03: angolo Tamburino Sardo / Via della Menta e fronte su Via della Menta",
+      "materiali": [
+        "C15",
+        "C20"
+      ],
+      "riprese": [
+        "SV-08",
+        "SV-12",
+        "SV-18"
+      ],
+      "h": {
+        "m": 1.2,
+        "fonte": "stima-riferimento",
+        "confidenza": "bassa",
+        "metodo": "lotto rialzato"
+      },
+      "parti": [
+        {
+          "elemento": "muro di sostegno",
+          "h_m": "0,6–1,5",
+          "materiale": "C15",
+          "note": "graffiti; targa Via della Menta su pilastrino"
+        },
+        {
+          "elemento": "recinzione",
+          "materiale": "C20",
+          "disegno": "rete elettrosaldata su paletti, cancello tubolare a 2 ante"
+        }
+      ]
+    },
+    {
+      "id": "R07",
+      "tipo": "muro misto blocchi cls + intonaco",
+      "lod": "LOD2",
+      "posizione": "E02: fronte su Via Tamburino Sardo",
+      "materiali": [
+        "C10",
+        "C13"
+      ],
+      "riprese": [
+        "SV-10"
+      ],
+      "h": {
+        "m": 1.4,
+        "fonte": "stima-riferimento",
+        "confidenza": "media"
+      }
+    },
+    {
+      "id": "R08",
+      "tipo": "muro intonacato + cancello",
+      "lod": "LOD2",
+      "posizione": "E01: fronte su Via Tamburino Sardo",
+      "materiali": [
+        "C14",
+        "C06",
+        "C03"
+      ],
+      "riprese": [
+        "SV-11"
+      ],
+      "h": {
+        "m": 1.6,
+        "fonte": "stima-riferimento",
+        "confidenza": "media"
+      },
+      "dettagli": "pilastri del cancello con cappello in coppi C03; cancello in ferro a disegno"
+    },
+    {
+      "id": "R09",
+      "tipo": "muro pieno intonacato",
+      "lod": "LOD2",
+      "posizione": "E11: fronte su Via Tamburino Sardo",
+      "materiali": [
+        "C07"
+      ],
+      "riprese": [
+        "SV-04"
+      ],
+      "h": {
+        "m": 2.5,
+        "fonte": "stima-riferimento",
+        "confidenza": "media",
+        "metodo": "vs lampione e porta"
+      }
+    },
+    {
+      "id": "R10",
+      "tipo": "muro rustico + cancello",
+      "lod": "LOD2",
+      "posizione": "E10: fronte su Via Tamburino Sardo; prosegue con muretti rosa",
+      "materiali": [
+        "C09",
+        "C06",
+        "C07"
+      ],
+      "riprese": [
+        "SV-05",
+        "SV-17"
+      ],
+      "h": {
+        "m": 1.8,
+        "fonte": "stima-riferimento",
+        "confidenza": "media"
+      }
+    },
+    {
+      "id": "R11",
+      "tipo": "muro di sostegno intonacato",
+      "lod": "LOD2",
+      "posizione": "lato N di Via Moravia e angolo con Via della Menta (graffiti)",
+      "materiali": [
+        "C04"
+      ],
+      "riprese": [
+        "SV-16",
+        "SV-19"
+      ],
+      "h": {
+        "m": 2.5,
+        "fonte": "stima-riferimento",
+        "confidenza": "bassa"
+      },
+      "dettagli": "piante ricadenti (capperi) sul paramento"
+    }
+  ],
+  "arredo": [
+    {
+      "id": "A01",
+      "tipo": "lampione stradale testa-palo",
+      "lod": "LOD2",
+      "posizione": "su entrambe le strade, sul marciapiede a ~0,5 m dal cordolo, passo ~25–30 m",
+      "materiali": [
+        "C20"
+      ],
+      "riprese": [
+        "SV-04",
+        "SV-05",
+        "SV-06",
+        "SV-18"
+      ],
+      "h": {
+        "m": 8.0,
+        "fonte": "stima-riferimento",
+        "confidenza": "bassa",
+        "metodo": "≈ 3 volte il muro R02"
+      },
+      "n": 6,
+      "disegno": "palo cilindrico/conico zincato, armatura LED a sbraccio corto"
+    },
+    {
+      "id": "A02",
+      "tipo": "segnaletica verticale",
+      "lod": "LOD2",
+      "posizione": "divieto di sosta 0-24 con rimozione (Tamburino Sardo E), frecce di direzione e targhe via all'incrocio, attraversamento pedonale",
+      "materiali": [
+        "C20"
+      ],
+      "riprese": [
+        "SV-01",
+        "SV-03",
+        "SV-16",
+        "SV-18"
+      ],
+      "n": 6
+    },
+    {
+      "id": "A03",
+      "tipo": "palina fermata bus",
+      "lod": "LOD2",
+      "posizione": "Via Tamburino Sardo lato E davanti al civ. 69",
+      "materiali": [
+        "C20"
+      ],
+      "riprese": [
+        "SV-02"
+      ],
+      "n": 1
+    },
+    {
+      "id": "A04",
+      "tipo": "armadio stradale",
+      "lod": "LOD2",
+      "posizione": "Via Moravia lato S davanti a E06",
+      "materiali": [
+        "C06"
+      ],
+      "riprese": [
+        "SV-06"
+      ],
+      "n": 1
+    },
+    {
+      "id": "A05",
+      "tipo": "caditoie e chiusini in ghisa",
+      "lod": "LOD3",
+      "posizione": "a bordo carreggiata lungo i cordoli; chiusini in mezzeria",
+      "materiali": [],
+      "riprese": [
+        "SV-04",
+        "SV-13"
+      ]
+    }
+  ],
+  "pavimentazioni": [
+    {
+      "id": "P01",
+      "tipo": "carreggiate in asfalto",
+      "lod": "LOD2",
+      "posizione": "tutte le strade; mezzeria bianca; strisce pedonali all'incrocio su Via Tamburino Sardo e Via della Menta",
+      "materiali": [
+        "C16"
+      ],
+      "riprese": [
+        "SV-01",
+        "SV-04",
+        "SV-18"
+      ]
+    },
+    {
+      "id": "P02",
+      "tipo": "marciapiedi in marmette di cls a scacchiera",
+      "lod": "LOD2",
+      "posizione": "su entrambi i lati, larghezza ~1,5 m; cordolo in cls h ~15 cm",
+      "materiali": [
+        "C17",
+        "C18",
+        "C19"
+      ],
+      "riprese": [
+        "SV-02",
+        "SV-13",
+        "SV-17"
+      ]
+    },
+    {
+      "id": "P03",
+      "tipo": "lotto incolto rialzato",
+      "lod": "LOD2",
+      "posizione": "angolo N tra Via Tamburino Sardo e Via della Menta; prato secco e arbusti, ~1 m sopra strada",
+      "materiali": [],
+      "riprese": [
+        "SV-08",
+        "SV-12",
+        "SV-18"
+      ]
+    },
+    {
+      "id": "P04",
+      "tipo": "terreno incolto",
+      "lod": "LOD1",
+      "posizione": "a SO di Via Tamburino Sardo (fondale)",
+      "materiali": [],
+      "riprese": []
+    }
+  ],
+  "vegetazione": [
+    {
+      "id": "V01",
+      "tipo": "palme a ventaglio (Washingtonia)",
+      "lod": "LOD2",
+      "posizione": "giardino d'angolo di E09",
+      "materiali": [],
+      "riprese": [
+        "SV-01",
+        "SV-12"
+      ],
+      "h": {
+        "m": 7.0,
+        "fonte": "stima-riferimento",
+        "confidenza": "bassa",
+        "metodo": "≈ gronda della torretta"
+      },
+      "n": 2
+    },
+    {
+      "id": "V02",
+      "tipo": "palme da dattero (Phoenix canariensis)",
+      "lod": "LOD2",
+      "posizione": "angolo Via della Menta: lotto P03 e lotto E03",
+      "materiali": [],
+      "riprese": [
+        "SV-16",
+        "SV-18"
+      ],
+      "h": {
+        "m": 4.5,
+        "fonte": "stima-riferimento",
+        "confidenza": "bassa"
+      },
+      "n": 2
+    },
+    {
+      "id": "V03",
+      "tipo": "canneto (Arundo donax)",
+      "lod": "LOD2",
+      "posizione": "dietro il muro R07 di E02",
+      "materiali": [],
+      "riprese": [
+        "SV-10"
+      ],
+      "h": {
+        "m": 3.5,
+        "fonte": "stima-riferimento",
+        "confidenza": "bassa"
+      }
+    },
+    {
+      "id": "V04",
+      "tipo": "olivi e agrumi nei giardini",
+      "lod": "LOD1",
+      "posizione": "E03, E10, E09",
+      "materiali": [],
+      "riprese": [
+        "SV-05",
+        "SV-09"
+      ],
+      "h": {
+        "m": 4.0,
+        "fonte": "stima-riferimento",
+        "confidenza": "bassa"
+      }
+    },
+    {
+      "id": "V05",
+      "tipo": "siepi e rampicanti sui muri",
+      "lod": "LOD2",
+      "posizione": "sommità R01, R03, R04; bouganville su E05",
+      "materiali": [],
+      "riprese": [
+        "SV-01",
+        "SV-06",
+        "SV-07"
+      ]
+    }
+  ]
+}

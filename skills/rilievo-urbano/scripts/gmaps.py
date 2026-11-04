@@ -44,14 +44,22 @@ def redact(url):
     return url.split("&key=")[0] + "&key=***" if "&key=" in url else url
 
 
-def http_get(url, data=None):
-    req = urllib.request.Request(url, data=data, headers={"User-Agent": UA})
-    try:
-        with urllib.request.urlopen(req, timeout=60) as r:
-            return r.read(), r.headers.get("Content-Type", "")
-    except urllib.error.HTTPError as e:
-        body = e.read()[:300].decode("utf-8", "replace")
-        raise RuntimeError(f"HTTP {e.code} su {redact(url)}: {body}") from None
+def http_get(url, data=None, tentativi=4):
+    import time
+    for i in range(tentativi):
+        req = urllib.request.Request(url, data=data, headers={"User-Agent": UA})
+        try:
+            with urllib.request.urlopen(req, timeout=90) as r:
+                return r.read(), r.headers.get("Content-Type", "")
+        except urllib.error.HTTPError as e:
+            if e.code in (429, 502, 503, 504) and i < tentativi - 1:
+                time.sleep(2 ** (i + 1)); continue
+            body = e.read()[:300].decode("utf-8", "replace")
+            raise RuntimeError(f"HTTP {e.code} su {redact(url)}: {body}") from None
+        except (urllib.error.URLError, ConnectionError, TimeoutError):
+            if i == tentativi - 1:
+                raise
+            time.sleep(2 ** (i + 1))
 
 
 def get_json(url, data=None):
