@@ -16,6 +16,12 @@
      250 × 250 m centrato sull'incrocio e importa (terreno incluso).
    - *File › Save As* → `arch_agents\rilievi\zona-cagliari-menta-tamburino\modello\base_georef.skp`.
    - Chiudi SketchUp.
+   **Con SketchUp 2025** (provato il 2026-11-04, build 25.0.575): dopo la ricerca delle coordinate la
+   posizione è già impostata. *Add Context* apre la scelta del contesto: per importare la mappa serve un
+   abbonamento, ma **non è necessario**. Basta annullare e salvare, perché gli script usano solo la
+   georeferenziazione e il terreno lo costruiscono dal DTM LiDAR. L'eseguibile è
+   `C:\Program Files\SketchUp\SketchUp 2025\SketchUp\SketchUp.exe`. Conviene passare anche il modello
+   base come ultimo argomento della riga di comando, così si apre direttamente.
 4. **Facoltativo, per il confronto con le foto:** imposta la variabile d'ambiente utente
    `GOOGLE_MAPS_API_KEY` sul PC (la stessa chiave della sessione cloud).
 

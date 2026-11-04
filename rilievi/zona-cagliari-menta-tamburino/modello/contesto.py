@@ -88,7 +88,8 @@ def parts(g):
 bordi = unary_union([LineString(r.coords) for _, g, _, _ in REG for p in parts(g)
                      for r in [p.exterior, *p.interiors]])
 def q(p): return (round(p[0], 3), round(p[1], 3))
-def dens_line(coords, step=2.0):
+def dens_line(coords, step=1.0):   # 1 m come le stazioni dei muri: z_marc è curvo sugli angoli e con 2 m
+                                   # il TIN scendeva fino a 9 cm sotto il piede del muro (fessure, SV-18)
     # unisce vertici più vicini di 10 cm (tranne gli estremi, che sono nodi condivisi)
     c2 = [coords[0]]
     for p in coords[1:-1]:

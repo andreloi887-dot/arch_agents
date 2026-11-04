@@ -76,14 +76,26 @@ _P03 = [p for i, p in particelle if i == 67][0].buffer(-1.0, join_style=1, quad_
 raccordo = _P03.buffer(4.0).difference(_P03).intersection(sedime.buffer(4.0))
 marciapiedi = sedime.union(raccordo).difference(carreggiata).difference(_P03).intersection(area)
 
-from shapely.ops import nearest_points as _np
 _carr_b = carreggiata.boundary
+# bordo della carreggiata campionato ogni 0,25 m, con la quota DTM di ogni campione
+_cb_xy = np.array([p for ln in getattr(_carr_b, "geoms", [_carr_b])
+                   for a, b in zip(ln.coords, ln.coords[1:])
+                   for p in [(a[0] + (b[0]-a[0])*k/max(1, int(math.ceil(math.dist(a, b)/0.25))),
+                              a[1] + (b[1]-a[1])*k/max(1, int(math.ceil(math.dist(a, b)/0.25))))
+                             for k in range(max(1, int(math.ceil(math.dist(a, b)/0.25))))]])
+_cb_z = np.array([trend(px, py) for px, py in _cb_xy])
+BLEND = 2.0   # m: i bordi strada entro dmin + BLEND contribuiscono alla quota (raccordo sugli angoli)
 def z_marc(x, y):
-    """quota del marciapiede: bordo della carreggiata più vicino (DTM) + sopraelevazione + pendenza 1,5 %
-    verso la strada. Evita che il DTM, che spalma il gradino dei muri, faccia "salire" il marciapiede."""
-    q = _np(_carr_b, Point(x, y))[0]
-    d = min(q.distance(Point(x, y)), 3.0)
-    return trend(q.x, q.y) + MARC + 0.015 * d
+    """quota del marciapiede: bordo della carreggiata (DTM) + sopraelevazione + pendenza 1,5 % verso la
+    strada. Evita che il DTM, che spalma il gradino dei muri, faccia "salire" il marciapiede.
+    La quota del bordo è una media pesata dei campioni entro dmin + BLEND: con il solo bordo più vicino,
+    sugli angoli tra due strade a pendenza diversa (punta del lotto: Via della Menta sale del 20 %) il
+    marciapiede faceva un gradino di ~1,2 m in 1 m dove cambia la strada più vicina."""
+    d = np.hypot(_cb_xy[:, 0] - x, _cb_xy[:, 1] - y)
+    dmin = float(d.min())
+    w = np.clip(1.0 - (d - dmin) / BLEND, 0.0, None) ** 2 / (d + 0.5)
+    zb = float((w * _cb_z).sum() / w.sum())
+    return zb + MARC + 0.015 * min(dmin, 3.0)
 
 
 def ring(p, step=2.0):
@@ -329,7 +341,10 @@ scena["vegetazione"] = [
 scena["controllo"] = {"tip_lotto": [round(tip[0], 2), round(tip[1], 2)], "area_lotto_m2": round(lot.area, 1),
                       "sedime_m2": round(sedime.area, 1), "carreggiata_m2": round(carreggiata.area, 1),
                       "z_tip_lotto": round(z_lotto(*tip), 2), "z_marciapiede_tip": round(trend(*tip) + MARC, 2)}
-_man = json.load(open(os.path.join(Z, "_rif_google/manifest_riprese.json"))) if os.path.exists(os.path.join(Z, "_rif_google/manifest_riprese.json")) else {"riprese": []}
+# camere: manifest locale di gmaps.py se c'è, altrimenti la copia versionata accanto a questo script
+_man_path = next((p for p in [os.path.join(Z, "_rif_google/manifest_riprese.json"), os.path.join(HERE, "manifest_riprese.json")]
+                  if os.path.exists(p)), None)
+_man = json.load(open(_man_path, encoding="utf-8")) if _man_path else {"riprese": []}
 scena["camere"] = {r["id"]: [round(v, 3) for v in loc(r["lng"], r["lat"])] for r in _man["riprese"]}
 json.dump(scena, open(os.path.join(HERE, "scena.json"), "w"), indent=0)
 print(json.dumps(scena["controllo"]), len(scena["edifici"]), "edifici,", len(scena["muri"]), "muri,", len(scena["recinzioni"]), "recinzioni")
