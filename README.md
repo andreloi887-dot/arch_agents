@@ -46,3 +46,18 @@ Requisiti: Python 3.9+ con Pillow; `GOOGLE_MAPS_API_KEY` con Street View Static,
 Geocoding abilitate (senza chiave l'agente lavora su screenshot e il confronto è solo qualitativo).
 I termini Google vietano di ricalcare o estrarre geometria: impronte e quote vengono da OSM, DBT,
 catasto o LiDAR; le immagini Google restano in `_rif_google/` (ignorata da git).
+
+## Comfy Desktop – render AI architettonici
+
+| Percorso | Cosa è |
+|---|---|
+| `skills/comfy-desktop-arch-render/` | Skill (SKILL.md + knowledge base in `references/`): setup Comfy Desktop, modelli e licenze, input dal 3D, pipeline, ricette, troubleshooting |
+| `.claude/agents/comfy-render-expert.md` | Subagent per Claude Code che usa la stessa knowledge base |
+
+Uso identico alla skill Lumion (zip della cartella su claude.ai, oppure "usa l'agente comfy-render-expert per …").
+Le due skill si parlano: i render pass di Lumion Pro (depth, Material ID, sky alpha) sono l'input ideale per ComfyUI.
+
+### Note sull'accuratezza
+Stato a nov 2026, da ricerca web; le docs ufficiali `docs.comfy.org` non erano raggiungibili dall'ambiente di stesura.
+I punti incerti sono elencati in `references/07-versioni-e-fonti.md`. I valori nelle ricette sono d'esperienza: sostituiscili
+con i tuoi preset testati.
