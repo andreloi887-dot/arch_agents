@@ -2,3 +2,6 @@
 _rif_google/
 __pycache__/
 rilievi/*/modello/anteprima/vendor/
+rilievi/*/modello/anteprima/out/
+rilievi/*/modello/anteprima/out_contesto/
+rilievi/*/modello/__pycache__/

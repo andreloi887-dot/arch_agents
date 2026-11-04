@@ -1,0 +1,11 @@
+{
+ "fonte": "Regione Autonoma della Sardegna \u2013 DTM 1 m da LiDAR (raster__DTM_1M_MOSAICO_ALTIMETRIA), WCS geoserverraster",
+ "crs": "EPSG:7791 (RDN2008 / UTM 32N)",
+ "bordo_sinistro_E": 509845.5,
+ "bordo_superiore_N": 4344892.1766,
+ "passo": 1.0,
+ "origine_E": 509945.8735350086,
+ "origine_N": 4344792.620752944,
+ "nota": "subset 200\u00d7200 m centrato sull'incrocio; allineamento della griglia \u00b10,5 m (bordi nativi a .5 E e .1766 N)",
+ "url": "https://webgis.regione.sardegna.it/geoserverraster/ows?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=raster__DTM_1M_MOSAICO_ALTIMETRIA&format=image/tiff&subset=E(509845,510045)&subset=N(4344692,4344892)"
+}

@@ -27,13 +27,14 @@
     },
     "scopo": "rilievo di prova del flusso; contesto per inserimento ambientale",
     "lod_default": "LOD2",
-    "revisione": 2,
+    "revisione": 3,
     "data_rilievo": "2026-11-04",
     "date_streetview": [
       "2026-04"
     ],
     "fonti_geometria": [
-      "Catasto AdE – WMS INSPIRE (CC BY 4.0), scaricato e vettorializzato il 2026-11-04: geometria/*.geojson"
+      "Catasto AdE – WMS INSPIRE (CC BY 4.0), scaricato e vettorializzato il 2026-11-04: geometria/*.geojson",
+      "DTM 1 m da LiDAR – Regione Autonoma della Sardegna (WCS geoserverraster): modello/dtm_lidar_1m.tif"
     ],
     "allineamento_catasto": {
       "stato": "DA ESEGUIRE in SketchUp su imagery Add Location (importa_catasto.rb)",
@@ -524,6 +525,55 @@
       "confidenza": "bassa",
       "fonte": [
         "SV-04"
+      ],
+      "texture": null
+    },
+    {
+      "id": "C24",
+      "materiale": "erbe spontanee",
+      "finitura": "alte ~1 m, fiorite (aprile)",
+      "hex": "#95A244",
+      "intervallo": [
+        "#626B08",
+        "#C9D08A"
+      ],
+      "confidenza": "media",
+      "fonte": [
+        "SV-12",
+        "SV-08"
+      ],
+      "texture": null,
+      "note": "in estate vira al paglierino secco"
+    },
+    {
+      "id": "C25",
+      "materiale": "terreno con erbe e terra",
+      "finitura": "lotti e giardini di fondo (stima)",
+      "hex": "#9C9A62",
+      "intervallo": [
+        "#8A8550",
+        "#B0AD78"
+      ],
+      "confidenza": "bassa",
+      "fonte": [
+        "SV-12",
+        "SV-08"
+      ],
+      "texture": null,
+      "note": "miscela stimata, non campionata su un'area omogenea"
+    },
+    {
+      "id": "C27",
+      "materiale": "fronde di palma",
+      "finitura": "Phoenix canariensis",
+      "hex": "#4E5630",
+      "intervallo": [
+        "#3E4526",
+        "#6B7444"
+      ],
+      "confidenza": "media",
+      "fonte": [
+        "SV-16"
       ],
       "texture": null
     }
@@ -1740,10 +1790,9 @@
       "id": "P02",
       "tipo": "marciapiedi in marmette di cls a scacchiera",
       "lod": "LOD2",
-      "posizione": "su entrambi i lati, larghezza ~1,5 m; cordolo in cls h ~15 cm",
+      "posizione": "su entrambi i lati, larghezza ~1,5 m; cordolo in cls h ~15 cm; scacchiera C17/C18 resa con texture sul materiale C17",
       "materiali": [
         "C17",
-        "C18",
         "C19"
       ],
       "riprese": [
@@ -1754,13 +1803,16 @@
     },
     {
       "id": "P03",
-      "tipo": "lotto incolto rialzato",
-      "lod": "LOD2",
-      "posizione": "angolo N tra Via Tamburino Sardo e Via della Menta; prato secco e arbusti, ~1 m sopra strada",
-      "materiali": [],
+      "tipo": "lotto incolto in rilevato",
+      "lod": "LOD3",
+      "posizione": "angolo N tra Via Tamburino Sardo e Via della Menta (part. 4258, 883 m²): dal DTM LiDAR il terreno sale dall'angolo (+0,5) a +3,8 m al centro; a raso con Via della Menta al cancello, ~+0,7 verso NO; erbe spontanee alte ~1 m",
+      "materiali": [
+        "C24"
+      ],
       "riprese": [
         "SV-08",
         "SV-12",
+        "SV-16",
         "SV-18"
       ]
     },
@@ -1796,16 +1848,19 @@
       "id": "V02",
       "tipo": "palme da dattero (Phoenix canariensis)",
       "lod": "LOD2",
-      "posizione": "angolo Via della Menta: lotto P03 e lotto E03",
-      "materiali": [],
+      "posizione": "1 giovane senza fusto nel lotto P03 a ~7 m dalla punta lungo Via della Menta (h ~2,6, chioma ~4 m: nascosta dalle erbe in SV-12, rev. 3) + 1 adulta nel giardino d'angolo di E03 (h ~4,5)",
+      "materiali": [
+        "C27"
+      ],
       "riprese": [
         "SV-16",
         "SV-18"
       ],
       "h": {
-        "m": 4.5,
+        "m": 2.6,
         "fonte": "stima-riferimento",
-        "confidenza": "bassa"
+        "confidenza": "bassa",
+        "metodo": "P03: fronde dal suolo fino a ~1,5 volte il cartello di divieto"
       },
       "n": 2
     },

@@ -28,7 +28,7 @@ function build(scena, palette) {
   const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(-40, 80, 30); scene.add(sun);
   // terreno di tendenza (abbassato di 3 cm per non sovrapporsi a strade e lotto)
   const T = S.terreno, n = T.n, pos = [], idx = [];
-  for (let j=0;j<n;j++) for (let i=0;i<n;i++) { const v = V(T.x0+i*T.passo, T.y0+j*T.passo, T.z[j][i]-0.35); pos.push(v.x,v.y,v.z); }
+  for (let j=0;j<n;j++) for (let i=0;i<n;i++) { const v = V(T.x0+i*T.passo, T.y0+j*T.passo, T.z[j][i]-0.12); pos.push(v.x,v.y,v.z); }
   for (let j=0;j<n-1;j++) for (let i=0;i<n-1;i++) { const a=j*n+i; idx.push(a,a+1,a+n, a+1,a+n+1,a+n); }
   const tg = new THREE.BufferGeometry(); tg.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); tg.setIndex(idx); tg.computeVertexNormals();
   scene.add(new THREE.Mesh(tg, mat('TERRENO')));
@@ -65,7 +65,9 @@ function build(scena, palette) {
     const m = new THREE.Mesh(g, [roof, mat(e.materiale)]);
     m.rotation.x = -Math.PI/2; m.position.y = e.z_base; scene.add(m);
   }
-  const tz = (x,y) => { const c=S.trend_coef; return c[0]+c[1]*x+c[2]*y+c[3]*x*x+c[4]*x*y+c[5]*y*y - S.trend_z0; };
+  const tz = (x,y) => { const T=S.terreno, fi=(x-T.x0)/T.passo, fj=(y-T.y0)/T.passo;
+    const i=Math.max(0,Math.min(T.n-2,Math.floor(fi))), j=Math.max(0,Math.min(T.n-2,Math.floor(fj))), a=fi-i, b=fj-j;
+    return T.z[j][i]*(1-a)*(1-b)+T.z[j][i+1]*a*(1-b)+T.z[j+1][i]*(1-a)*b+T.z[j+1][i+1]*a*b; };
   for (const v of S.vegetazione) {
     const pts = v.xy ? [v.xy] : v.xy_lista;
     for (const q of pts) {
@@ -86,10 +88,51 @@ function build(scena, palette) {
     if (a.tipo==='lampione') { const t=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.15,0.3), mat(a.materiale)); t.position.copy(V(a.xy[0]-0.3,a.xy[1],z0+a.h)); scene.add(t); }
     if (a.tipo.startsWith('cartello')) { const d=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,0.03,16), mat('X',{color:'#c03030'})); d.rotation.x=Math.PI/2; d.position.copy(V(a.xy[0],a.xy[1],z0+a.h-0.3)); scene.add(d); }
   }
-  function zLotto(x,y){ const r=S.lotto.rialzo_piano; return tz(x,y)+Math.max(0.15, r.a+r.b*x+r.c*y); }
+  function zLotto(x,y){ return tz(x,y); }
   window.tz = tz;
   renderer = new THREE.WebGLRenderer({antialias:true, preserveDrawingBuffer:true}); renderer.setSize(640,640); document.body.appendChild(renderer.domElement);
 }
+
+// ---- modalità CONTESTO: stessa geometria che costruisce SketchUp (contesto.json)
+function hexOf(ctx, nome){ const m=ctx.materiali[nome]; return m ? m.hex : '#cccccc'; }
+function mk(ctx, nome){ const m=ctx.materiali[nome]||{}; return new THREE.MeshLambertMaterial({color: hexOf(ctx,nome), side:THREE.DoubleSide, transparent: m.alpha!==undefined, opacity: m.alpha!==undefined? m.alpha:1}); }
+function triMesh(V, T, mat){ const pos=[]; for (const v of V){ const q=Vv(v); pos.push(q.x,q.y,q.z); }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); g.setIndex(T); g.computeVertexNormals(); return new THREE.Mesh(g, mat); }
+const Vv = v => new THREE.Vector3(v[0], v[2], -v[1]);
+let GROUND = null;
+function buildCtx(ctx){
+  scene = new THREE.Scene(); scene.background = new THREE.Color('#9ec3ea');
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7a60, 0.9));
+  const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(-40, 80, 30); scene.add(sun);
+  GROUND = [];
+  for (const s of ctx.superfici){
+    s.materiali.forEach((mn, mi) => { const T=[]; for (const t of s.triangoli) if ((t[3]||0)===mi) T.push(t[0],t[1],t[2]);
+      if (T.length){ const m=triMesh(s.vertici, T, mk(ctx,mn)); scene.add(m); if (mi===0) GROUND.push(m); } });
+  }
+  for (const w of ctx.muri){ const st=w.stazioni, k=st[0].length, V=[], T=[];
+    st.forEach(sec => sec.forEach(p => V.push(p)));
+    for (let i=0;i<st.length-1;i++) for (let j=0;j<k;j++){ const a=i*k+j, b=i*k+(j+1)%k, a1=a+k, b1=b+k; T.push(a,a1,b1, a,b1,b); }
+    for (const e of [0, st.length-1]) for (let j=1;j<k-1;j++) T.push(e*k, e*k+j, e*k+j+1);
+    scene.add(triMesh(V,T,mk(ctx,w.materiale))); }
+  for (const r of ctx.recinzioni){ const A=r.asse, mp=mk(ctx,r.materiale_palo), mr=mk(ctx,r.materiale_rete);
+    for (let i=0;i<A.length-1;i++){ const a=A[i], b=A[i+1];
+      scene.add(triMesh([[a[0],a[1],a[2]+r.gap],[b[0],b[1],b[2]+r.gap],[b[0],b[1],b[2]+r.gap+r.h],[a[0],a[1],a[2]+r.gap+r.h]],[0,1,2,0,2,3],mr));
+      const L=Math.hypot(b[0]-a[0],b[1]-a[1]), n=Math.max(1,Math.ceil(L/r.passo));
+      for (let j=0;j<=n;j++){ const t=j/n, p=[a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t];
+        const m=new THREE.Mesh(new THREE.BoxGeometry(r.lato_palo, r.h, r.lato_palo), mp); m.position.copy(Vv([p[0],p[1],p[2]+r.h/2])); scene.add(m); } } }
+  for (const e of ctx.edifici){ const shape=new THREE.Shape(e.impronta.map(p=>new THREE.Vector2(p[0],p[1])));
+    const g=new THREE.ExtrudeGeometry(shape,{depth:e.altezza, bevelEnabled:false}); const m=new THREE.Mesh(g,[mk(ctx,e.materiale_copertura), mk(ctx,e.materiale)]);
+    m.rotation.x=-Math.PI/2; m.position.y=e.z_base; scene.add(m); }
+  for (const o of ctx.oggetti){ const m=new THREE.Mesh(new THREE.BoxGeometry(o.dim[0],o.dim[2],o.dim[1]), mk(ctx,o.materiale)); m.position.copy(Vv([o.xy[0],o.xy[1],o.z+o.dim[2]/2])); m.rotation.y=(o.rot_deg||0)*Math.PI/180; scene.add(m);
+    if (o.testa==='lampione'){ const t=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.15,0.3), mk(ctx,o.materiale)); t.position.copy(Vv([o.xy[0]-0.3,o.xy[1],o.z+o.dim[2]])); scene.add(t); }
+    if (o.testa==='disco'){ const d=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,0.03,16), new THREE.MeshLambertMaterial({color:'#c03030'})); d.rotation.x=Math.PI/2; d.position.copy(Vv([o.xy[0],o.xy[1],o.z+o.dim[2]-0.3])); scene.add(d); } }
+  for (const v of ctx.vegetazione){ for (let k=0;k<9;k++){ const f=new THREE.Mesh(new THREE.BoxGeometry(v.chioma/2,0.05,0.5), mk(ctx,v.materiale)); const an=k*0.7;
+      f.position.copy(Vv([v.xy[0]+Math.cos(an)*v.chioma/4, v.xy[1]+Math.sin(an)*v.chioma/4, v.z+v.h*0.7])); f.rotation.y=-an; f.rotation.z=0.5; scene.add(f); } }
+  const ray = new THREE.Raycaster();
+  window.tz = (x,y) => { ray.set(Vv([x,y,500]), new THREE.Vector3(0,-1,0)); const h=ray.intersectObjects(GROUND); return h.length? h[0].point.y : 0; };
+  renderer = new THREE.WebGLRenderer({antialias:true, preserveDrawingBuffer:true}); renderer.setSize(640,640); document.body.appendChild(renderer.domElement);
+}
+
 // camera come Street View: posizione pano, occhio a 2,5 m sul terreno, heading da N orario, pitch, fov (quadrato)
 function shoot(x, y, heading, pitch, fov, eye=2.5) {
   const cam = new THREE.PerspectiveCamera(fov, 1, 0.3, 2000);

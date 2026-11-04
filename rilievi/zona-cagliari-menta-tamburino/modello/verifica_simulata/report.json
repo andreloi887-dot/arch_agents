@@ -1,0 +1,965 @@
+{
+  "esito_globale": "NON CONFORME",
+  "conteggi": {
+    "✅": 8,
+    "⚠️": 3,
+    "❌": 25
+  },
+  "elementi": [
+    {
+      "id": "E01",
+      "categoria": "edifici",
+      "problemi": [
+        "altezza 9.07 m vs colmo 10.8 m (±1.5, bassa)"
+      ],
+      "presenza": "✅",
+      "altezza_modello": 9.07,
+      "altezza_scheda": 10.8,
+      "quota": "colmo",
+      "confidenza": "bassa",
+      "tolleranza": 1.5,
+      "materiali_mancanti": [],
+      "esito": "⚠️"
+    },
+    {
+      "id": "E02",
+      "categoria": "edifici",
+      "problemi": [],
+      "presenza": "✅",
+      "altezza_modello": 7.21,
+      "altezza_scheda": 8.3,
+      "quota": "colmo",
+      "confidenza": "bassa",
+      "tolleranza": 1.5,
+      "materiali_mancanti": [],
+      "esito": "✅"
+    },
+    {
+      "id": "E03",
+      "categoria": "edifici",
+      "problemi": [],
+      "presenza": "✅",
+      "altezza_modello": 7.01,
+      "altezza_scheda": 8.3,
+      "quota": "colmo",
+      "confidenza": "bassa",
+      "tolleranza": 1.5,
+      "materiali_mancanti": [],
+      "esito": "✅"
+    },
+    {
+      "id": "E04",
+      "categoria": "edifici",
+      "problemi": [],
+      "presenza": "✅",
+      "altezza_modello": 3.6,
+      "altezza_scheda": 3.5,
+      "quota": "gronda",
+      "confidenza": "bassa",
+      "tolleranza": 1.5,
+      "materiali_mancanti": [],
+      "esito": "✅"
+    },
+    {
+      "id": "E05",
+      "categoria": "edifici",
+      "problemi": [
+        "altezza 8.83 m vs gronda 7.0 m (±0.75, media)",
+        "materiali non usati sull'elemento: C12, C21"
+      ],
+      "presenza": "✅",
+      "altezza_modello": 8.83,
+      "altezza_scheda": 7.0,
+      "quota": "gronda",
+      "confidenza": "media",
+      "tolleranza": 0.75,
+      "materiali_mancanti": [
+        "C12",
+        "C21"
+      ],
+      "esito": "❌"
+    },
+    {
+      "id": "E06",
+      "categoria": "edifici",
+      "problemi": [
+        "altezza 11.39 m vs gronda 10.0 m (±0.75, media)",
+        "materiali non usati sull'elemento: C11, C21"
+      ],
+      "presenza": "✅",
+      "altezza_modello": 11.39,
+      "altezza_scheda": 10.0,
+      "quota": "gronda",
+      "confidenza": "media",
+      "tolleranza": 0.75,
+      "materiali_mancanti": [
+        "C11",
+        "C21"
+      ],
+      "esito": "❌"
+    },
+    {
+      "id": "E07",
+      "categoria": "edifici",
+      "problemi": [
+        "materiali non usati sull'elemento: C21"
+      ],
+      "presenza": "✅",
+      "altezza_modello": 9.29,
+      "altezza_scheda": 8.3,
+      "quota": "colmo",
+      "confidenza": "bassa",
+      "tolleranza": 1.5,
+      "materiali_mancanti": [
+        "C21"
+      ],
+      "esito": "❌"
+    },
+    {
+      "id": "E08",
+      "categoria": "edifici",
+      "problemi": [
+        "altezza 4.84 m vs colmo 8.0 m (±1.5, bassa)",
+        "materiali non usati sull'elemento: C21"
+      ],
+      "presenza": "✅",
+      "altezza_modello": 4.84,
+      "altezza_scheda": 8.0,
+      "quota": "colmo",
+      "confidenza": "bassa",
+      "tolleranza": 1.5,
+      "materiali_mancanti": [
+        "C21"
+      ],
+      "esito": "❌"
+    },
+    {
+      "id": "E09",
+      "categoria": "edifici",
+      "problemi": [
+        "altezza 7.05 m vs colmo 10.5 m (±0.75, media)",
+        "materiali non usati sull'elemento: C04, C06, C21"
+      ],
+      "presenza": "✅",
+      "altezza_modello": 7.05,
+      "altezza_scheda": 10.5,
+      "quota": "colmo",
+      "confidenza": "media",
+      "tolleranza": 0.75,
+      "materiali_mancanti": [
+        "C04",
+        "C06",
+        "C21"
+      ],
+      "esito": "❌"
+    },
+    {
+      "id": "E10",
+      "categoria": "edifici",
+      "problemi": [
+        "materiali non usati sull'elemento: C22"
+      ],
+      "presenza": "✅",
+      "altezza_modello": 9.66,
+      "altezza_scheda": 10.8,
+      "quota": "colmo",
+      "confidenza": "bassa",
+      "tolleranza": 1.5,
+      "materiali_mancanti": [
+        "C22"
+      ],
+      "esito": "❌"
+    },
+    {
+      "id": "E11",
+      "categoria": "edifici",
+      "problemi": [
+        "materiali non usati sull'elemento: C23"
+      ],
+      "presenza": "✅",
+      "altezza_modello": 6.97,
+      "altezza_scheda": 6.5,
+      "quota": "gronda",
+      "confidenza": "bassa",
+      "tolleranza": 1.5,
+      "materiali_mancanti": [
+        "C23"
+      ],
+      "esito": "❌"
+    },
+    {
+      "id": "R01",
+      "categoria": "recinzioni",
+      "problemi": [
+        "altezza 2.76 m vs h 1.8 m (±0.75, media)",
+        "materiali non usati sull'elemento: C02"
+      ],
+      "presenza": "✅",
+      "altezza_modello": 2.76,
+      "altezza_scheda": 1.8,
+      "quota": "h",
+      "confidenza": "media",
+      "tolleranza": 0.75,
+      "materiali_mancanti": [
+        "C02"
+      ],
+      "esito": "❌"
+    },
+    {
+      "id": "R02",
+      "categoria": "recinzioni",
+      "problemi": [],
+      "presenza": "✅",
+      "altezza_modello": 2.83,
+      "altezza_scheda": 2.5,
+      "quota": "h",
+      "confidenza": "media",
+      "tolleranza": 0.75,
+      "materiali_mancanti": [],
+      "esito": "✅"
+    },
+    {
+      "id": "R03",
+      "categoria": "recinzioni",
+      "problemi": [
+        "altezza 2.81 m vs h 1.8 m (±0.75, media)",
+        "materiali non usati sull'elemento: C20"
+      ],
+      "presenza": "✅",
+      "altezza_modello": 2.81,
+      "altezza_scheda": 1.8,
+      "quota": "h",
+      "confidenza": "media",
+      "tolleranza": 0.75,
+      "materiali_mancanti": [
+        "C20"
+      ],
+      "esito": "❌"
+    },
+    {
+      "id": "R04",
+      "categoria": "recinzioni",
+      "problemi": [
+        "altezza 2.75 m vs h 1.9 m (±0.75, media)"
+      ],
+      "presenza": "✅",
+      "altezza_modello": 2.75,
+      "altezza_scheda": 1.9,
+      "quota": "h",
+      "confidenza": "media",
+      "tolleranza": 0.75,
+      "materiali_mancanti": [],
+      "esito": "❌"
+    },
+    {
+      "id": "R05",
+      "categoria": "recinzioni",
+      "problemi": [
+        "altezza 3.96 m vs h 2.5 m (±0.75, media)"
+      ],
+      "presenza": "✅",
+      "altezza_modello": 3.96,
+      "altezza_scheda": 2.5,
+      "quota": "h",
+      "confidenza": "media",
+      "tolleranza": 0.75,
+      "materiali_mancanti": [],
+      "esito": "❌"
+    },
+    {
+      "id": "R06",
+      "categoria": "recinzioni",
+      "problemi": [
+        "altezza 3.43 m vs h 1.2 m (±1.5, bassa)"
+      ],
+      "presenza": "✅",
+      "altezza_modello": 3.43,
+      "altezza_scheda": 1.2,
+      "quota": "h",
+      "confidenza": "bassa",
+      "tolleranza": 1.5,
+      "materiali_mancanti": [],
+      "esito": "⚠️"
+    },
+    {
+      "id": "R07",
+      "categoria": "recinzioni",
+      "problemi": [
+        "materiali non usati sull'elemento: C13"
+      ],
+      "presenza": "✅",
+      "altezza_modello": 1.76,
+      "altezza_scheda": 1.4,
+      "quota": "h",
+      "confidenza": "media",
+      "tolleranza": 0.75,
+      "materiali_mancanti": [
+        "C13"
+      ],
+      "esito": "❌"
+    },
+    {
+      "id": "R08",
+      "categoria": "recinzioni",
+      "problemi": [
+        "elemento assente nel modello (nessun gruppo/componente con questo ID)"
+      ],
+      "presenza": "❌",
+      "esito": "❌"
+    },
+    {
+      "id": "R09",
+      "categoria": "recinzioni",
+      "problemi": [],
+      "presenza": "✅",
+      "altezza_modello": 3.11,
+      "altezza_scheda": 2.5,
+      "quota": "h",
+      "confidenza": "media",
+      "tolleranza": 0.75,
+      "materiali_mancanti": [],
+      "esito": "✅"
+    },
+    {
+      "id": "R10",
+      "categoria": "recinzioni",
+      "problemi": [
+        "materiali non usati sull'elemento: C06, C07"
+      ],
+      "presenza": "✅",
+      "altezza_modello": 2.43,
+      "altezza_scheda": 1.8,
+      "quota": "h",
+      "confidenza": "media",
+      "tolleranza": 0.75,
+      "materiali_mancanti": [
+        "C06",
+        "C07"
+      ],
+      "esito": "❌"
+    },
+    {
+      "id": "R11",
+      "categoria": "recinzioni",
+      "problemi": [
+        "altezza 4.84 m vs h 2.5 m (±1.5, bassa)"
+      ],
+      "presenza": "✅",
+      "altezza_modello": 4.84,
+      "altezza_scheda": 2.5,
+      "quota": "h",
+      "confidenza": "bassa",
+      "tolleranza": 1.5,
+      "materiali_mancanti": [],
+      "esito": "⚠️"
+    },
+    {
+      "id": "A01",
+      "categoria": "arredo",
+      "problemi": [
+        "istanze 1 vs 6 in scheda"
+      ],
+      "presenza": "✅",
+      "altezza_modello": 8.05,
+      "altezza_scheda": 8.0,
+      "quota": "h",
+      "confidenza": "bassa",
+      "tolleranza": 1.5,
+      "materiali_mancanti": [],
+      "esito": "❌"
+    },
+    {
+      "id": "A02",
+      "categoria": "arredo",
+      "problemi": [
+        "istanze 2 vs 6 in scheda"
+      ],
+      "presenza": "✅",
+      "altezza_modello": 2.45,
+      "materiali_mancanti": [],
+      "esito": "❌"
+    },
+    {
+      "id": "A03",
+      "categoria": "arredo",
+      "problemi": [
+        "elemento assente nel modello (nessun gruppo/componente con questo ID)"
+      ],
+      "presenza": "❌",
+      "esito": "❌"
+    },
+    {
+      "id": "A04",
+      "categoria": "arredo",
+      "problemi": [
+        "elemento assente nel modello (nessun gruppo/componente con questo ID)"
+      ],
+      "presenza": "❌",
+      "esito": "❌"
+    },
+    {
+      "id": "A05",
+      "categoria": "arredo",
+      "problemi": [
+        "elemento assente nel modello (nessun gruppo/componente con questo ID)"
+      ],
+      "presenza": "❌",
+      "esito": "❌"
+    },
+    {
+      "id": "P01",
+      "categoria": "pavimentazioni",
+      "problemi": [],
+      "presenza": "✅",
+      "altezza_modello": 14.35,
+      "materiali_mancanti": [],
+      "esito": "✅"
+    },
+    {
+      "id": "P02",
+      "categoria": "pavimentazioni",
+      "problemi": [],
+      "presenza": "✅",
+      "altezza_modello": 14.54,
+      "materiali_mancanti": [],
+      "esito": "✅"
+    },
+    {
+      "id": "P03",
+      "categoria": "pavimentazioni",
+      "problemi": [],
+      "presenza": "✅",
+      "altezza_modello": 5.49,
+      "materiali_mancanti": [],
+      "esito": "✅"
+    },
+    {
+      "id": "P04",
+      "categoria": "pavimentazioni",
+      "problemi": [
+        "elemento assente nel modello (nessun gruppo/componente con questo ID)"
+      ],
+      "presenza": "❌",
+      "esito": "❌"
+    },
+    {
+      "id": "V01",
+      "categoria": "vegetazione",
+      "problemi": [
+        "elemento assente nel modello (nessun gruppo/componente con questo ID)"
+      ],
+      "presenza": "❌",
+      "esito": "❌"
+    },
+    {
+      "id": "V02",
+      "categoria": "vegetazione",
+      "problemi": [
+        "istanze 1 vs 2 in scheda",
+        "altezza 2.60 m vs h 4.5 m (±1.5, bassa)"
+      ],
+      "presenza": "✅",
+      "altezza_modello": 2.6,
+      "altezza_scheda": 4.5,
+      "quota": "h",
+      "confidenza": "bassa",
+      "tolleranza": 1.5,
+      "materiali_mancanti": [],
+      "esito": "❌"
+    },
+    {
+      "id": "V03",
+      "categoria": "vegetazione",
+      "problemi": [
+        "elemento assente nel modello (nessun gruppo/componente con questo ID)"
+      ],
+      "presenza": "❌",
+      "esito": "❌"
+    },
+    {
+      "id": "V04",
+      "categoria": "vegetazione",
+      "problemi": [
+        "elemento assente nel modello (nessun gruppo/componente con questo ID)"
+      ],
+      "presenza": "❌",
+      "esito": "❌"
+    },
+    {
+      "id": "V05",
+      "categoria": "vegetazione",
+      "problemi": [
+        "elemento assente nel modello (nessun gruppo/componente con questo ID)"
+      ],
+      "presenza": "❌",
+      "esito": "❌"
+    }
+  ],
+  "palette": [
+    {
+      "id": "C01",
+      "materiale": "C01_intonaco_civile",
+      "hex_scheda": "#F2D9AE",
+      "rgb_modello": [
+        242,
+        217,
+        174
+      ],
+      "texture": false,
+      "deltaE2000": 0.0,
+      "tolleranza": 5.0,
+      "esito": "✅"
+    },
+    {
+      "id": "C02",
+      "esito": "❌",
+      "nota": "materiale C##_… assente"
+    },
+    {
+      "id": "C03",
+      "materiale": "C03_tegole_coppi_in_late",
+      "hex_scheda": "#BE7B73",
+      "rgb_modello": [
+        190,
+        123,
+        115
+      ],
+      "texture": false,
+      "deltaE2000": 0.0,
+      "tolleranza": 5.0,
+      "esito": "✅"
+    },
+    {
+      "id": "C04",
+      "materiale": "C04_intonaco_civile",
+      "hex_scheda": "#ECE5DA",
+      "rgb_modello": [
+        236,
+        229,
+        218
+      ],
+      "texture": false,
+      "deltaE2000": 0.0,
+      "tolleranza": 5.0,
+      "esito": "✅"
+    },
+    {
+      "id": "C05",
+      "materiale": "C05_paletti_doghe",
+      "hex_scheda": "#FAFAFA",
+      "rgb_modello": [
+        250,
+        250,
+        250
+      ],
+      "texture": false,
+      "deltaE2000": 0.0,
+      "tolleranza": 5.0,
+      "esito": "✅"
+    },
+    {
+      "id": "C05",
+      "materiale": "C05_doghe",
+      "hex_scheda": "#FAFAFA",
+      "rgb_modello": [
+        250,
+        250,
+        250
+      ],
+      "texture": false,
+      "deltaE2000": 0.0,
+      "tolleranza": 5.0,
+      "esito": "✅"
+    },
+    {
+      "id": "C06",
+      "materiale": "C06_paletti_ringhiera",
+      "hex_scheda": "#64696D",
+      "rgb_modello": [
+        100,
+        105,
+        109
+      ],
+      "texture": false,
+      "deltaE2000": 0.0,
+      "tolleranza": 5.0,
+      "esito": "✅"
+    },
+    {
+      "id": "C06",
+      "materiale": "C06_ringhiera",
+      "hex_scheda": "#64696D",
+      "rgb_modello": [
+        100,
+        105,
+        109
+      ],
+      "texture": false,
+      "deltaE2000": 0.0,
+      "tolleranza": 5.0,
+      "esito": "✅"
+    },
+    {
+      "id": "C07",
+      "materiale": "C07_intonaco_civile",
+      "hex_scheda": "#AE8260",
+      "rgb_modello": [
+        174,
+        130,
+        96
+      ],
+      "texture": false,
+      "deltaE2000": 0.0,
+      "tolleranza": 5.0,
+      "esito": "✅"
+    },
+    {
+      "id": "C08",
+      "materiale": "C08_intonaco_civile",
+      "hex_scheda": "#E5CDAF",
+      "rgb_modello": [
+        229,
+        205,
+        175
+      ],
+      "texture": false,
+      "deltaE2000": 0.0,
+      "tolleranza": 5.0,
+      "esito": "✅"
+    },
+    {
+      "id": "C09",
+      "materiale": "C09_intonaco_rustico___c",
+      "hex_scheda": "#796E5E",
+      "rgb_modello": [
+        121,
+        110,
+        94
+      ],
+      "texture": false,
+      "deltaE2000": 0.0,
+      "tolleranza": 5.0,
+      "esito": "✅"
+    },
+    {
+      "id": "C10",
+      "materiale": "C10_blocchi_di_cls_vibro",
+      "hex_scheda": "#7E7463",
+      "rgb_modello": [
+        126,
+        116,
+        99
+      ],
+      "texture": false,
+      "deltaE2000": 0.0,
+      "tolleranza": 5.0,
+      "esito": "✅"
+    },
+    {
+      "id": "C11",
+      "esito": "❌",
+      "nota": "materiale C##_… assente"
+    },
+    {
+      "id": "C12",
+      "esito": "❌",
+      "nota": "materiale C##_… assente"
+    },
+    {
+      "id": "C13",
+      "materiale": "C13_intonaco_civile",
+      "hex_scheda": "#E2DBC9",
+      "rgb_modello": [
+        226,
+        219,
+        201
+      ],
+      "texture": false,
+      "deltaE2000": 0.0,
+      "tolleranza": 5.0,
+      "esito": "✅"
+    },
+    {
+      "id": "C14",
+      "materiale": "C14_intonaco_civile",
+      "hex_scheda": "#D4C3AA",
+      "rgb_modello": [
+        212,
+        195,
+        170
+      ],
+      "texture": false,
+      "deltaE2000": 0.0,
+      "tolleranza": 5.0,
+      "esito": "✅"
+    },
+    {
+      "id": "C15",
+      "materiale": "C15_calcestruzzo_a_vista",
+      "hex_scheda": "#B5A187",
+      "rgb_modello": [
+        181,
+        161,
+        135
+      ],
+      "texture": false,
+      "deltaE2000": 0.0,
+      "tolleranza": 5.0,
+      "esito": "✅"
+    },
+    {
+      "id": "C16",
+      "materiale": "C16_asfalto",
+      "hex_scheda": "#AFA698",
+      "rgb_modello": [
+        175,
+        166,
+        152
+      ],
+      "texture": false,
+      "deltaE2000": 0.0,
+      "tolleranza": 5.0,
+      "esito": "✅"
+    },
+    {
+      "id": "C17",
+      "materiale": "C17_marmette_in_cls",
+      "hex_scheda": "#E5C7B1",
+      "rgb_modello": [
+        238,
+        214,
+        187
+      ],
+      "texture": true,
+      "deltaE2000": 5.0,
+      "tolleranza": 10.0,
+      "esito": "✅"
+    },
+    {
+      "id": "C18",
+      "materiale": "C18_marmette_in_cls",
+      "hex_scheda": "#F8E5C5",
+      "rgb_modello": [
+        248,
+        229,
+        197
+      ],
+      "texture": false,
+      "deltaE2000": 0.0,
+      "tolleranza": 5.0,
+      "esito": "✅"
+    },
+    {
+      "id": "C19",
+      "materiale": "C19_cls",
+      "hex_scheda": "#D8D0C0",
+      "rgb_modello": [
+        216,
+        208,
+        192
+      ],
+      "texture": false,
+      "deltaE2000": 0.0,
+      "tolleranza": 5.0,
+      "esito": "✅"
+    },
+    {
+      "id": "C20",
+      "materiale": "C20_acciaio_zincato",
+      "hex_scheda": "#ACB0B3",
+      "rgb_modello": [
+        172,
+        176,
+        179
+      ],
+      "texture": false,
+      "deltaE2000": 0.0,
+      "tolleranza": 5.0,
+      "esito": "✅"
+    },
+    {
+      "id": "C20",
+      "materiale": "C20_paletti_rete",
+      "hex_scheda": "#ACB0B3",
+      "rgb_modello": [
+        172,
+        176,
+        179
+      ],
+      "texture": false,
+      "deltaE2000": 0.0,
+      "tolleranza": 5.0,
+      "esito": "✅"
+    },
+    {
+      "id": "C20",
+      "materiale": "C20_rete",
+      "hex_scheda": "#ACB0B3",
+      "rgb_modello": [
+        172,
+        176,
+        179
+      ],
+      "texture": false,
+      "deltaE2000": 0.0,
+      "tolleranza": 5.0,
+      "esito": "✅"
+    },
+    {
+      "id": "C21",
+      "esito": "❌",
+      "nota": "materiale C##_… assente"
+    },
+    {
+      "id": "C22",
+      "esito": "❌",
+      "nota": "materiale C##_… assente"
+    },
+    {
+      "id": "C23",
+      "esito": "❌",
+      "nota": "materiale C##_… assente"
+    },
+    {
+      "id": "C24",
+      "materiale": "C24_erbe_spontanee",
+      "hex_scheda": "#95A244",
+      "rgb_modello": [
+        149,
+        162,
+        68
+      ],
+      "texture": false,
+      "deltaE2000": 0.0,
+      "tolleranza": 5.0,
+      "esito": "✅"
+    },
+    {
+      "id": "C25",
+      "materiale": "C25_terreno_con_erbe_e_t",
+      "hex_scheda": "#9C9A62",
+      "rgb_modello": [
+        156,
+        154,
+        98
+      ],
+      "texture": false,
+      "deltaE2000": 0.0,
+      "tolleranza": 5.0,
+      "esito": "✅"
+    },
+    {
+      "id": "C27",
+      "materiale": "C27_fronde_di_palma",
+      "hex_scheda": "#4E5630",
+      "rgb_modello": [
+        78,
+        86,
+        48
+      ],
+      "texture": false,
+      "deltaE2000": 0.0,
+      "tolleranza": 5.0,
+      "esito": "✅"
+    }
+  ],
+  "id_non_in_scheda": [],
+  "senza_id": 1,
+  "viste": [
+    {
+      "id": "SV-01",
+      "stato": "ok",
+      "inquadra": "incrocio: lotto d'angolo E (villa E05 e recinzione)"
+    },
+    {
+      "id": "SV-02",
+      "stato": "ok",
+      "inquadra": "edificio grande grigio E08 da Via Tamburino Sardo"
+    },
+    {
+      "id": "SV-03",
+      "stato": "ok",
+      "inquadra": "E08 fronte SE / accesso"
+    },
+    {
+      "id": "SV-04",
+      "stato": "ok",
+      "inquadra": "lato O Via Tamburino Sardo: casa bianca E09"
+    },
+    {
+      "id": "SV-05",
+      "stato": "ok",
+      "inquadra": "lato O: casa coppi E10"
+    },
+    {
+      "id": "SV-06",
+      "stato": "ok",
+      "inquadra": "Via Moravia: palazzina bianca tetto piano E06"
+    },
+    {
+      "id": "SV-07",
+      "stato": "ok",
+      "inquadra": "Via Moravia: casa coppi E07"
+    },
+    {
+      "id": "SV-08",
+      "stato": "ok",
+      "inquadra": "Via della Menta: lotto incolto angolo N"
+    },
+    {
+      "id": "SV-09",
+      "stato": "ok",
+      "inquadra": "Via della Menta lato E: casa coppi E04"
+    },
+    {
+      "id": "SV-10",
+      "stato": "ok",
+      "inquadra": "Via Tamburino Sardo NO: villa E02"
+    },
+    {
+      "id": "SV-11",
+      "stato": "ok",
+      "inquadra": "Via Tamburino Sardo NO: villa E01"
+    },
+    {
+      "id": "SV-12",
+      "stato": "ok",
+      "inquadra": "panoramica incrocio verso E"
+    },
+    {
+      "id": "SV-13",
+      "stato": "ok",
+      "inquadra": "dettaglio recinzione E05 su Via Tamburino Sardo"
+    },
+    {
+      "id": "SV-14",
+      "stato": "ok",
+      "inquadra": "E08 sopra il muro, da Via Tamburino Sardo"
+    },
+    {
+      "id": "SV-15",
+      "stato": "ok",
+      "inquadra": "E05 villa d'angolo, facciata SO"
+    },
+    {
+      "id": "SV-16",
+      "stato": "ok",
+      "inquadra": "corridoio Via della Menta verso N"
+    },
+    {
+      "id": "SV-17",
+      "stato": "ok",
+      "inquadra": "corridoio Via Tamburino Sardo verso SE"
+    },
+    {
+      "id": "SV-18",
+      "stato": "ok",
+      "inquadra": "corridoio Via Tamburino Sardo verso NO"
+    },
+    {
+      "id": "SV-19",
+      "stato": "ok",
+      "inquadra": "corridoio Via Moravia verso E"
+    }
+  ]
+}
