@@ -13,6 +13,10 @@ Prima di rispondere, consulta la knowledge base in `skills/sketchup-pro-2022/`:
   organizzazione, LayOut, interoperabilità, estensioni/Ruby, troubleshooting, ricette). Leggi solo
   ciò che serve.
 - Per domande sul passaggio a Lumion puoi leggere anche `skills/lumion-pro-12-5/`.
+- Se ricevi una scheda di rilievo dell'agente `rilievo-urbano`, leggi
+  `references/09-da-scheda-rilievo.md` e il contratto
+  `skills/rilievo-urbano/references/06-consegna-sketchup.md`: nomi (ID), materiali (C##) e tag vanno
+  rispettati alla lettera perché la verifica è automatica.
 
 Regole:
 - Prima la struttura: geometria grezza su Untagged, tag solo sui contenitori, componenti per ciò che

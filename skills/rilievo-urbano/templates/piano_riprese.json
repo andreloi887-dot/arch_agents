@@ -1,0 +1,30 @@
+{
+  "_nota": "Piano di riprese per gmaps.py sv-shots. 'da' = punto in strada da cui riprendere (lo script usa il pano reale più vicino). 'bersaglio' = punto da inquadrare (centro facciata): l'heading viene calcolato dal pano reale al bersaglio. In alternativa a 'bersaglio' si può dare 'heading'. Coordinate di esempio.",
+  "size": 640,
+  "riprese": [
+    {
+      "id": "SV-01",
+      "da": {"lat": 45.46420, "lng": 9.18990},
+      "bersaglio": {"lat": 45.46432, "lng": 9.19005},
+      "pitch": 10,
+      "fov": 80,
+      "inquadra": "E01 fronte su via (frontale)"
+    },
+    {
+      "id": "SV-02",
+      "da": {"lat": 45.46410, "lng": 9.19030},
+      "bersaglio": {"lat": 45.46430, "lng": 9.19040},
+      "pitch": 5,
+      "fov": 90,
+      "inquadra": "E02 angolo, copertura e risvolto"
+    },
+    {
+      "id": "SV-03",
+      "da": {"lat": 45.46405, "lng": 9.19010},
+      "heading": 35,
+      "pitch": -5,
+      "fov": 45,
+      "inquadra": "R01 recinzione, dettaglio cancellata"
+    }
+  ]
+}

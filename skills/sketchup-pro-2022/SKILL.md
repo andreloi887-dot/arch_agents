@@ -44,6 +44,7 @@ spiegazioni elementari.
 | `references/06-estensioni-ruby.md` | Estensioni consigliate, installazione, Ruby Console e snippet pronti |
 | `references/07-prestazioni-troubleshooting.md` | File lenti, crash, z-fighting, clipping, facce che non si chiudono |
 | `references/08-ricette.md` | Workflow pronti: rilievo da DWG, edificio da zero, interni, per Lumion, per stampa 3D |
+| `references/09-da-scheda-rilievo.md` | Modellare il contesto urbano da una scheda dell'agente `rilievo-urbano` e restituire viste e inventario per la verifica |
 
 ## Formato risposte
 

@@ -27,3 +27,22 @@ Contenuti verificati sulla Lumion Knowledge Base ufficiale (circa 320 articoli c
 Uso identico a Lumion: zip di `skills/sketchup-pro-2022/` su claude.ai, oppure "usa l'agente
 sketchup-expert per …" in Claude Code. Gli snippet Ruby in `references/06-estensioni-ruby.md`
 sono per Ruby 2.7 (SketchUp 2022): provali prima su una copia del file.
+
+## Rilievo urbano (Google Maps / Street View / Earth → SketchUp)
+
+| Percorso | Cosa è |
+|---|---|
+| `skills/rilievo-urbano/` | Skill: protocollo di rilievo, scheda (MD + JSON), materiali e colori, verifica, contratto con SketchUp |
+| `skills/rilievo-urbano/scripts/` | `gmaps.py` (Street View, Maps Static, Geocoding, OSM), `annota.py` (mappe e foto annotate, palette, campionamento colore), `confronta.py` (verifica automatica + affiancamenti) |
+| `skills/rilievo-urbano/scripts/sketchup/` | Ruby per SketchUp 2022: scene con camera uguale a Street View, inventario del modello |
+| `.claude/agents/rilievo-urbano.md` | Subagent DESCRIVI / VERIFICA |
+
+### Flusso in Claude Code
+1. *"Usa rilievo-urbano per descrivere l'isolato tra via X e via Y, LOD2, viste da via X"* → pacchetto `zona-<nome>/`.
+2. *"Passa la scheda a sketchup-expert"* → procedura di modellazione + script da lanciare in SketchUp.
+3. *"Usa rilievo-urbano per verificare"* con `inventario.json` ed `export_verifica/` → verbale con correzioni (max 3 cicli).
+
+Requisiti: Python 3.9+ con Pillow; `GOOGLE_MAPS_API_KEY` con Street View Static, Maps Static e
+Geocoding abilitate (senza chiave l'agente lavora su screenshot e il confronto è solo qualitativo).
+I termini Google vietano di ricalcare o estrarre geometria: impronte e quote vengono da OSM, DBT,
+catasto o LiDAR; le immagini Google restano in `_rif_google/` (ignorata da git).

@@ -1,0 +1,79 @@
+{
+  "zona": {
+    "nome": "Esempio – isolato Via Garibaldi / Via Verdi",
+    "comune": "(comune)",
+    "perimetro": [[45.46440, 9.18980], [45.46440, 9.19060], [45.46400, 9.19060], [45.46400, 9.18980]],
+    "origine": {"lat": 45.46400, "lng": 9.18980, "descrizione": "spigolo SO del marciapiede all'incrocio"},
+    "scopo": "inserimento ambientale per render da Via Garibaldi",
+    "lod_default": "LOD2",
+    "revisione": 1,
+    "data_rilievo": "2026-11-04",
+    "date_streetview": ["2024-05", "2025-03"],
+    "fonti_geometria": ["DBT regionale (impronte, quote gronda)", "Catasto WMS (limiti)", "OSM (arredo)"]
+  },
+  "lacune": [
+    "Cortile interno di E02 non visibile da strada: fronti interni ipotizzati (bassa).",
+    "Ripresa SV di Via Verdi del 2019: possibile ritinteggiatura successiva di E03."
+  ],
+  "palette": [
+    {"id": "C01", "materiale": "intonaco civile", "finitura": "frattazzato fine", "hex": "#D8B98C", "intervallo": ["#CDAE80", "#E1C498"], "ral_indicativo": "RAL 1001 (indicativo)", "texture": {"tipo": "intonaco", "modulo_mm": [1000, 1000]}, "confidenza": "media", "fonte": ["SV-01", "SV-02"]},
+    {"id": "C02", "materiale": "intonaco/stucco", "finitura": "liscio (cornici, marcapiani)", "hex": "#EDE6D8", "intervallo": ["#E4DCCB", "#F3EDE2"], "texture": null, "confidenza": "media", "fonte": ["SV-01"]},
+    {"id": "C04", "materiale": "intonaco a bugnato", "finitura": "liscio, corsi 1,3 m", "hex": "#A9A49A", "intervallo": ["#9E998F", "#B5B0A6"], "texture": null, "confidenza": "media", "fonte": ["SV-01"]},
+    {"id": "C05", "materiale": "coppi in laterizio", "finitura": "invecchiati", "hex": "#9A5B3F", "intervallo": ["#8C5038", "#A86648"], "texture": {"tipo": "coppi", "modulo_mm": [200, 400]}, "confidenza": "bassa", "fonte": ["satellitare"]},
+    {"id": "C07", "materiale": "legno verniciato", "finitura": "persiane alla genovese", "hex": "#3E5B45", "intervallo": ["#344D3B", "#4A6A52"], "texture": null, "confidenza": "alta", "fonte": ["SV-01"]},
+    {"id": "C08", "materiale": "ferro verniciato", "finitura": "micaceo", "hex": "#2E2E2C", "intervallo": ["#252523", "#383836"], "texture": null, "confidenza": "alta", "fonte": ["SV-01", "SV-03"]},
+    {"id": "C09", "materiale": "porfido", "finitura": "cubetti 8/10 posa ad archi", "hex": "#6E5E58", "intervallo": ["#62534E", "#7A6A63"], "texture": {"tipo": "cubetti", "modulo_mm": [1200, 1200]}, "confidenza": "media", "fonte": ["SV-02"]}
+  ],
+  "edifici": [
+    {
+      "id": "E01",
+      "indirizzo": "Via Garibaldi 10",
+      "lod": "LOD3",
+      "tipologia": "palazzo residenziale in linea",
+      "epoca": "primi '900",
+      "impronta": {"fonte": "DBT", "rif": "edificio n. 123456"},
+      "piani_ft": 5,
+      "quote": {
+        "piano_terra": {"m": 0.15, "fonte": "stima-riferimento", "confidenza": "media", "metodo": "un gradino al portone"},
+        "gronda": {"m": 17.4, "fonte": "DBT", "confidenza": "alta"},
+        "colmo": {"m": 20.1, "fonte": "stima-piani", "confidenza": "media", "metodo": "gronda + falda 33% su semi-profondità 8,2 m"}
+      },
+      "copertura": {"forma": "a padiglione", "pendenza_pct": 33, "manto": "C05", "sporto_cm": 45, "elementi": ["4 comignoli in muratura", "2 lucernari"]},
+      "facciate": [
+        {
+          "fronte": "Via Garibaldi",
+          "orientamento": "S",
+          "visibile": true,
+          "materiale": "C01",
+          "basamento": {"h": {"m": 3.9, "fonte": "stima-riferimento", "confidenza": "media", "metodo": "3 corsi bugnato da 1,3 m vs portone 2,8 m"}, "materiale": "C04"},
+          "partitura": "marcapiano a +3,9 m h 20 cm sporg. 6 cm (C02); cornicione modanato sporg. 45 cm (C02)",
+          "aperture": {
+            "assi": 6, "passo_m": 3.35, "allineate": true,
+            "tipo": [{"codice": "F1", "l_m": 1.10, "h_m": 1.60, "davanzale_m": 0.90, "mazzetta_cm": 25, "serramento": "C02", "oscurante": "persiana alla genovese", "oscurante_colore": "C07", "cornice": "piatta 12 cm", "cornice_colore": "C02"}],
+            "piano_terra": "portone ad arco h 2,8 m asse 3; 2 vetrine 2,4 × 2,6 m assi 1 e 6"
+          },
+          "aggetti": "balconi 1° e 3° piano assi 2–5, sbalzo 0,90 m, soletta 15 cm, ringhiera a piatti verticali C08",
+          "riprese": ["SV-01", "SV-02"]
+        }
+      ],
+      "note": ""
+    }
+  ],
+  "recinzioni": [
+    {"id": "R01", "tipo": "muretto + cancellata", "lod": "LOD3", "posizione": "fronte su Via Verdi lungo limite catastale, da E01 a E02, L ≈ 18 m",
+     "h": {"m": 1.80, "fonte": "stima-riferimento", "confidenza": "media", "metodo": "vs auto parcheggiata"},
+     "parti": [{"elemento": "muretto", "h_m": 0.60, "materiale": "C04", "copertina": "pietra 5 cm"}, {"elemento": "cancellata", "materiale": "C08", "disegno": "piatti verticali 40×8 mm passo 12 cm, pilastrini 30×30 ogni 2,5 m"}],
+     "riprese": ["SV-03"]}
+  ],
+  "arredo": [
+    {"id": "A01", "tipo": "lampione testa-palo", "n": 3, "lod": "LOD2", "posizione": "lato N di Via Garibaldi, a 0,5 m dal cordolo, passo ≈ 25 m dal civico 10",
+     "h": {"m": 6.0, "fonte": "stima-riferimento", "confidenza": "bassa", "metodo": "≈ 1,5 volte il basamento di E01"}, "materiali": ["C08"], "riprese": ["SV-02"]}
+  ],
+  "pavimentazioni": [
+    {"id": "P01", "tipo": "marciapiede", "lod": "LOD2", "posizione": "Via Garibaldi lato N, larghezza 2,2 m", "materiali": ["C09"], "cordolo": "granito h 15 cm", "riprese": ["SV-01"]}
+  ],
+  "vegetazione": [
+    {"id": "V01", "tipo": "filare di tigli", "n": 4, "lod": "LOD2", "posizione": "Via Verdi lato E, passo ≈ 8 m",
+     "h": {"m": 12, "fonte": "stima-riferimento", "confidenza": "bassa", "metodo": "≈ 4 piani di E02"}, "chioma_m": 7, "riprese": ["SV-03"]}
+  ]
+}
