@@ -82,6 +82,20 @@
   in ambito urbano, spesso con quota gronda o altezza volume. È la fonte migliore per le altezze.
 - **Cartografia catastale** (Agenzia delle Entrate, servizio WMS gratuito, CC-BY 4.0): particelle e
   sagome dei fabbricati; ottima per i limiti di proprietà (dove corrono le recinzioni).
+- **Catasto sfasato: allineare prima di usare.** Le mappe catastali sono spesso traslate e ruotate
+  rispetto alla realtà, di solito di qualche metro e a volte di più di 10 m: dipende dalle origini locali
+  Cassini-Soldner, dalla trasformazione verso WGS84 e dai fogli di impianto storico. Inoltre le sagome
+  non sono sempre aggiornate. Procedura:
+  1. trattare le sagome come **forma**, non come **posizione**;
+  2. scegliere ≥ 3 punti di controllo ben distribuiti (spigoli di edifici, angoli di recinzione) su una
+     base con licenza: *Add Location* di SketchUp, ortofoto regionale, LiDAR. Mai su imagery Google;
+  3. applicare una **rototraslazione rigida** (eventualmente con scala uniforme), non una
+     deformazione: le sagome restano congruenti tra loro;
+  4. dichiarare nella scheda lo spostamento applicato (dx, dy, rotazione) e lo scarto residuo per
+     punto. Con residui > 1 m su un edificio, quell'impronta va a confidenza bassa: probabilmente la
+     sagoma è obsoleta (ampliamenti, demolizioni);
+  5. confrontare il numero e la forma dei corpi con Street View: edifici nuovi non accatastati (o
+     accatastati male) vanno in `lacune`.
 - **LiDAR** (Piano Straordinario di Telerilevamento del MASE e LiDAR regionali): DTM/DSM 1–2 m;
   nDSM = DSM − DTM dà le altezze degli edifici con precisione ±0,5 m.
 - **SketchUp *Add Location*** (Pro): imagery e terreno georeferenziati, base del modello e dell'origine
