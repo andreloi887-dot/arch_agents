@@ -17,13 +17,16 @@ Agenti e skill per software di architettura.
 Contenuti scritti da conoscenza generale di Lumion 12/12.5: scorciatoie e alcune voci di menu vanno
 verificate in-app. Aggiorna i file `references/` con le tue preferenze e i tuoi preset di studio.
 
-## SketchUp Pro 2022
+## SketchUp Pro 2025
 
 | Percorso | Cosa è |
 |---|---|
-| `skills/sketchup-pro-2022/` | Skill (SKILL.md + knowledge base in `references/`: setup, modellazione, organizzazione, LayOut, interoperabilità, estensioni/Ruby, troubleshooting, ricette) |
+| `skills/sketchup-pro-2025/` | Skill (SKILL.md + knowledge base in `references/`: novità e migrazione dalla 2022, setup, modellazione, organizzazione, LayOut, interoperabilità, estensioni/Ruby, troubleshooting, ricette, visualizzazione photoreal) |
 | `.claude/agents/sketchup-expert.md` | Subagent per Claude Code che usa la stessa knowledge base |
 
-Uso identico a Lumion: zip di `skills/sketchup-pro-2022/` su claude.ai, oppure "usa l'agente
-sketchup-expert per …" in Claude Code. Gli snippet Ruby in `references/06-estensioni-ruby.md`
-sono per Ruby 2.7 (SketchUp 2022): provali prima su una copia del file.
+Uso identico a Lumion: zip di `skills/sketchup-pro-2025/` su claude.ai (sostituisce la vecchia
+skill 2022, da rimuovere), oppure "usa l'agente sketchup-expert per …" in Claude Code. Gli snippet
+Ruby sono per Ruby 3.2 (SketchUp 2024+): provali prima su una copia del file.
+
+Le voci segnate *(da verificare)* non sono confermate dalle release notes ufficiali: controllale
+in-app e correggi i file quando le verifichi.

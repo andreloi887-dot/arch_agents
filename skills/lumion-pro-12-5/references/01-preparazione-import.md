@@ -13,7 +13,7 @@
 `.dae` (Collada), `.fbx`, `.skp`, `.dwg/.dxf`, `.3ds`, `.obj`, `.max` (con 3ds Max installato), `.ifc` non nativo in 12.x → passare da Revit/Archicad/Edificius o convertire. Formato consigliato senza LiveSync: **COLLADA (.dae)** o **FBX**.
 
 ## LiveSync
-Plugin ufficiali (Lumion 12.x): SketchUp, Revit, Archicad, Rhino, AutoCAD, Allplan, BricsCAD, Vectorworks, Autodesk FormIt (aggiunto con Lumion 12). Revit LT non supportato.
+Plugin ufficiali (Lumion 12.x): SketchUp, Revit, Archicad, Rhino, AutoCAD, Allplan, BricsCAD, Vectorworks, Autodesk FormIt (aggiunto con Lumion 12). Revit LT non supportato. **SketchUp 2025**: Lumion 12.5 è del 2022 e potrebbe non leggere gli `.skp` 2025 né avere un LiveSync compatibile; in caso di problemi esportare DAE/FBX da SketchUp (vedi `skills/sketchup-pro-2025/references/05-interoperabilita.md`).
 - La versione del plugin deve essere compatibile sia con il CAD sia con Lumion 12.5: scaricarla da support.lumion.com.
 - Flusso: avvia Lumion, apri/crea progetto → nel CAD *Start LiveSync* → in Lumion appare il modello aggiornato in tempo reale. Fine sessione: in Lumion il modello va **salvato** (resta come oggetto importato `.lsm` sincronizzabile).
 - Sincronizzazione camera: utile per impostare inquadrature dal CAD.
