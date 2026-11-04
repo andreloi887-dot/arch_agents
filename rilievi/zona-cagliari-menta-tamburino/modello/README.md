@@ -60,7 +60,13 @@ confrontare.
 ## Limiti noti
 - Catasto non allineato: va fatto in SketchUp su Add Location (`importa_catasto.rb`).
 - Edifici LOD1, senza tetti a falda.
-- Lo script Ruby è stato rivisto ma non eseguito in SketchUp: provalo su una copia del file.
+- Lo script Ruby è stato rivisto riga per riga da `sketchup-expert` (correzioni applicate: orientamento
+  automatico dei muri, paletti per altezza, materiali per normale, scarti contati, arredo in
+  sotto-gruppi, controllo delle texture), ma **non è ancora stato eseguito in SketchUp**: provalo su una
+  copia del file. Tempo stimato: 10–60 s.
+- In verifica daranno ❌ anche, per scelta di perimetro: i conteggi delle serie (A01 1 lampione su 6, A02
+  2 su 6, V02 1 palma su 2) e le altezze degli edifici, perché senza tetti a falda l'estrusione si ferma
+  alla gronda mentre la verifica confronta col colmo.
 
 ## Rigenerare i dati
 ```

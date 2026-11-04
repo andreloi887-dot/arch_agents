@@ -16,7 +16,7 @@ module RilievoUrbano
   module Contesto
     DICT  = 'rilievo_urbano'.freeze
     ZV    = Geom::Vector3d.new(0, 0, 1)
-    MIN2A = 0.01.m * 0.01.m # 2×area minima di un triangolo, in pollici²
+    MIN2A = 0.002.m * 0.002.m # 2×area minima di un triangolo, in pollici² (scarti contati in @scarti)
 
     def self.pt(a)
       Geom::Point3d.new(a[0].to_f.m, a[1].to_f.m, a[2].to_f.m)
@@ -34,7 +34,9 @@ module RilievoUrbano
     def self.materiale(model, nome, m, base_dir)
       mat = model.materials[nome] || model.materials.add(nome)
       if m['texture']
-        mat.texture = File.expand_path(m['texture'], base_dir)
+        tp = File.expand_path(m['texture'], base_dir)
+        raise "Texture mancante: #{tp} (copia la cartella texture/ accanto al json)" unless File.exist?(tp)
+        mat.texture = tp
         mat.texture.size = [m['modulo_mm'][0].mm, m['modulo_mm'][1].mm]
       else
         mat.color = Sketchup::Color.new(*m['hex'].delete('#').scan(/../).map { |c| c.to_i(16) })
@@ -102,7 +104,7 @@ module RilievoUrbano
       pts = []
       (vs + [c]).zip(uv + [uc]).each { |p, (u, v)| pts << p << Geom::Point3d.new(u / tw, v / th, 0) }
       face.position_material(mat, pts, true) # 4 coppie: mappatura affine esatta
-    rescue ArgumentError
+    rescue StandardError
       nil # mappatura degenere: resta quella di default
     end
 
@@ -130,22 +132,27 @@ module RilievoUrbano
         vtx.each_with_index { |p, i| lut[chiave(p)] = s['uv'][i] }
         uvf = ->(p) { lut[chiave(p)] }
       end
-      s['triangoli'].group_by { |t| t[3] || 0 }.each do |mi, tris|
-        mat = mat!(model, s['materiali'][mi])
+      s['triangoli'].group_by { |t| t[3] || 0 }.each do |_mi, tris|
         mesh = Geom::PolygonMesh.new(tris.size * 3, tris.size)
         tris.each do |t|
           a, b, c = vtx.values_at(t[0], t[1], t[2])
-          mesh.add_polygon(a, b, c) if (b - a).cross(c - a).length > MIN2A
+          if (b - a).cross(c - a).length > MIN2A
+            mesh.add_polygon(a, b, c)
+          else
+            @scarti += 1
+          end
         end
-        prima = Set.new(ents.grep(Sketchup::Face))
         ents.add_faces_from_mesh(mesh, Geom::PolygonMesh::NO_SMOOTH_OR_HIDE)
-        ents.grep(Sketchup::Face).each do |f|
-          next if prima.include?(f)
-          f.reverse! if f.normal.z < -0.3 # prima di assegnare il materiale
-          f.material = mat
-          f.back_material = f.normal.z.abs < 0.3 ? mat : nil
-          posiziona(f, mat, uvf)
-        end
+      end
+      # materiali assegnati dopo, per normale: [0] superfici 2.5D, [1] fasce verticali (cordoli, salti)
+      m0 = mat!(model, s['materiali'][0])
+      m1 = mat!(model, s['materiali'][1] || s['materiali'][0])
+      ents.grep(Sketchup::Face).each do |f|
+        f.reverse! if f.normal.z < -0.3 # prima di assegnare il materiale
+        vert = f.normal.z.abs < 0.3
+        f.material = vert ? m1 : m0
+        f.back_material = vert ? m1 : nil
+        posiziona(f, f.material, uvf)
       end
       ammorbidisci(ents, s['smooth_deg'] || 30)
       g
@@ -159,9 +166,18 @@ module RilievoUrbano
       g.name = w['nome']
       ents = g.entities
       sez = w['stazioni'].map { |s| s.map { |a| pt(a) } }
+      # il lato lotto (piede interno, indice 3) deve stare a SINISTRA del verso di avanzamento
+      i1 = (1...sez.size).find { |i| sez[i][0].distance(sez[0][0]) > 0.01.m }
+      if i1
+        d = sez[i1][0] - sez[0][0]
+        o = sez[0][3] - sez[0][0]
+        sez.map!(&:reverse) if d.x * o.y - d.y * o.x < 0
+      end
       k = sez.first.size
       mesh = Geom::PolygonMesh.new(sez.size * k, sez.size * k * 2 + 2 * k)
-      tri = ->(a, b, c) { mesh.add_polygon(a, b, c) if (b - a).cross(c - a).length > MIN2A }
+      tri = lambda do |a, b, c|
+        if (b - a).cross(c - a).length > MIN2A then mesh.add_polygon(a, b, c) else @scarti += 1 end
+      end
       sez.each_cons(2) do |s0, s1|
         k.times do |j|
           a0 = s0[j]; b0 = s0[(j + 1) % k]; a1 = s1[j]; b1 = s1[(j + 1) % k]
@@ -175,7 +191,7 @@ module RilievoUrbano
       ents.add_faces_from_mesh(mesh, Geom::PolygonMesh::NO_SMOOTH_OR_HIDE)
       ents.grep(Sketchup::Face).each do |f|
         f.material = mat
-        f.back_material = mat
+        f.back_material = nil
         posiziona(f, mat)
       end
       ammorbidisci(ents, w['smooth_deg'] || 20)
@@ -185,7 +201,7 @@ module RilievoUrbano
     # (c) Recinzione su paletti lungo una polilinea (base = testa del muro).
     def self.def_palo(model, r, mat)
       @fatte ||= Set.new
-      nome = r['def_palo'] || 'REC_paletto_40x40'
+      nome = format('%s_h%03d', r['def_palo'] || 'REC_paletto', (r['h'] * 100).round)
       d = model.definitions[nome] || model.definitions.add(nome)
       return d if @fatte.include?(nome)
       d.entities.clear!
@@ -267,16 +283,19 @@ module RilievoUrbano
       g
     rescue ArgumentError => err
       puts "Edificio #{e['nome']} saltato: #{err.message}"
+      @saltati << e['nome']
       g.erase! if g && g.valid?
       nil
     end
 
     # (e) Arredo: parallelepipedo (con testa per lampioni e disco per cartelli), ruotato di rot_deg attorno a Z.
     def self.box(ents, cx, cy, z, w, d, h, mat)
+      sub = ents.add_group.entities # sotto-gruppo senza nome: niente geometria fusa tra i pezzi
       pts = [[-w / 2, -d / 2], [w / 2, -d / 2], [w / 2, d / 2], [-w / 2, d / 2]].map { |x, y| Geom::Point3d.new((cx + x).m, (cy + y).m, z.m) }
-      f = ents.add_face(pts)
+      f = sub.add_face(pts)
       f.reverse! if f.normal.z < 0
       f.pushpull(h.m)
+      sub.grep(Sketchup::Face).each { |x| x.material = mat }
     end
 
     def self.oggetto(model, parent, o)
@@ -287,11 +306,12 @@ module RilievoUrbano
       box(g.entities, 0, 0, 0, w, d, h, mat)
       box(g.entities, -0.25, 0, h - 0.15, 0.6, 0.3, 0.15, mat) if o['testa'] == 'lampione'
       if o['testa'] == 'disco'
-        c = g.entities.add_circle(Geom::Point3d.new(0, 0, (h - 0.3).m), Geom::Vector3d.new(1, 0, 0), 0.3.m, 16)
-        disco = g.entities.add_face(c)
+        sub = g.entities.add_group.entities
+        c = sub.add_circle(Geom::Point3d.new(0.06.m, 0, (h - 0.3).m), Geom::Vector3d.new(1, 0, 0), 0.3.m, 16)
+        disco = sub.add_face(c)
         disco.pushpull(0.02.m) if disco
+        sub.grep(Sketchup::Face).each { |x| x.material = mat }
       end
-      g.entities.grep(Sketchup::Face).each { |x| x.material = mat }
       rot = Geom::Transformation.rotation(ORIGIN, Z_AXIS, (o['rot_deg'] || 0).to_f.degrees)
       g.transformation = Geom::Transformation.translation(Geom::Vector3d.new(o['xy'][0].to_f.m, o['xy'][1].to_f.m, o['z'].to_f.m)) * rot
       g
@@ -340,6 +360,8 @@ module RilievoUrbano
       end
       prec = model.active_layer
       @fatte = Set.new
+      @scarti = 0
+      @saltati = []
       t0 = Time.now
       model.start_operation('Contesto da dati', true)
       begin
@@ -357,8 +379,11 @@ module RilievoUrbano
         (dati['edifici'] || []).each { |e| (g = edificio(model, root.entities, e)) && g.layer = tag(model, e['tag']) }
         (dati['oggetti'] || []).each { |o| oggetto(model, root.entities, o).layer = tag(model, o['tag']) }
         (dati['vegetazione'] || []).each { |v| palma(model, root.entities, v).layer = tag(model, v['tag']) }
+        model.definitions.purge_unused # definizioni dei gruppi di un'esecuzione precedente
         model.commit_operation
         puts format('Contesto generato da %s in %.1f s', path, Time.now - t0)
+        puts "Triangoli scartati perché degeneri: #{@scarti}" if @scarti > 0
+        puts "Edifici saltati (#{@saltati.size}): #{@saltati.join(', ')}" unless @saltati.empty?
         puts 'Prima di scene_da_manifest.rb: nascondi terreno di Add Location, Location Snapshot e tag 00_Riferimenti.'
       rescue StandardError
         model.abort_operation

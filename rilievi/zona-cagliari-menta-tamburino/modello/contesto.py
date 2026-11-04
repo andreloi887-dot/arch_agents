@@ -291,6 +291,15 @@ ll_of = S.ll_of
 controllo = [{"nome": n, "x": x, "y": y, "lat": round(ll_of(x, y)[0], 9), "lng": round(ll_of(x, y)[1], 9)}
              for n, (x, y) in {"punta P03": tuple(sc["controllo"]["tip_lotto"]), "NE": (60.0, 60.0), "SO": (-60.0, -60.0)}.items()]
 
+# nomi univoci: tratti numerati in modo progressivo per elemento
+import re as _re
+from collections import defaultdict as _dd
+_cnt = _dd(int)
+for lst in (muri, recinzioni):
+    for it in lst:
+        base = _re.sub(r"( tratto \d+)+$", "", it["nome"])
+        _cnt[base] += 1
+        it["nome"] = f"{base} tratto {_cnt[base]}"
 ctx = {"origine": sc["origine"], "applica_allineamento_catasto": False, "controllo": controllo,
        "fonti": sc["fonti"], "materiali": materiali, "superfici": out_sup, "muri": muri, "recinzioni": recinzioni,
        "edifici": edifici, "oggetti": oggetti, "vegetazione": vegetazione}
