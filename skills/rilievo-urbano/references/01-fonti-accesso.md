@@ -41,6 +41,11 @@
   - `pitch` −90…+90°, 0 = orizzontale. Default 0. Per facciate alte: +10/+20.
   - `fov` 1…120°, default 90. 90 per contesto, 50–60 per dettaglio, 30 per elementi lontani.
   - `source=outdoor` esclude i pano interni; `radius` (default 50 m) raggio di ricerca del pano.
+  - **Pano degli utenti** (photosphere, `copyright` ≠ "© Google"): `source=outdoor` NON li esclude e
+    nei centri storici sono spesso i più vicini (anche dall'alto di torri e terrazze). Quota e posizione
+    della camera sono ignote, quindi niente camera matching. `gmaps.py sv-shots` li scarta e cerca il
+    pano Google ufficiale più vicino entro 20 m (metadata gratuiti); per usarli comunque solo come
+    riferimento descrittivo: `"consenti_pano_utente": true` nella ripresa.
   - Si può usare `pano=ID` invece di `location` per bloccare una ripresa specifica.
 - Metadata: `…/streetview/metadata?location=…&key=…` → `status`, `pano_id`, `location` (posizione
   **reale** del pano, diversa dal punto richiesto), `date` (AAAA-MM), `copyright`. **Gratuito**, non
@@ -54,7 +59,8 @@
   solo carattere: per gli ID usa `annota.py mappa`, che proietta lat/lng in pixel (Web Mercator).
 
 ### Altre API utili
-- **Geocoding API**: indirizzo ↔ coordinate.
+- **Geocoding API**: indirizzo ↔ coordinate. Se la chiave ha una restrizione di applicazione (siti
+  web/IP) il Geocoding risponde `REQUEST_DENIED`: usare solo la restrizione per API o una chiave dedicata.
 - **Elevation API**: quota del terreno in un punto (solo controllo, il terreno del modello viene da
   *Add Location*/DTM).
 - **Map Tiles API – Photorealistic 3D Tiles**: visione obliqua 3D (es. in un visualizzatore

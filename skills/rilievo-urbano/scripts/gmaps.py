@@ -96,6 +96,31 @@ def sv_meta(lat=None, lng=None, pano=None, radius=50):
     return get_json(build_url("streetview/metadata", params))
 
 
+def is_ufficiale(meta):
+    return meta.get("status") == "OK" and "google" in (meta.get("copyright") or "").lower()
+
+
+def cerca_pano_ufficiale(lat, lng, raggio_max=20, passo=5):
+    """Sonda (metadata gratuiti) una griglia attorno al punto e restituisce il pano Google ufficiale
+    più vicino al punto richiesto, o None."""
+    dlat = 1 / 111320.0
+    dlng = 1 / (111320.0 * math.cos(math.radians(lat)))
+    visti, migliore = set(), None
+    for r in range(passo, raggio_max + 1, passo):
+        for k in range(8):
+            ang = math.radians(45 * k)
+            m = sv_meta(lat + r * math.cos(ang) * dlat, lng + r * math.sin(ang) * dlng, radius=passo * 2)
+            if not is_ufficiale(m) or m["pano_id"] in visti:
+                continue
+            visti.add(m["pano_id"])
+            d = distance_m(lat, lng, m["location"]["lat"], m["location"]["lng"])
+            if migliore is None or d < migliore[0]:
+                migliore = (d, m)
+        if migliore:
+            return migliore[1]
+    return None
+
+
 def cmd_sv_meta(a):
     print(json.dumps(sv_meta(a.lat, a.lng, a.pano, a.radius), ensure_ascii=False, indent=2))
 
@@ -116,6 +141,18 @@ def cmd_sv_shots(a):
             manifest["scartate"].append({"id": sid, "motivo": meta.get("status")})
             print(f"{sid}: nessun pano ({meta.get('status')})", file=sys.stderr)
             continue
+        ufficiale = is_ufficiale(meta)
+        if not ufficiale and not s.get("pano") and da and not s.get("consenti_pano_utente", False):
+            alt = cerca_pano_ufficiale(da["lat"], da["lng"])
+            if alt:
+                print(f"{sid}: pano utente ({meta.get('copyright')}) sostituito con pano Google vicino", file=sys.stderr)
+                meta, ufficiale = alt, True
+        if not ufficiale and not s.get("consenti_pano_utente", False):
+            manifest["scartate"].append({"id": sid, "motivo": f"pano utente ({meta.get('copyright')}): "
+                                         "quota e posizione camera ignote; spostare il punto 'da' o "
+                                         "impostare consenti_pano_utente (solo descrizione, no camera matching)"})
+            print(f"{sid}: scartata, pano non Google ({meta.get('copyright')})", file=sys.stderr)
+            continue
         plat, plng = meta["location"]["lat"], meta["location"]["lng"]
         scarto = distance_m(da["lat"], da["lng"], plat, plng) if da else 0.0
         if "bersaglio" in s:
@@ -132,7 +169,7 @@ def cmd_sv_shots(a):
             "fov": float(s.get("fov", 90)), "size": size,
             "scarto_pano_m": round(scarto, 1),
             "distanza_bersaglio_m": round(dist_t, 1) if dist_t is not None else None,
-            "inquadra": s.get("inquadra", ""), "file": f"{sid}.jpg",
+            "inquadra": s.get("inquadra", ""), "file": f"{sid}.jpg", "pano_ufficiale": ufficiale,
         }
         if scarto > 25:
             print(f"{sid}: attenzione, pano a {scarto:.0f} m dal punto richiesto", file=sys.stderr)
