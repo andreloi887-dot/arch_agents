@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><title>Anteprima scena</title>
+<style>html,body{margin:0;background:#9ec3ea}canvas{display:block}</style>
+<script src="vendor/three.min.js"></script></head>
+<body><script>
+// Anteprima di verifica della scena (stessa sorgente scena.json del builder SketchUp).
+// Coordinate scena: x=E, y=N, z=quota. In three.js: X=x, Y=z, Z=-y.
+const PAL = {TERRENO:'#a89c78', PRATO_SECCO:'#b9a96c'};
+let renderer, scene, S;
+const V = (x,y,z) => new THREE.Vector3(x, z, -y);
+function mat(id, opts={}) {
+  const c = PAL[id] || '#cccccc';
+  return new THREE.MeshLambertMaterial(Object.assign({color: c, side: THREE.DoubleSide}, opts));
+}
+function polyMesh(ring, holes, m, dz=0) {
+  const shape2 = ring.map(p => new THREE.Vector2(p[0], p[1]));
+  const holes2 = (holes||[]).map(h => h.map(p => new THREE.Vector2(p[0], p[1])));
+  const tris = THREE.ShapeUtils.triangulateShape(shape2, holes2);
+  const all = ring.concat(...(holes||[]));
+  const pos = []; for (const p of all) { const v = V(p[0], p[1], p[2]+dz); pos.push(v.x, v.y, v.z); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setIndex(tris.flat()); g.computeVertexNormals(); return new THREE.Mesh(g, m);
+}
+function build(scena, palette) {
+  S = scena; for (const p of palette) PAL[p.id] = p.hex;
+  scene = new THREE.Scene(); scene.background = new THREE.Color('#9ec3ea');
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7a60, 0.9));
+  const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(-40, 80, 30); scene.add(sun);
+  // terreno di tendenza (abbassato di 3 cm per non sovrapporsi a strade e lotto)
+  const T = S.terreno, n = T.n, pos = [], idx = [];
+  for (let j=0;j<n;j++) for (let i=0;i<n;i++) { const v = V(T.x0+i*T.passo, T.y0+j*T.passo, T.z[j][i]-0.35); pos.push(v.x,v.y,v.z); }
+  for (let j=0;j<n-1;j++) for (let i=0;i<n-1;i++) { const a=j*n+i; idx.push(a,a+1,a+n, a+1,a+n+1,a+n); }
+  const tg = new THREE.BufferGeometry(); tg.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); tg.setIndex(idx); tg.computeVertexNormals();
+  scene.add(new THREE.Mesh(tg, mat('TERRENO')));
+  for (const r of S.strade) scene.add(polyMesh(r.anello, [], mat(r.materiale), 0.02));
+  for (const r of S.marciapiedi) scene.add(polyMesh(r.anello, r.fori, mat(r.materiale), 0));
+  scene.add(polyMesh(S.lotto.anello, [], mat('PRATO_SECCO'), 0));
+  for (const w of S.muri) {
+    const p = w.punti, pos = [], idx = [];
+    p.forEach((q,k) => { const a=V(q[0],q[1],w.z_base[k]-0.15), b=V(q[0],q[1],w.z_sommita[k]); pos.push(a.x,a.y,a.z,b.x,b.y,b.z); });
+    for (let k=0;k<p.length-1;k++) { const a=2*k; idx.push(a,a+2,a+1, a+1,a+2,a+3); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); g.setIndex(idx); g.computeVertexNormals();
+    scene.add(new THREE.Mesh(g, mat(w.materiale)));
+  }
+  for (const f of S.recinzioni) {
+    const p = f.punti, mp = mat(f.materiale);
+    let acc = 0;
+    for (let k=0;k<p.length-1;k++) {
+      const a=p[k], b=p[k+1], L=Math.hypot(b[0]-a[0], b[1]-a[1]);
+      const pos=[], A=V(a[0],a[1],a[2]), B=V(b[0],b[1],b[2]), A2=V(a[0],a[1],a[2]+f.altezza), B2=V(b[0],b[1],b[2]+f.altezza);
+      pos.push(A.x,A.y,A.z,B.x,B.y,B.z,A2.x,A2.y,A2.z,B2.x,B2.y,B2.z);
+      const g=new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); g.setIndex([0,1,2,1,3,2]);
+      scene.add(new THREE.Mesh(g, mat(f.materiale, {transparent:true, opacity:0.25})));
+      for (let s=acc>0?(2-acc):0; s<L; s+=f.passo_paletti) {
+        const t=s/L, x=a[0]+(b[0]-a[0])*t, y=a[1]+(b[1]-a[1])*t, z=a[2]+(b[2]-a[2])*t;
+        const post=new THREE.Mesh(new THREE.BoxGeometry(0.05,f.altezza,0.05), mp); post.position.copy(V(x,y,z+f.altezza/2)); scene.add(post);
+      }
+      acc = (acc+L)%f.passo_paletti;
+    }
+  }
+  for (const e of S.edifici) {
+    const shape = new THREE.Shape(e.impronta.map(p => new THREE.Vector2(p[0], p[1])));
+    const g = new THREE.ExtrudeGeometry(shape, {depth: e.altezza + (e.z_base<0?0:0), bevelEnabled:false});
+    const roof = e.manto && e.copertura !== 'piana' ? mat(e.manto) : mat(e.materiale);
+    const m = new THREE.Mesh(g, [roof, mat(e.materiale)]);
+    m.rotation.x = -Math.PI/2; m.position.y = e.z_base; scene.add(m);
+  }
+  const tz = (x,y) => { const c=S.trend_coef; return c[0]+c[1]*x+c[2]*y+c[3]*x*x+c[4]*x*y+c[5]*y*y - S.trend_z0; };
+  for (const v of S.vegetazione) {
+    const pts = v.xy ? [v.xy] : v.xy_lista;
+    for (const q of pts) {
+      const z0 = v.su_lotto ? zLotto(q[0],q[1]) : tz(q[0],q[1]);
+      if (v.tipo.includes('senza fusto')) {
+        for (let k=0;k<9;k++){ const f=new THREE.Mesh(new THREE.BoxGeometry(v.chioma/2,0.05,0.5), mat('X',{color:'#56743e'})); const an=k*0.7; f.position.copy(V(q[0]+Math.cos(an)*v.chioma/4,q[1]+Math.sin(an)*v.chioma/4,z0+v.h*0.7)); f.rotation.y=-an; f.rotation.z=0.5; scene.add(f);} 
+      } else if (v.tipo.startsWith('palma')) {
+        const tr=new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.35,v.h,8), mat('X',{color:'#6b5a45'})); tr.position.copy(V(q[0],q[1],z0+v.h/2)); scene.add(tr);
+        const cr=new THREE.Mesh(new THREE.SphereGeometry(v.chioma/2,10,6), mat('X',{color:'#4f6b3a'})); cr.scale.y=0.45; cr.position.copy(V(q[0],q[1],z0+v.h)); scene.add(cr);
+      } else {
+        const cr=new THREE.Mesh(new THREE.SphereGeometry(v.chioma/2,8,6), mat('X',{color:'#7a7a4a'})); cr.scale.y=0.6; cr.position.copy(V(q[0],q[1],z0+v.h*0.5)); scene.add(cr);
+      }
+    }
+  }
+  for (const a of (S.arredo||[])) {
+    const z0 = tz(a.xy[0],a.xy[1]) + 0.15, w = a.dim ? a.dim[0] : (a.tipo.startsWith('pilastrino') ? 0.3 : (a.tipo==='lampione' ? 0.09 : 0.04));
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w,a.h,w), mat(a.materiale)); m.position.copy(V(a.xy[0],a.xy[1],z0+a.h/2)); scene.add(m);
+    if (a.tipo==='lampione') { const t=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.15,0.3), mat(a.materiale)); t.position.copy(V(a.xy[0]-0.3,a.xy[1],z0+a.h)); scene.add(t); }
+    if (a.tipo.startsWith('cartello')) { const d=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,0.03,16), mat('X',{color:'#c03030'})); d.rotation.x=Math.PI/2; d.position.copy(V(a.xy[0],a.xy[1],z0+a.h-0.3)); scene.add(d); }
+  }
+  function zLotto(x,y){ const r=S.lotto.rialzo_piano; return tz(x,y)+Math.max(0.15, r.a+r.b*x+r.c*y); }
+  window.tz = tz;
+  renderer = new THREE.WebGLRenderer({antialias:true, preserveDrawingBuffer:true}); renderer.setSize(640,640); document.body.appendChild(renderer.domElement);
+}
+// camera come Street View: posizione pano, occhio a 2,5 m sul terreno, heading da N orario, pitch, fov (quadrato)
+function shoot(x, y, heading, pitch, fov, eye=2.5) {
+  const cam = new THREE.PerspectiveCamera(fov, 1, 0.3, 2000);
+  const z = window.tz(x,y) + eye, h = heading*Math.PI/180, p = pitch*Math.PI/180;
+  cam.position.copy(V(x,y,z));
+  const d = V(Math.sin(h)*Math.cos(p), Math.cos(h)*Math.cos(p), Math.sin(p));
+  cam.lookAt(cam.position.clone().add(d));
+  renderer.render(scene, cam); return renderer.domElement.toDataURL('image/png');
+}
+</script></body></html>

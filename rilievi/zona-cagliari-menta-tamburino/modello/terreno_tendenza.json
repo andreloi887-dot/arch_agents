@@ -1,0 +1,16 @@
+{
+ "tipo": "polinomio 2\u00b0 grado robusto (R=100.0 m, k=2.0) su Copernicus DEM GLO-30 (DSM)",
+ "coef": [
+  40.855115940597535,
+  0.04966934894618654,
+  0.04784271528852304,
+  0.00032774956000352967,
+  0.00023939364381221168,
+  -5.450772580585479e-05
+ ],
+ "z_incrocio_slm": 40.855115940597535,
+ "n_punti": 42,
+ "base": "x=E, y=N in metri dall'origine 39.25240, 9.11527",
+ "incertezza": "\u00b11 m vicino all'incrocio, \u00b12 m a 70 m",
+ "fonte": "Copernicus DEM GLO-30 \u00a9 DLR e.V./Airbus, fornito da ESA"
+}
