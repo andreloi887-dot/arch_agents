@@ -1,0 +1,9 @@
+{
+ "skp_base": "base_georef.skp",
+ "contesto": "contesto.json",
+ "manifest": "manifest_riprese.json",
+ "uscita": "uscita_sketchup",
+ "chiudi": false,
+ "lat": 39.2524,
+ "lng": 9.11527
+}

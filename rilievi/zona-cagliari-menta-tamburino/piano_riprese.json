@@ -182,6 +182,90 @@
    "pitch": -5,
    "fov": 50,
    "inquadra": "dettaglio recinzione E05 su Via Tamburino Sardo"
+  },
+  {
+   "id": "SV-14",
+   "da": {
+    "lat": 39.252088,
+    "lng": 9.115632
+   },
+   "bersaglio": {
+    "lat": 39.25214,
+    "lng": 9.115793
+   },
+   "pitch": 20,
+   "fov": 100,
+   "inquadra": "E08 sopra il muro, da Via Tamburino Sardo"
+  },
+  {
+   "id": "SV-15",
+   "da": {
+    "lat": 39.252317,
+    "lng": 9.115418
+   },
+   "bersaglio": {
+    "lat": 39.252338,
+    "lng": 9.115565
+   },
+   "pitch": 20,
+   "fov": 90,
+   "inquadra": "E05 villa d'angolo, facciata SO"
+  },
+  {
+   "id": "SV-16",
+   "da": {
+    "lat": 39.252525,
+    "lng": 9.11531
+   },
+   "bersaglio": {
+    "lat": 39.252878,
+    "lng": 9.115458
+   },
+   "pitch": 5,
+   "fov": 90,
+   "inquadra": "corridoio Via della Menta verso N"
+  },
+  {
+   "id": "SV-17",
+   "da": {
+    "lat": 39.252358,
+    "lng": 9.115391
+   },
+   "bersaglio": {
+    "lat": 39.251902,
+    "lng": 9.115806
+   },
+   "pitch": 5,
+   "fov": 90,
+   "inquadra": "corridoio Via Tamburino Sardo verso SE"
+  },
+  {
+   "id": "SV-18",
+   "da": {
+    "lat": 39.252483,
+    "lng": 9.11527
+   },
+   "bersaglio": {
+    "lat": 39.252815,
+    "lng": 9.114814
+   },
+   "pitch": 5,
+   "fov": 90,
+   "inquadra": "corridoio Via Tamburino Sardo verso NO"
+  },
+  {
+   "id": "SV-19",
+   "da": {
+    "lat": 39.252514,
+    "lng": 9.115431
+   },
+   "bersaglio": {
+    "lat": 39.25267,
+    "lng": 9.115914
+   },
+   "pitch": 5,
+   "fov": 90,
+   "inquadra": "corridoio Via Moravia verso E"
   }
  ]
 }

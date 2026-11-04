@@ -85,7 +85,7 @@ module RilievoUrbano
       found
     end
 
-    def self.run
+    def self.run(path = nil)
       model = Sketchup.active_model
       out = []
       stats = { senza_id: 0 }
@@ -109,7 +109,7 @@ module RilievoUrbano
         'senza_id' => stats[:senza_id],
         'materiali_senza_prefisso' => mats.map { |m| m['nome'] }.reject { |n| n =~ /\AC\d{2,3}_/ }
       }
-      path = if model.path.empty?
+      path ||= if model.path.empty?
                UI.savepanel('Salva inventario', '', 'inventario.json')
              else
                File.join(File.dirname(model.path), 'inventario.json')
@@ -120,8 +120,9 @@ module RilievoUrbano
       ids = out.map { |o| o['id'] }
       dup = ids.group_by { |i| i }.select { |_, v| v.size > 1 }.keys
       puts "ID ripetuti (normale per le serie A/V): #{dup.join(', ')}" unless dup.empty?
+      path
     end
   end
 end
 
-RilievoUrbano::Inventario.run
+RilievoUrbano::Inventario.run unless $RILIEVO_PIPELINE

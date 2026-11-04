@@ -65,18 +65,20 @@ module RilievoUrbano
       cam
     end
 
-    def self.run
+    # path/folder facoltativi: se assenti si chiedono con le finestre di dialogo (uso interattivo)
+    def self.run(path = nil, folder = nil, interattivo = true)
       model = Sketchup.active_model
       unless model.georeferenced?
+        raise 'Modello non georeferenziato' unless interattivo
         UI.messagebox('Modello non georeferenziato: esegui prima File › Geo-location › Add Location.')
         return
       end
-      path = UI.openpanel('Seleziona manifest_riprese.json', '', 'JSON|*.json||')
+      path ||= UI.openpanel('Seleziona manifest_riprese.json', '', 'JSON|*.json||')
       return unless path
       man = JSON.parse(File.read(path, encoding: 'UTF-8'))
       eye_default = (man['eye_height_m'] || 2.5).to_f
       base = model.path.empty? ? File.dirname(path) : File.dirname(model.path)
-      folder = File.join(base, 'export_verifica')
+      folder ||= File.join(base, 'export_verifica')
       Dir.mkdir(folder) unless Dir.exist?(folder)
 
       po = model.options['PageOptions']
@@ -100,15 +102,16 @@ module RilievoUrbano
         model.commit_operation
       rescue StandardError => e
         model.abort_operation
-        UI.messagebox("Errore: #{e.message}")
+        UI.messagebox("Errore: #{e.message}") if interattivo
         raise
       ensure
         po['ShowTransition'] = old_transition
       end
       puts "Scene create ed esportate (#{done.size}): #{done.join(', ')} -> #{folder}"
       puts 'Controlla subito la prima vista: se l\'orizzonte non coincide con la foto, correggi z_occhio_m o l\'origine.'
+      done
     end
   end
 end
 
-RilievoUrbano::SceneDaManifest.run
+RilievoUrbano::SceneDaManifest.run unless $RILIEVO_PIPELINE
