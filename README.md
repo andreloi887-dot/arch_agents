@@ -42,7 +42,7 @@ sono per Ruby 2.7 (SketchUp 2022): provali prima su una copia del file.
 2. *"Passa la scheda a sketchup-expert"* → procedura di modellazione + script da lanciare in SketchUp.
 3. *"Usa rilievo-urbano per verificare"* con `inventario.json` ed `export_verifica/` → verbale con correzioni (max 3 cicli).
 
-Requisiti: Python 3.9+ con Pillow; `GOOGLE_MAPS_API_KEY` con Street View Static, Maps Static e
+Requisiti: Python 3.9+ con Pillow (per `catasto.py` anche numpy e `opencv-python-headless`); `GOOGLE_MAPS_API_KEY` con Street View Static, Maps Static e
 Geocoding abilitate (senza chiave l'agente lavora su screenshot e il confronto è solo qualitativo).
 I termini Google vietano di ricalcare o estrarre geometria: impronte e quote vengono da OSM, DBT,
 catasto o LiDAR; le immagini Google restano in `_rif_google/` (ignorata da git).

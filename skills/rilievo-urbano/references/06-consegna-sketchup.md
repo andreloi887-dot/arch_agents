@@ -24,6 +24,9 @@ progetto prima di tutto).
 1. *File › Geo-location › Add Location* sulla zona; importare imagery e terreno.
 2. Portare l'origine degli assi su `zona.origine` (lat/lng della scheda) e lasciare il Nord di
    *Add Location* (Solar North invariato). Senza questo passo le scene camera-matched non tornano.
+3. Impronte catastali: `scripts/sketchup/importa_catasto.rb` (`RilievoUrbano::Catasto.importa`),
+   allineamento del gruppo intero sull'imagery di Add Location (rototraslazione rigida, punti di
+   controllo indicati in `zona.allineamento_catasto`), poi `.report` e trascrizione dei valori.
 
 ### Struttura e nomi
 - Un **gruppo o componente per ID**, nominato `ID – descrizione` (es. `E02 – Via Garibaldi 12`,

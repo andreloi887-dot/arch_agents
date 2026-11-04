@@ -82,6 +82,15 @@
   in ambito urbano, spesso con quota gronda o altezza volume. È la fonte migliore per le altezze.
 - **Cartografia catastale** (Agenzia delle Entrate, servizio WMS gratuito, CC-BY 4.0): particelle e
   sagome dei fabbricati; ottima per i limiti di proprietà (dove corrono le recinzioni).
+  - Endpoint: `https://wms.cartografia.agenziaentrate.gov.it/inspire/wms/ows01.php` (WMS 1.3.0, max
+    2048×2048 px). Layer: `fabbricati`, `CP.CadastralParcel`, `strade`, `codice_plla`, `acque`,
+    `vestizioni`. CRS: EPSG:4258/6706 (assi lat,lon in 1.3.0) e UTM.
+  - Solo raster: `GetFeatureInfo` non restituisce attributi. `scripts/catasto.py` vettorializza per
+    colore (fabbricati arancio, strade grigie, particelle come regioni chiuse dai confini); i numeri
+    di particella si leggono a vista dal layer `codice_plla`, il foglio no.
+  - Le strade private o non frazionate non compaiono come area stradale ma come particelle.
+  - Portali di terzi che ridistribuiscono il catasto (es. forMaps): usarli solo dal browser e
+    rispettarne il `robots.txt`; per l'accesso automatico usare sempre il WMS ufficiale.
 - **Catasto sfasato: allineare prima di usare.** Le mappe catastali sono spesso traslate e ruotate
   rispetto alla realtà, di solito di qualche metro e a volte di più di 10 m: dipende dalle origini locali
   Cassini-Soldner, dalla trasformazione verso WGS84 e dai fogli di impianto storico. Inoltre le sagome

@@ -10,8 +10,11 @@ verifica è automatica.
    indicato e si elencano in `note_modellazione.md`.
 2. **Georeferenzia**: *File › Geo-location › Add Location* sulla zona, poi origine degli assi su
    `zona.origine`. Il terreno di Add Location va su tag `60_Terreno`.
-3. **Impronte dalle fonti aperte** della cartella `geometria/` (DWG/DXF/GeoJSON convertiti) su
-   `00_Riferimenti`, bloccate. Mai ricalcare immagini Google (vietato dai termini e non preciso).
+3. **Impronte dalle fonti aperte** della cartella `geometria/` su `00_Riferimenti`. Per i GeoJSON
+   catastali: `RilievoUrbano::Catasto.importa` (`skills/rilievo-urbano/scripts/sketchup/importa_catasto.rb`),
+   poi **allineare il gruppo intero** (Move + Rotate, mai deformare) su ≥ 3 spigoli riconoscibili
+   nell'imagery di Add Location: il catasto è spesso sfasato di metri. `.report` dà dx/dy/rotazione da
+   annotare. Bloccare il gruppo dopo l'allineamento. Mai ricalcare immagini Google.
 4. **Palette prima della geometria**: crea un materiale per ogni C## chiamato `C##_descrizione`,
    colore = `hex`, texture con dimensione = `modulo_mm` (*Materials › Edit › Texture size*).
 5. **Volumi** (LOD1): Push/Pull dell'impronta a quota gronda; un gruppo per ID `E## – indirizzo`

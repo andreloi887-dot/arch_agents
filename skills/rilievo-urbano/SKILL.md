@@ -79,9 +79,11 @@ DESCRIVI                                   SKETCHUP                       VERIFI
 | `gmaps.py sv-shots` | Scarica le riprese da un piano JSON e scrive `manifest_riprese.json` (heading calcolato verso il bersaglio) |
 | `gmaps.py static` | Immagine satellitare/roadmap + metadati per l'annotazione |
 | `gmaps.py osm-edifici` | Impronte e tag edifici da OpenStreetMap (Overpass) → GeoJSON |
+| `catasto.py` | Catasto AdE (WMS, CC BY 4.0): scarica e vettorializza fabbricati, particelle e strade → GeoJSON (numpy, opencv) |
 | `annota.py mappa / foto / palette / campiona` | Mappa con ID, foto annotate, tavola colori, campionamento colore (mediana) |
 | `confronta.py` | VERIFICA: inventario vs scheda (presenza, quote, ΔE2000) + affiancamenti e sovrapposizioni |
 | `sketchup/scene_da_manifest.rb` | In SketchUp 2022: crea scene con camera uguale alle riprese SV ed esporta PNG |
+| `sketchup/importa_catasto.rb` | In SketchUp 2022: importa i GeoJSON catastali come gruppo da allineare; `report` stampa dx/dy/rotazione |
 | `sketchup/inventario_modello.rb` | In SketchUp 2022: esporta `inventario.json` (ID, quote, posizione, materiali) |
 
 Gli script Python richiedono Python 3.9+ e Pillow; le API Google richiedono la variabile

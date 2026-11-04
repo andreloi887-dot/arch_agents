@@ -1,0 +1,11 @@
+{
+ "bbox_lat_lng": [
+  39.2516,
+  9.1143,
+  39.2532,
+  9.1163
+ ],
+ "crs": "EPSG:4258",
+ "size": 2048,
+ "fonte": "Agenzia delle Entrate \u2013 Cartografia catastale WMS, CC BY 4.0"
+}

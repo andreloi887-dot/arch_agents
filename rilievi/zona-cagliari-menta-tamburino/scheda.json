@@ -27,18 +27,34 @@
     },
     "scopo": "rilievo di prova del flusso; contesto per inserimento ambientale",
     "lod_default": "LOD2",
-    "revisione": 1,
+    "revisione": 2,
     "data_rilievo": "2026-11-04",
     "date_streetview": [
       "2026-04"
     ],
     "fonti_geometria": [
-      "NESSUNA ancora: OSM/Overpass e Geoportale Sardegna non raggiungibili dall'ambiente di lavoro"
+      "Catasto AdE – WMS INSPIRE (CC BY 4.0), scaricato e vettorializzato il 2026-11-04: geometria/*.geojson"
     ],
+    "allineamento_catasto": {
+      "stato": "DA ESEGUIRE in SketchUp su imagery Add Location (importa_catasto.rb)",
+      "diagnosi": "confronto qualitativo con satellitare (non usato per correggere): sfasamento non uniforme, 0–2 m a N (E01, E02, E06), fino a ~5 m verso O a S (E10, E11); E03, E08, E09 con corpi non presenti in mappa",
+      "controllo_suggerito": [
+        "spigoli di E06 (forma coerente)",
+        "spigoli di E02",
+        "spigoli di E10",
+        "spigoli di E01"
+      ],
+      "dx_m": null,
+      "dy_m": null,
+      "rotazione_deg": null
+    },
     "carattere": "periferia residenziale a bassa densità (Pirri): villini e palazzine 1-3 piani arretrati nei lotti; il fronte stradale è costituito quasi solo da muri di cinta e di sostegno con recinzioni; terreno in salita verso E (Via Moravia sale sensibilmente)"
   },
   "lacune": [
-    "Impronte e quote NON da fonti aperte: tutte le altezze sono stime da conteggio piani (media/bassa). Prima di modellare: impronte da catasto (WMS AdE) o DBMP Sardegna.",
+    "Impronte dal catasto (rev. 2) ma NON ancora allineate: sfasamento stimato 0–5 m, non uniforme. Allineare in SketchUp prima di modellare.",
+    "Catasto non aggiornato su E03, E08, E09 (corpi mancanti): per quei volumi la forma si integra da Street View/Add Location, confidenza bassa.",
+    "Altezze ancora stime da conteggio piani (il catasto non ha quote).",
+    "Via A. Moravia a catasto non è area stradale ma una sequenza di particelle: il sedime va letto su Add Location.",
     "Terreno: la pendenza di Via Moravia e Via Tamburino Sardo è solo qualitativa; usare il terreno di Add Location o il DTM regionale.",
     "Fronti interni e retri non visibili (E03, E07, E08, E09 lato giardino): ipotesi.",
     "Colori di marciapiedi e doghe bianche da foto sovraesposte (sole pieno di aprile): confidenza bassa.",
@@ -520,8 +536,19 @@
       "tipologia": "casa unifamiliare/bifamiliare a blocco",
       "epoca": "fine '900 – anni 2010",
       "impronta": {
-        "fonte": "DA ACQUISIRE (catasto WMS / DBMP Sardegna / OSM)",
-        "rif": null
+        "fonte": "Catasto AdE (WMS, CC BY 4.0) vettorializzato",
+        "file": "geometria/catasto_fabbricati.geojson",
+        "indice": 17,
+        "particella": null,
+        "particella_nota": "non leggibile",
+        "area_m2": 100.7,
+        "ingombro_m": [
+          10.4,
+          10.0
+        ],
+        "corrispondenza_realta": "buona",
+        "confidenza": "alta",
+        "nota": "scarto ≤ 1–2 m"
       },
       "posizione_indicativa": {
         "lat": 39.252836,
@@ -587,8 +614,19 @@
       "tipologia": "palazzina bifamiliare + corpo retrostante a 3 piani",
       "epoca": "fine '900 – anni 2010",
       "impronta": {
-        "fonte": "DA ACQUISIRE (catasto WMS / DBMP Sardegna / OSM)",
-        "rif": null
+        "fonte": "Catasto AdE (WMS, CC BY 4.0) vettorializzato",
+        "file": "geometria/catasto_fabbricati.geojson",
+        "indice": 14,
+        "particella": "4165",
+        "particella_nota": "letta dalla mappa, foglio non indicato: da confermare",
+        "area_m2": 130.0,
+        "ingombro_m": [
+          12.2,
+          11.8
+        ],
+        "corrispondenza_realta": "buona",
+        "confidenza": "alta",
+        "nota": "scarto ≤ 1 m"
       },
       "posizione_indicativa": {
         "lat": 39.25268,
@@ -650,8 +688,19 @@
       "tipologia": "villa unifamiliare a più corpi",
       "epoca": "fine '900 – anni 2010",
       "impronta": {
-        "fonte": "DA ACQUISIRE (catasto WMS / DBMP Sardegna / OSM)",
-        "rif": null
+        "fonte": "Catasto AdE (WMS, CC BY 4.0) vettorializzato",
+        "file": "geometria/catasto_fabbricati.geojson",
+        "indice": 15,
+        "particella": null,
+        "particella_nota": "non leggibile",
+        "area_m2": 127.7,
+        "ingombro_m": [
+          14.7,
+          10.8
+        ],
+        "corrispondenza_realta": "forma diversa",
+        "confidenza": "bassa",
+        "nota": "corpi a S (terrazzo e falde) assenti in mappa; sagoma anche traslata ~2–4 m"
       },
       "posizione_indicativa": {
         "lat": 39.252732,
@@ -715,8 +764,19 @@
       "tipologia": "corpo basso",
       "epoca": "fine '900 – anni 2010",
       "impronta": {
-        "fonte": "DA ACQUISIRE (catasto WMS / DBMP Sardegna / OSM)",
-        "rif": null
+        "fonte": "Catasto AdE (WMS, CC BY 4.0) vettorializzato",
+        "file": "geometria/catasto_fabbricati.geojson",
+        "indice": 18,
+        "particella": null,
+        "particella_nota": "non leggibile",
+        "area_m2": 23.5,
+        "ingombro_m": [
+          6.8,
+          3.7
+        ],
+        "corrispondenza_realta": "non verificabile",
+        "confidenza": "bassa",
+        "nota": "piccolo corpo, visto solo da satellite"
       },
       "posizione_indicativa": {
         "lat": 39.252857,
@@ -755,8 +815,19 @@
       "tipologia": "casa a schiera/bifamiliare contemporanea",
       "epoca": "fine '900 – anni 2010",
       "impronta": {
-        "fonte": "DA ACQUISIRE (catasto WMS / DBMP Sardegna / OSM)",
-        "rif": null
+        "fonte": "Catasto AdE (WMS, CC BY 4.0) vettorializzato",
+        "file": "geometria/catasto_fabbricati.geojson",
+        "indice": 13,
+        "particella": "4142",
+        "particella_nota": "letta dalla mappa, foglio non indicato: da confermare",
+        "area_m2": 172.6,
+        "ingombro_m": [
+          22.0,
+          11.7
+        ],
+        "corrispondenza_realta": "buona",
+        "confidenza": "media",
+        "nota": "scarto ~1–2 m"
       },
       "posizione_indicativa": {
         "lat": 39.252608,
@@ -815,8 +886,19 @@
       "tipologia": "palazzina contemporanea a volumi sfalsati",
       "epoca": "fine '900 – anni 2010",
       "impronta": {
-        "fonte": "DA ACQUISIRE (catasto WMS / DBMP Sardegna / OSM)",
-        "rif": null
+        "fonte": "Catasto AdE (WMS, CC BY 4.0) vettorializzato",
+        "file": "geometria/catasto_fabbricati.geojson",
+        "indice": 11,
+        "particella": "3714",
+        "particella_nota": "letta dalla mappa, foglio non indicato: da confermare",
+        "area_m2": 180.2,
+        "ingombro_m": [
+          17.9,
+          10.7
+        ],
+        "corrispondenza_realta": "buona",
+        "confidenza": "alta",
+        "nota": "scarto ≤ 1 m"
       },
       "posizione_indicativa": {
         "lat": 39.252452,
@@ -883,8 +965,19 @@
       "tipologia": "villa",
       "epoca": "fine '900 – anni 2010",
       "impronta": {
-        "fonte": "DA ACQUISIRE (catasto WMS / DBMP Sardegna / OSM)",
-        "rif": null
+        "fonte": "Catasto AdE (WMS, CC BY 4.0) vettorializzato",
+        "file": "geometria/catasto_fabbricati.geojson",
+        "indice": 10,
+        "particella": "3396/3399",
+        "particella_nota": "letta dalla mappa, foglio non indicato: da confermare",
+        "area_m2": 252.8,
+        "ingombro_m": [
+          31.1,
+          15.0
+        ],
+        "corrispondenza_realta": "da verificare",
+        "confidenza": "media",
+        "nota": "la sagoma unisce più corpi"
       },
       "posizione_indicativa": {
         "lat": 39.252379,
@@ -930,8 +1023,19 @@
       "tipologia": "villa a un piano su basamento terrazzato",
       "epoca": "fine '900 – anni 2010",
       "impronta": {
-        "fonte": "DA ACQUISIRE (catasto WMS / DBMP Sardegna / OSM)",
-        "rif": null
+        "fonte": "Catasto AdE (WMS, CC BY 4.0) vettorializzato",
+        "file": "geometria/catasto_fabbricati.geojson",
+        "indice": 7,
+        "particella": "4205",
+        "particella_nota": "letta dalla mappa, foglio non indicato: da confermare",
+        "area_m2": 335.7,
+        "ingombro_m": [
+          25.6,
+          16.5
+        ],
+        "corrispondenza_realta": "forma diversa",
+        "confidenza": "bassa",
+        "nota": "corpo NE assente in mappa; traslazione ~2–4 m"
       },
       "posizione_indicativa": {
         "lat": 39.25213,
@@ -995,8 +1099,19 @@
       "tipologia": "complesso a schiera di 3-4 unità con portici",
       "epoca": "fine '900 – anni 2010",
       "impronta": {
-        "fonte": "DA ACQUISIRE (catasto WMS / DBMP Sardegna / OSM)",
-        "rif": null
+        "fonte": "Catasto AdE (WMS, CC BY 4.0) vettorializzato",
+        "file": "geometria/catasto_fabbricati.geojson",
+        "indice": 9,
+        "particella": "2973",
+        "particella_nota": "letta dalla mappa, foglio non indicato: da confermare",
+        "area_m2": 119.8,
+        "ingombro_m": [
+          18.1,
+          7.9
+        ],
+        "corrispondenza_realta": "forma diversa",
+        "confidenza": "bassa",
+        "nota": "a catasto ~120 m² contro un complesso a L di 3–4 unità: ala S e unità d'angolo assenti in mappa"
       },
       "posizione_indicativa": {
         "lat": 39.252338,
@@ -1085,8 +1200,19 @@
       "tipologia": "palazzina a 3 piani",
       "epoca": "fine '900 – anni 2010",
       "impronta": {
-        "fonte": "DA ACQUISIRE (catasto WMS / DBMP Sardegna / OSM)",
-        "rif": null
+        "fonte": "Catasto AdE (WMS, CC BY 4.0) vettorializzato",
+        "file": "geometria/catasto_fabbricati.geojson",
+        "indice": 4,
+        "particella": "3887",
+        "particella_nota": "letta dalla mappa, foglio non indicato: da confermare",
+        "area_m2": 132.1,
+        "ingombro_m": [
+          12.7,
+          12.3
+        ],
+        "corrispondenza_realta": "traslata",
+        "confidenza": "media",
+        "nota": "sagoma ~4–5 m a O e ~2 m a N rispetto al tetto; forma coerente"
       },
       "posizione_indicativa": {
         "lat": 39.252026,
@@ -1155,8 +1281,19 @@
       "tipologia": "villa a 1-2 piani a tetto piano",
       "epoca": "fine '900 – anni 2010",
       "impronta": {
-        "fonte": "DA ACQUISIRE (catasto WMS / DBMP Sardegna / OSM)",
-        "rif": null
+        "fonte": "Catasto AdE (WMS, CC BY 4.0) vettorializzato",
+        "file": "geometria/catasto_fabbricati.geojson",
+        "indice": 8,
+        "particella": "3929",
+        "particella_nota": "letta dalla mappa, foglio non indicato: da confermare",
+        "area_m2": 144.3,
+        "ingombro_m": [
+          15.1,
+          12.2
+        ],
+        "corrispondenza_realta": "traslata",
+        "confidenza": "media",
+        "nota": "sagoma ~3 m a O, leggera rotazione"
       },
       "posizione_indicativa": {
         "lat": 39.252213,

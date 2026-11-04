@@ -7,21 +7,47 @@
 | Scopo | Rilievo di prova del flusso; contesto per inserimento ambientale |
 | LOD | LOD2 di default; **LOD3 per E06, E09, R01, R02** (i fronti visti dall'incrocio) |
 | Immagini | 19 riprese Street View Google, **aprile 2026**; satellitare Airbus/Maxar 2026 |
-| Revisione | 1 – 04/11/2026 |
-| Fonti geometria | **nessuna ancora** (vedi lacune) |
+| Revisione | **2** – 04/11/2026 (rev. 1: solo descrizione; rev. 2: impronte catastali) |
+| Fonti geometria | Catasto AdE – WMS INSPIRE, CC BY 4.0, vettorializzato in `geometria/` (**non ancora allineato**) |
 
 ## ⚠️ Lacune e rischi (leggere prima di modellare)
-1. **Impronte e quote non provengono da fonti aperte.** OpenStreetMap e Geoportale Sardegna non erano
-   raggiungibili dall'ambiente di lavoro. Tutte le altezze sono **stime da conteggio dei piani**
-   (confidenza media o bassa). Prima di modellare servono le sagome da **catasto (WMS AdE)** o dal **DBMP
-   della Regione Sardegna**. Non ricalcare il satellitare Google.
-2. **Terreno in pendenza.** Via Moravia sale sensibilmente verso E e Via Tamburino Sardo scende
-   leggermente verso SE. Per questo molti muri di cinta sono **muri di sostegno**: i lotti a E (E08, E09,
-   E06) stanno 1–2,5 m sopra il marciapiede. Usare il terreno di *Add Location* o il DTM regionale.
-3. Retri e fronti interni (E03, E07, E08, E09 lato giardino) non sono visibili: ipotesi.
-4. Il sole pieno sovraespone bianchi e marciapiedi: i colori C05, C17, C18 e C19 hanno confidenza bassa.
-5. Le falde di E05, E08 ed E09 sono in gran parte coperte da fotovoltaico.
-6. E04 ed E07 sono visti solo da satellite: solo volumi (LOD1).
+1. **Le impronte catastali sono sfasate e non ancora allineate.** Sfasamento stimato da 0 a 5 m, non
+   uniforme: quasi nullo a N (E01, E02, E06), ~3–5 m verso O a S (E10, E11). Vanno allineate in SketchUp
+   con una rototraslazione rigida sull'imagery di *Add Location* (`importa_catasto.rb`). La diagnosi è
+   stata fatta confrontando con il satellitare Google, ma solo per controllo: i valori non sono stati
+   usati per correggere la geometria.
+2. **Catasto non aggiornato su E03, E08, E09.** In mappa mancano corpi esistenti. Il caso più grave è E09:
+   ~120 m² a catasto contro un complesso a L di 3–4 unità. Per quei volumi la forma si integra da Street
+   View e *Add Location* (confidenza bassa).
+3. **Altezze.** Restano stime da conteggio dei piani (media o bassa): il catasto non ha quote.
+4. **Terreno in pendenza.** Via Moravia sale verso E e i lotti a E sono rialzati di 1–2,5 m (muri di
+   sostegno). Usare il terreno di *Add Location* o il DTM.
+5. **Via Moravia** a catasto non è un'area stradale ma una sequenza di particelle strette: il sedime
+   della strada va letto su *Add Location*.
+6. Retri non visibili (E03, E07, E08, E09); colori C05, C17, C18, C19 sovraesposti (confidenza bassa);
+   E04 ed E07 solo da satellite.
+
+## Impronte catastali (rev. 2)
+File: `geometria/catasto_fabbricati.geojson` (29 sagome), `geometria/catasto_strade_particelle.geojson`
+(94 particelle e le aree stradali), raster originali `geometria/catasto_*.png`.
+Le particelle sono lette sulla mappa; il foglio non è indicato: da confermare in visura.
+
+| ID | Particella | Area catasto | Ingombro (m) | Corrispondenza con la realtà | Conf. impronta |
+|---|---|---|---|---|---|
+| E01 | n.l. | 101 m² | 10,4 × 10,0 | buona (≤ 1–2 m) | alta |
+| E02 | 4165 | 130 m² | 12,2 × 11,8 | buona (≤ 1 m) | alta |
+| E03 | n.l. | 128 m² | 14,7 × 10,8 | **forma diversa**: corpi a S assenti; traslata ~2–4 m | bassa |
+| E04 | n.l. | 24 m² | 6,8 × 3,7 | non verificabile | bassa |
+| E05 | 4142 | 173 m² | 22,0 × 11,7 | buona (~1–2 m) | media |
+| E06 | 3714 | 180 m² | 17,9 × 10,7 | buona (≤ 1 m), **punto di controllo** | alta |
+| E07 | 3396/3399 | 253 m² | 31,1 × 15,0 | da verificare (più corpi uniti) | media |
+| E08 | 4205 | 336 m² | 25,6 × 16,5 | **forma diversa**: corpo NE assente; traslata ~2–4 m | bassa |
+| E09 | 2973 | 120 m² | 18,1 × 7,9 | **forma diversa**: complesso a L di 3–4 unità, ala S assente | bassa |
+| E10 | 3887 | 132 m² | 12,7 × 12,3 | traslata ~4–5 m O, ~2 m N; forma coerente | media |
+| E11 | 3929 | 144 m² | 15,1 × 12,2 | traslata ~3 m O, leggera rotazione | media |
+
+Lotti senza costruito: P03 = particella 4258; P04 = particelle 2112, 2114, 2116, 4166, 4167.
+I muri e le recinzioni R## seguono i confini delle particelle sul fronte strada.
 
 ## Carattere della zona
 Periferia residenziale a bassa densità di Pirri: villini e palazzine da 1 a 3 piani **arretrati nei
