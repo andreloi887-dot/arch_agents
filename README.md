@@ -2,6 +2,9 @@
 
 Agenti e skill per software di architettura.
 
+**Procedimento di riferimento per i progetti:** [PROCEDIMENTO.md](PROCEDIMENTO.md).
+La filiera è Edificius → contesto in Python → Blender → Unreal Engine 5 → FFmpeg, ed è valida per ogni lotto.
+
 ## Lumion Pro 12.5
 
 | Percorso | Cosa è |
