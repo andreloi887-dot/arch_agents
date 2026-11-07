@@ -111,6 +111,8 @@ module RilievoUrbano
         log 'Viste aeree esportate'
 
         dest = File.join(out, 'contesto_generato.skp')
+        # file vuoti lasciati da un'esecuzione interrotta (.skp o backup .skb a 0 byte) bloccano model.save
+        [dest, dest.sub(/\.skp\z/, '.skb')].each { |f| File.delete(f) if File.exist?(f) && File.size(f) == 0 }
         model.save(dest)
         esito['passi']['skp'] = dest
         log "Salvato: #{dest}"
