@@ -6,7 +6,7 @@ Cartella: `C:\Users\andre\Desktop\via della menta con claude\arch_agents\rilievi
 
 ## Avvisi
 - ⚠️ cartelli a meno di 0,8 m l'uno dall'altro: 1
-- ⚠️ bordo stradale senza muro entro 15 m dagli edifici: 45 m (CTX02 10 m, E07 9 m, CTX19 9 m, CTX24 7 m, DB31 9 m)
+- ⚠️ bordo stradale senza muro entro 15 m dagli edifici: 43 m (CTX02 10 m, E07 9 m, CTX19 7 m, CTX24 7 m, DB31 9 m)
 - ⚠️ edifici con quote stimate (non misurate dal DSM): 5 ['CTX06', 'E06', 'E05', 'CTX16', 'E04']
 
 ## Superati

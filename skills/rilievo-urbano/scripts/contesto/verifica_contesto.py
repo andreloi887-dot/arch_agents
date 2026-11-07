@@ -6,7 +6,6 @@ esce con codice 1 se ci sono errori bloccanti.
   python verifica_contesto.py <cartella modello>
 """
 import json, math, os, sys
-from collections import defaultdict
 from shapely.geometry import Point, Polygon, LineString
 from shapely.ops import unary_union
 
@@ -44,7 +43,6 @@ for m in sc["muri"]:
 bd = sede.boundary; coperto = unary_union([LineString([p[:2] for p in m["punti"]]).buffer(1.5) for m in sc["muri"]] +
                                          [LineString([p[:2] for p in c["punti"]]).buffer(1.0) for c in sc.get("cancelli", [])])
 scoperti = 0.0; esempi = []
-area_lim = Polygon([(-sc["terreno"]["x0"] * -1, -sc["terreno"]["y0"] * -1)]) if False else None
 for e in sc["edifici"]:
     P = Polygon(e["impronta"])
     vicino = bd.intersection(P.buffer(15))

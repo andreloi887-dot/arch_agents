@@ -11,7 +11,7 @@ _rif_google/ (ignorata da git): servono solo a descrivere, mai a ricavare geomet
 """
 import argparse, json, math, os, sys, urllib.parse, urllib.request
 from pyproj import Transformer
-from shapely.geometry import Polygon, Point
+from shapely.geometry import Polygon
 from shapely.ops import unary_union, nearest_points
 
 ap = argparse.ArgumentParser()

@@ -10,7 +10,7 @@ Coordinate locali in metri arrotondate al mm: x = Est, y = Nord, z = quota relat
 """
 import json, math, os, random
 import numpy as np, triangle
-from shapely.geometry import Polygon, LineString, Point, MultiPolygon
+from shapely.geometry import Polygon, LineString, Point
 from shapely.ops import unary_union, polygonize
 from PIL import Image
 
@@ -581,7 +581,6 @@ for a in sc["arredo"]:
 vegetazione = []
 dettagli = []   # scatole libere (segnaletica, siepi, canneti, recinzioni, cancelli): formato degli elementi degli edifici
 MAT_DETT = {"ringhiera": None, "doghe": None, "grigliato": "GRIGLIATO", "telo": "TELO_VERDE"}
-recinzioni_dett = []
 for r in sc["recinzioni"]:
     if r["tipo"] not in ("ringhiera", "doghe", "grigliato", "telo"): continue
     pts = [p[:2] for p in r["punti"]]; zs = [p[2] for p in r["punti"]]

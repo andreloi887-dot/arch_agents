@@ -32,6 +32,8 @@ python skills/rilievo-urbano/scripts/contesto/contesto.py rilievi/zona-cagliari-
 Servono numpy, shapely, triangle, pyproj, tifffile, imagecodecs, Pillow e opencv-python-headless (per il catasto).
 
 ## Cosa va in `lotto.json`
+Se c'è il progetto IFC, `lotto.perimetro_progetto` (scritto da `../blender/importa_progetto.py`) sostituisce il lotto
+catastale: il motore porta la sede stradale fino al filo del progetto.
 L'esempio completo è `rilievi/zona-cagliari-menta-tamburino/modello/lotto.json`.
 - `origine` (lat, lng), `semilato_m` dell'area quadrata modellata, `seme_casuale`.
 - `dati`: percorsi di DTM, tendenza, scheda, geojson del catasto (particelle e fabbricati) e manifest delle riprese.

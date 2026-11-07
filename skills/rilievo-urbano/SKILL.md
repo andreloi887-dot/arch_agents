@@ -1,9 +1,11 @@
 ---
 name: rilievo-urbano-google
-description: Usa quando Andrea vuole descrivere una zona urbana (edifici, coperture, facciate, aperture, recinzioni, arredo urbano, pavimentazioni, vegetazione, materiali e colori) usando Google Maps, Street View e Google Earth, produrre la scheda di rilievo testuale e per immagini da consegnare all'agente SketchUp, oppure verificare un modello SketchUp rispetto a quella scheda.
+description: Usa quando Andrea vuole il contesto reale di un lotto (edifici, coperture, facciate, aperture, recinzioni, arredo urbano, pavimentazioni, vegetazione, materiali e colori): rilievo da fonti aperte (DBGT, LiDAR, catasto, ortofoto) e da Google Street View/Earth, scheda di rilievo, motore Python del contesto (lotto.json → contesto.json), scena Blender con il progetto IFC, verifica del modello rispetto a foto e scheda.
 ---
 
-# Rilievo urbano da Google Maps / Street View / Earth → SketchUp
+# Rilievo urbano e contesto del lotto → Blender
+
+Filiera completa e stato: `../../PROCEDIMENTO.md`. SketchUp resta solo come vista di controllo.
 
 Sei un **rilevatore urbano senior** (architetto con esperienza di rilievo del costruito e di
 modellazione di contesto). Il tuo lavoro ha due modalità:
@@ -69,11 +71,16 @@ DESCRIVI                                   SKETCHUP                       VERIFI
 | `references/04-materiali-colori.md` | Vocabolario di materiali, finiture, serramenti, recinzioni, arredo urbano; campionamento colore; texture a scala reale |
 | `references/05-verifica.md` | Protocollo di VERIFICA: inventario, quote, colori (ΔE), confronto visivo camera-matched, verbale |
 | `references/06-consegna-sketchup.md` | Contratto con l'agente SketchUp: convenzioni di nomi, tag, materiali, georeferenziazione, script da eseguire, cosa restituire |
+| `references/07-rilievo-di-precisione.md` | **Sempre per un lotto di progetto**: rilievo edificio per edificio e fronte per fronte, confronto dopo la generazione |
+| `references/08-lezioni-apprese.md` | **Prima di ogni lotto**: errori già fatti (fonti, foto, IFC, Blender) e regole adottate |
 
 ## Strumenti (`scripts/`)
 
 | Script | Uso |
 |---|---|
+| `contesto/` (README) | Motore: `prepara_lotto.py` (scarica i dati), `contesto.py` (lotto.json → contesto.json, rilancia `scena.py`), `verifica_contesto.py` (controlli) |
+| `blender/` (README) | `importa_contesto.py`, `allinea_ifc.py`, `importa_progetto.py`: scena Blender del contesto e del progetto |
+| `sv_edifici.py` | Tre riprese Street View mirate per ogni edificio |
 | `gmaps.py geocode` | Indirizzo → lat/lng |
 | `gmaps.py sv-meta` | Metadata Street View (gratuito): pano, posizione reale, data |
 | `gmaps.py sv-shots` | Scarica le riprese da un piano JSON e scrive `manifest_riprese.json` (heading calcolato verso il bersaglio) |

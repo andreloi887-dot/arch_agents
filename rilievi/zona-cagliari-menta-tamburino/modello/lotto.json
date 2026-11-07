@@ -122,7 +122,8 @@
   },
   "fronte_arredo": {
    "x_min_da_punta": 0.5
-  }
+  },
+  "perimetro_progetto": "perimetro_progetto.json"
  },
  "muri_contorno": [
   {
@@ -1051,8 +1052,7 @@
   ],
   "dz": 3.92,
   "escludi_nomi": [
-   "Strada",
-   "Estrusione (solido)"
+   "Strada"
   ],
   "nascondi": [
    "P03",
@@ -1060,6 +1060,31 @@
    "erba lotto"
   ],
   "margine_m": 1.0,
-  "_nota_quota": "dz agganciato a Via della Menta (Andrea, 2026-11-07): mediana z_rilievo - z_IFC del terreno Edificius su carreggiata e marciapiede entro 7 m dall'asse DBGT, n 1589, p25/p75 3,67/4,02"
+  "_nota_quota": "dz agganciato a Via della Menta (Andrea, 2026-11-07): mediana z_rilievo - z_IFC del terreno Edificius su carreggiata e marciapiede entro 7 m dall'asse DBGT, n 1589, p25/p75 3,67/4,02",
+  "marciapiede_nomi": [
+   "Estrusione (solido)"
+  ],
+  "muraglione": {
+   "spessore_m": 0.3,
+   "passo_m": 0.5,
+   "minimo_m": 0.1,
+   "materiale": "#9C9A93"
+  },
+  "_nota_planimetria": "IFC planimetricamente giusto (Andrea, 2026-11-07): lotto, marciapiede di progetto e punta in quota comandano sul contesto; terra contenuta da muraglioni in c.a. su Via della Menta e alla punta",
+  "ville": {
+   "_nota": "4 ville divise trasversalmente a Via della Menta lungo i muri divisori dei cortili (Andrea, 2026-11-07); ogni villa alla quota che porta la soglia del suo cancello carraio al marciapiede di Via della Menta. Villa 4 ha due cancelli: per ora vale il primo.",
+   "asse_gradi": 43.5,
+   "tagli": [
+    1.33,
+    7.57,
+    13.77
+   ],
+   "cancelli": [
+    "Porta 399839",
+    "Porta 398781",
+    "Porta 397445",
+    "Porta 396048"
+   ]
+  }
  }
 }

@@ -105,12 +105,24 @@ def _arrotonda(p):
 _AGL = indici(LT.get("punti_aggiunti_al_lotto"), LT.get("particelle_aggiunte_al_lotto", []))   # particelle che il catasto disegna separate ma fanno parte del lotto
 P03 = _arrotonda(unary_union([dict(particelle)[i] for i in [IL] + _AGL]).buffer(0.3, join_style=2).buffer(-0.3, join_style=2))
 IL_TUTTE = set([IL] + _AGL)                 # lotto di progetto (P03: nome storico della variabile)
+# perimetro del progetto (IFC planimetricamente giusto): sostituisce il lotto catastale; ciò che il catasto dava al lotto
+# oltre il filo del progetto, se tocca la sede stradale, è strada (evita strettoie dove il catasto sporge sulla sede)
+P03_CATASTO = P03
+if LT.get("perimetro_progetto") and os.path.exists(os.path.join(HERE, LT["perimetro_progetto"])):
+    _PP = json.load(open(os.path.join(HERE, LT["perimetro_progetto"]), encoding="utf-8"))
+    _o = _PP["origine"]
+    if abs(_o["lat"] - O[0]) > 1e-9 or abs(_o["lng"] - O[1]) > 1e-9:
+        _x0, _y0 = loc(_o["lng"], _o["lat"]); _PP["anello"] = [[x + _x0, y + _y0] for x, y in _PP["anello"]]
+    P03 = Polygon(_PP["anello"]).buffer(0)
+    print(f"lotto dal perimetro di progetto: {P03.area:.0f} m² (catasto {P03_CATASTO.area:.0f} m²)")
 
 # --- sedime stradale: aree 'strada' + particelle che di fatto sono strada
 AGG = indici(ST.get("punti_aggiunti_al_sedime"), ST.get("particelle_aggiunte_al_sedime", []))
 _DB_STRADE = dbgt("strade")
 if _DB_STRADE:   # DBGT: sede stradale da recinzione a recinzione (fotogrammetria 1:2000)
-    sedime = unary_union(_DB_STRADE).buffer(0.3).buffer(-0.3).difference(P03)
+    _sd = unary_union(_DB_STRADE)
+    _ex = P03_CATASTO.difference(P03.buffer(0.05)).intersection(_sd.buffer(4.0))   # fascia catastale oltre il filo di progetto
+    sedime = unary_union([_sd, _ex]).buffer(0.3).buffer(-0.3).difference(P03)
 else:            # catasto: aree 'strada' + particelle che di fatto sono strada
     sedime = unary_union(strade + [p for i, p in particelle if i in AGG]).buffer(0.3).buffer(-0.3)
 sedime = sedime.intersection(area)

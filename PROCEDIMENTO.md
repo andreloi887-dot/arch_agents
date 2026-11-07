@@ -48,8 +48,14 @@ Andrea deve intervenire il meno possibile.
   il contesto anche lì; Blender; SketchUp solo per controlli).
 
 ### 3. Assemblaggio in Blender (agenti)
-- Importa l'IFC di Edificius con Bonsai, mantenendo classi e piani.
-- Costruisce il contesto da `contesto.json`, nella stessa origine.
+Script in `skills/rilievo-urbano/scripts/blender/` (vedi il README lì), tutti senza interfaccia:
+1. `importa_contesto.py`: contesto da `contesto.json`, con sole reale, materiali della libreria e camere delle riprese.
+2. `allinea_ifc.py`: se l'IFC non è georiferito (Edificius esporta coordinate locali), rotazione, traslazione e quota
+   del progetto sul lotto; i valori vanno in `lotto.json → progetto_ifc`.
+3. `importa_progetto.py`: l'IFC (letto con l'ifcopenshell di Bonsai) nella scena del contesto. L'IFC è
+   planimetricamente giusto: comanda su lotto e marciapiede di progetto, il terreno è contenuto da muraglioni,
+   il progetto si può dividere in ville, ognuna alla quota del proprio cancello carraio. Il perimetro torna al
+   motore del contesto (`lotto.perimetro_progetto`), che rifà la sede stradale fino al filo del progetto.
 - Materiali PBR dalla **libreria materiali di studio**, assegnati per classe IFC e nome del materiale.
 - Vegetazione con Geometry Nodes, luci degli interni, sole reale (posizione georeferenziata, data e ora
   scelte).
@@ -106,9 +112,9 @@ Andrea deve intervenire il meno possibile.
 - Fase 2 provata su Via della Menta / Via Tamburino Sardo (Cagliari): contesto LOD3 con quote misurate dal DSM,
   verificato su foto, ortofoto e controlli automatici; SketchUp solo come vista di controllo. Da provare su un
   secondo lotto.
-- Fase 3 (Blender) avviata: `skills/rilievo-urbano/scripts/blender/importa_contesto.py` costruisce l'intero contesto
-  da `contesto.json` in ~11 s (`blender -b -P importa_contesto.py -- <modello> [--render]`), con camere uguali alle
-  riprese Street View e render EEVEE di controllo. Da fare: libreria materiali PBR e modelli (lampioni, cartelli,
-  alberi, palme, cancelli) al posto delle forme semplici, poi l'import dell'IFC di Edificius con Bonsai.
+- Fase 3 (Blender) avviata: contesto in ~11 s con libreria PBR Poly Haven, sole NOAA, erbe in Geometry Nodes;
+  progetto IFC di Via della Menta inserito (2026-11-07): 4 ville alla quota dei cancelli su Via della Menta,
+  muraglioni in c.a., marciapiede di progetto. Da fare: secondo cancello della villa 4, rampette carrabili,
+  materiali PBR del progetto (oggi colori Edificius), percorsi di camera, export USD.
 - Installati: Blender 5.2 + Bonsai 0.9.0, Unreal Engine 5.8, FFmpeg.
 - Fasi 3–6 ancora da costruire.

@@ -27,6 +27,8 @@ DBGT regionale per la geometria, DTM e **DSM LiDAR** per le quote (gronde, colmi
 controllo a terra, Street View e Earth solo per descrivere. Dopo ogni generazione lancia
 `skills/rilievo-urbano/scripts/contesto/verifica_contesto.py <modello>`: nessun errore bloccante prima della consegna, e ogni avviso spiegato.
 
+**Con il progetto IFC** l'IFC è planimetricamente giusto: dove lotto catastale e progetto non coincidono comanda il progetto (`lotto.perimetro_progetto`, scritto da `skills/rilievo-urbano/scripts/blender/importa_progetto.py`); segnala ad Andrea solo le differenze che toccano fronti, muri o accessi.
+
 Strumenti: gli script in `skills/rilievo-urbano/scripts/` (`gmaps.py`, `annota.py`, `confronta.py`,
 `sv_edifici.py` per una ripresa mirata di ogni edificio).
 Le API Google richiedono `GOOGLE_MAPS_API_KEY`: se manca, dillo e lavora su screenshot o foto

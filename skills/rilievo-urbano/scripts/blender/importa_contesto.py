@@ -1,7 +1,7 @@
 """Importatore di contesto.json in Blender (fase 3 della filiera, vedi PROCEDIMENTO.md).
 
   blender -b -P importa_contesto.py -- <cartella modello> [--uscita uscita_blender] [--render] [--samples 16]
-                                      [--data 2026-04-15] [--ora 11:00] [--fuso 2] [--senza-libreria]
+                                      [--data 2026-04-15] [--ora 11:00] [--fuso 2] [--senza-libreria] [--viste SV-08,VISTA_angolo]
 
 Sole: posizione calcolata (NOAA) da origine del lotto, data e ora locali (fuso: +1 inverno, +2 ora legale).
 
@@ -20,10 +20,10 @@ la proprietà `asset` con il tipo, così la sostituzione con asset di qualità �
 import bpy, bmesh, json, math, os, sys
 from mathutils import Matrix, Vector
 
-argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from comune import argomenti, registro, resa, rendi_camere
+argv, opt = argomenti()
 MOD = os.path.abspath(argv[0]) if argv else os.getcwd()
-def opt(nome, default=None):
-    return argv[argv.index(nome) + 1] if nome in argv and argv.index(nome) + 1 < len(argv) else default
 USCITA = os.path.join(MOD, opt("--uscita", "uscita_blender"))
 RENDER = "--render" in argv
 REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", ".."))
@@ -32,9 +32,7 @@ LIBJ = json.load(open(os.path.join(LIB, "libreria.json"), encoding="utf-8")) if 
 SAMPLES = int(opt("--samples", "16"))
 os.makedirs(USCITA, exist_ok=True)
 C = json.load(open(os.path.join(MOD, "contesto.json"), encoding="utf-8"))
-LOG = open(os.path.join(USCITA, "importa.log"), "w", encoding="utf-8")
-def log(*a):
-    s = " ".join(str(x) for x in a); print(s); LOG.write(s + "\n"); LOG.flush()
+log = registro(os.path.join(USCITA, "importa.log"))
 
 # ------------------------------------------------------------------------------------------------ scena pulita
 # ATTENZIONE: mai bpy.ops.wm.read_factory_settings() / read_homefile(): riportano le preferenze di fabbrica e Blender
@@ -551,29 +549,9 @@ camere.append((camera("VISTA_aerea_NE", (55, 75, 38), (0, 15, 2), 55), "vista_ae
 camere.append((camera("VISTA_angolo", (-12, 4, 2.6), (2, 16, 2.0), 75), "vista_angolo"))
 scn.camera = camere[-3][0]
 
+for co, nome in camere: co["file"] = nome
+resa(scn, SAMPLES)          # salvata nel .blend: si apre già con la resa giusta e importa_progetto.py la eredita
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(USCITA, "contesto.blend"))
 log("salvato", os.path.join(USCITA, "contesto.blend"))
-
-if RENDER:
-    for eng in ("BLENDER_EEVEE_NEXT", "BLENDER_EEVEE"):
-        try: scn.render.engine = eng; break
-        except Exception: pass
-    try: scn.eevee.taa_render_samples = SAMPLES
-    except Exception: pass
-    try: scn.eevee.shadow_pool_size = "1024"     # molte ombre (erbe, ringhiere): pool più grande
-    except Exception: pass
-    scn.view_settings.view_transform = "AgX" if "AgX" in [i.identifier for i in scn.view_settings.bl_rna.properties["view_transform"].enum_items] else "Filmic"
-    # anteprima di controllo: trasformazione "Standard" (colori fedeli alla palette), esposizione leggermente ridotta
-    # AgX regge le luci forti del sole di mezzogiorno; "Punchy" restituisce la saturazione delle foto
-    try: scn.view_settings.view_transform = "AgX"
-    except Exception: pass
-    for look in ("AgX - Punchy", "Punchy", "AgX - High Contrast"):
-        try: scn.view_settings.look = look; break
-        except Exception: pass
-    scn.view_settings.exposure = -0.2
-    os.makedirs(os.path.join(USCITA, "viste"), exist_ok=True)
-    for co, nome in camere:
-        scn.camera = co; scn.render.resolution_x, scn.render.resolution_y = co["res"]
-        scn.render.filepath = os.path.join(USCITA, "viste", nome + ".png")
-        bpy.ops.render.render(write_still=True); log("render", nome)
+if RENDER: rendi_camere(bpy, scn, os.path.join(USCITA, "viste"), opt("--viste"), log)
 log("fine")

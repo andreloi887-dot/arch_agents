@@ -47,7 +47,19 @@ perché, da leggere prima di lavorare su un lotto nuovo.
 3. Rigenerazione, viste dagli stessi punti delle riprese, confronto affiancato edificio per edificio.
 4. Ogni differenza corretta nei dati o in una regola generale, mai con eccezioni nel codice per il singolo lotto.
 
+## Progetto IFC (Edificius)
+| Errore | Causa | Regola |
+|---|---|---|
+| Progetto a 3,7 km dal lotto | Edificius esporta coordinate locali e lat/long di default del sito | mai fidarsi di IfcSite: `allinea_ifc.py` adatta il perimetro del progetto ai bordi strada e al confine |
+| Allineamento spostato di metri | bersaglio "confine allargato" sui lati verso i vicini | lati su strada → bordo della sede; lati verso i vicini → confine; scarto sull'85 % dei punti migliori |
+| Strettoia su Via della Menta | il lotto catastale sporgeva sulla sede DBGT, il contesto toglieva quella fascia alla strada | con un progetto, il lotto è il perimetro IFC (`lotto.perimetro_progetto`) e la fascia catastale oltre il filo, se tocca la sede, è strada |
+| Scarpata sospesa e vuoti sotto le ville | terreno IFC con fianchi e margine fuori dal perimetro; contesto tolto sotto | terreno solo dentro il perimetro, buchi riempiti, terra contenuta da muraglioni in c.a. |
+| Una quota sola per tutto il progetto (±1 m) | il terreno di Edificius non segue la pendenza della strada | progetto diviso in ville lungo i muri divisori; ogni villa alla quota che porta la soglia del suo cancello carraio al marciapiede |
+| Marciapiede di progetto 30 cm troppo alto | quota presa dal marciapiede del contesto (già rialzato) | marciapiede = piano della carreggiata accanto + alzata del cordolo |
+
 ## Blender
+- Le impostazioni di resa (AgX "Punchy", EEVEE) si salvano nel `.blend` (`comune.resa`): chi lo apre o lo riusa
+  vede gli stessi colori dei render di controllo.
 - **Mai `bpy.ops.wm.read_factory_settings()` (né `read_homefile`) negli script**: riporta le preferenze di fabbrica e
   Blender rimuove le librerie delle estensioni dalla cartella utente (`extensions/.local/.../site-packages`). Il
   2026-11-07 ha cancellato in parte ifcopenshell e le dipendenze di Bonsai. Gli script svuotano solo la scena.
