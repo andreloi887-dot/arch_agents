@@ -16,7 +16,7 @@ Fa, senza interventi:
  5. se manca, una scheda.json minima (solo palette): edifici, muri e arredo li aggiunge l'agente rilievo-urbano.
 Non sovrascrive lotto.json né scheda.json se esistono già (usa --forza per lotto.json).
 """
-import argparse, json, math, os, subprocess, sys, urllib.request
+import argparse, json, math, os, subprocess, sys, urllib.parse, urllib.request
 import numpy as np, tifffile
 from pyproj import Transformer
 from shapely.geometry import Polygon, Point
@@ -101,6 +101,57 @@ def main():
                "fonte": "derivata dal DTM LiDAR; per una tendenza Copernicus usare terreno_tendenza.py"},
               open(os.path.join(MOD, "terreno_tendenza.json"), "w", encoding="utf-8"), indent=1)
 
+    # 3b. Database Geotopografico regionale (WFS): sede stradale, assi, recinzioni, muri di sostegno, edifici
+    WFS = "https://webgis.regione.sardegna.it/geoserver/ows"
+    bb = f"{la0:.6f},{lo0:.6f},{la1:.6f},{lo1:.6f},urn:ogc:def:crs:EPSG::4326"
+    DBL = {"strade": "dbgt_10k_22_v05_01_area_stradale", "assi": "dbgt_10k_22_v05_01_elemento_stradale",
+           "recinzioni": "dbgt_10k_22_v05_02_elemento_divisorio", "muri_sostegno": "dbgt_10k_22_v05_02_muro_sostegno_arc",
+           "edifici": "dbgt_10k_22_v05_02_edificio_ingombro_suolo"}
+    dbgt = {}
+    for k, lay in DBL.items():
+        out = os.path.join(GEO, f"dbgt_{lay.split('_v05_')[1][3:]}.geojson")
+        if not os.path.exists(out):
+            scarica(WFS + "?" + urllib.parse.urlencode({"service": "WFS", "version": "2.0.0", "request": "GetFeature",
+                    "typeNames": f"dbu:{lay}", "outputFormat": "application/json", "srsName": "EPSG:4326", "bbox": bb}), out)
+        dbgt[k] = "../geometria/" + os.path.basename(out)
+    print("DBGT:", ", ".join(dbgt))
+
+    # 3c. DSM LiDAR 1 m (superficie, solo edifici, solo vegetazione): tavole dai quadri d'unione regionali
+    dsm = {"superficie": [], "edifici": [], "vegetazione": [], "json": "dsm_2008.json"}
+    DSMD = os.path.join(GEO, "dsm"); os.makedirs(DSMD, exist_ok=True)
+    for qu, anno in (("QU2k_DTM_DSM1m_centri_urbani_2013", 2013), ("QU2k_fasciacostiera2008_DTM_DSM1m", 2008)):
+        fn = os.path.join(DSMD, qu + ".json")
+        scarica(WFS + "?" + urllib.parse.urlencode({"service": "WFS", "version": "2.0.0", "request": "GetFeature",
+                "typeNames": f"dbu:{qu}", "outputFormat": "application/json", "srsName": "EPSG:4326", "bbox": bb}), fn)
+        tav = json.load(open(fn, encoding="utf-8")).get("features", [])
+        if not tav: continue
+        import zipfile
+        for f in tav:
+            pr = f["properties"]
+            for k, chiave in (("dsm", "superficie"), ("dsm_buildi", "edifici"), ("dsm_vegeta", "vegetazione")):
+                url = pr.get(k)
+                if not url: continue
+                zp = os.path.join(DSMD, os.path.basename(url))
+                if not os.path.exists(zp): scarica(url, zp)
+                dest = os.path.join(DSMD, os.path.splitext(os.path.basename(url))[0])
+                with zipfile.ZipFile(zp) as z: z.extractall(dest)
+                asc = [x for x in os.listdir(dest) if x.upper().endswith(".ASC")]
+                if asc: dsm[chiave].append("../geometria/dsm/" + os.path.basename(dest) + "/" + asc[0])
+        dsm["anno"] = anno; dsm["json"] = f"dsm_{anno}.json"
+        break   # la copertura più recente
+    if dsm["superficie"]:
+        print(f"DSM {dsm['anno']}: {len(dsm['superficie'])} tavole")
+    # 3d. ortofoto regionale più recente (WMS), 10 cm/pixel sull'area
+    ORT = os.path.join(GEO, "ortofoto"); os.makedirs(ORT, exist_ok=True)
+    Eo, No = Transformer.from_crs("EPSG:4326", CRS_DTM, always_xy=True).transform(O[1], O[0]); hh = EXT + 5
+    q = {"SERVICE": "WMS", "VERSION": "1.3.0", "REQUEST": "GetMap", "LAYERS": "raster:Mosaico_2022_GB", "STYLES": "", "CRS": CRS_DTM,
+         "BBOX": f"{Eo-hh},{No-hh},{Eo+hh},{No+hh}", "WIDTH": int(2*hh/0.1), "HEIGHT": int(2*hh/0.1), "FORMAT": "image/jpeg"}
+    if not os.path.exists(os.path.join(ORT, "ortofoto.jpg")):
+        scarica("https://webgis.regione.sardegna.it/geoserverraster/ows?" + urllib.parse.urlencode(q), os.path.join(ORT, "ortofoto.jpg"))
+    json.dump({"crs": CRS_DTM, "layer": q["LAYERS"], "bbox": [Eo-hh, No-hh, Eo+hh, No+hh], "px": q["WIDTH"], "m_px": 0.1,
+               "file": "ortofoto.jpg", "fonte": "Regione Autonoma della Sardegna – ortofoto 2022 (WMS)"},
+              open(os.path.join(ORT, "ortofoto.json"), "w", encoding="utf-8"), indent=1)
+
     # 4. particella del lotto
     feats = json.load(open(os.path.join(GEO, "catasto_strade_particelle.geojson"), encoding="utf-8"))["features"]
     px, py = to_loc.transform(PL[1], PL[0])
@@ -124,7 +175,9 @@ def main():
                      "crs_dtm": CRS_DTM, "scheda": "../scheda.json",
                      "particelle": "../geometria/catasto_strade_particelle.geojson",
                      "fabbricati": "../geometria/catasto_fabbricati.geojson",
-                     "manifest": ["../_rif_google/manifest_riprese.json", "manifest_riprese.json"]},
+                     "manifest": ["../_rif_google/manifest_riprese.json", "manifest_riprese.json"],
+                     "dbgt": dbgt, "ortofoto": "../geometria/ortofoto/ortofoto.json",
+                     **({"dsm": dsm} if dsm["superficie"] else {})},
             "strade": {"punti_aggiunti_al_sedime": [], "marciapiede_m": 1.5, "rialzo_marciapiede_m": 0.10,
                        "pendenza_marciapiede": 0.015, "raccordo_angoli_m": 2.0, "raccordo_lotto_m": 4.0,
                        "materiale_carreggiata": "C16", "materiale_marciapiede": "C17", "materiale_cordolo": "C19",
@@ -147,6 +200,8 @@ def main():
                    "edifici": [], "recinzioni": [],
                    "palette": [{"id": i, "materiale": n, "hex": h} for i, n, h in PALETTE]},
                   open(sp, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
+    if dsm["superficie"]:
+        subprocess.run([sys.executable, os.path.join(HERE, "dsm.py"), MOD], check=True)
     print(f"pronto: {MOD}\npoi: python {os.path.join(HERE, 'contesto.py')} \"{MOD}\"")
 
 if __name__ == "__main__":

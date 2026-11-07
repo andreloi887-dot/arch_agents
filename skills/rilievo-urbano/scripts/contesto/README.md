@@ -6,7 +6,8 @@ del modello. Le uscite vengono scritte nella stessa cartella.
 
 | Script | Ingresso → uscita |
 |---|---|
-| `prepara_lotto.py --cartella <zona> --origine lat,lng --lotto lat,lng` | scarica catasto e DTM LiDAR, trova la particella, scrive `lotto.json` e una scheda minima |
+| `prepara_lotto.py --cartella <zona> --origine lat,lng --lotto lat,lng` | scarica catasto, DTM LiDAR, Database Geotopografico (strade, assi, recinzioni, muri, edifici), DSM LiDAR (superficie, edifici, vegetazione) e ortofoto 2022; trova la particella, scrive `lotto.json` e una scheda minima |
+| `dsm.py <cartella>` | mosaico e ritaglio delle tavole DSM sull'area (lanciato da `prepara_lotto.py`) |
 | `terreno_tendenza.py <cartella> <Copernicus.tif>` | facoltativo: tendenza del terreno per le zone fuori dal DTM |
 | `scena.py <cartella>` | `lotto.json` + dati → `scena.json` |
 | `contesto.py <cartella>` | rilancia `scena.py`, poi → `contesto.json` + `texture/` (letto da `../sketchup/costruisci_contesto.rb`, e poi da Blender) |

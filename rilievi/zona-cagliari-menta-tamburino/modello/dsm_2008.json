@@ -1,0 +1,12 @@
+{
+ "crs": "EPSG:32632",
+ "bordo_sinistro_E": 509855.5,
+ "bordo_superiore_N": 4344882.5,
+ "passo": 1.0,
+ "fonte": "Regione Autonoma della Sardegna – DSM LiDAR 1 m, volo 2008 (fascia costiera)",
+ "raster": {
+  "superficie": "dsm_2008.tif",
+  "edifici": "dsm_2008_edifici.tif",
+  "vegetazione": "dsm_2008_vegetazione.tif"
+ }
+}

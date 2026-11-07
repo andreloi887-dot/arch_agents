@@ -6,3 +6,6 @@ rilievi/*/modello/anteprima/out/
 rilievi/*/modello/anteprima/out_contesto/
 rilievi/*/modello/__pycache__/
 rilievi/*/modello/uscita_sketchup/
+# tavole DSM originali (scaricabili di nuovo con prepara_lotto.py); restano i ritagli in modello/
+rilievi/*/geometria/dsm_2008/
+rilievi/*/geometria/dsm/

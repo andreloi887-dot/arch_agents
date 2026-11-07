@@ -1,0 +1,14 @@
+{
+ "crs": "EPSG:7791",
+ "layer": "raster:Mosaico_2022_GB",
+ "bbox": [
+  509865.8735350086,
+  4344712.620752944,
+  510025.8735350086,
+  4344872.620752944
+ ],
+ "px": 1600,
+ "m_px": 0.1,
+ "fonte": "Regione Autonoma della Sardegna \u2013 ortofoto (WMS geoserverraster), layer raster:Mosaico_2022_GB",
+ "file": "ortofoto.jpg"
+}

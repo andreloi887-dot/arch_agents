@@ -640,6 +640,83 @@ for j, g in enumerate(_DB_ED):
         "copertura": ov.get("copertura", "piana"), "manto": ov.get("manto"), "lod": 1,
         "colmo": ov.get("colmo"), "pendenza_pct": ov.get("pendenza_pct")})
 
+# --- quote misurate dal DSM LiDAR (se disponibile): gronda, colmo, forma del tetto; alberi dalla vegetazione
+_DSMJ = D.get("dsm", {}).get("json")
+if _DSMJ and os.path.exists(P_(_DSMJ)):
+    _DM2 = jload(_DSMJ); _RS = {k: tifffile.imread(P_(v)) for k, v in _DM2["raster"].items()}
+    _TU = Transformer.from_crs(_AEQD, _DM2["crs"], always_xy=True)
+    def _rc(x, y):
+        E_, N_ = _TU.transform(x, y)
+        return int((_DM2["bordo_superiore_N"] - N_) / _DM2["passo"]), int((E_ - _DM2["bordo_sinistro_E"]) / _DM2["passo"])
+    def dsm(k, x, y):
+        r_, c_ = _rc(x, y); a_ = _RS[k]
+        return float(a_[r_, c_]) if 0 <= r_ < a_.shape[0] and 0 <= c_ < a_.shape[1] else float("nan")
+    ANNO = D["dsm"].get("anno", "?")
+    for e in scena["edifici"]:
+        P_e = Polygon(e["impronta"]); x0, y0, x1, y1 = P_e.bounds
+        celle = [(x + 0.5, y + 0.5) for x in range(int(x0) - 1, int(x1) + 2) for y in range(int(y0) - 1, int(y1) + 2)
+                 if P_e.buffer(-0.3).contains(Point(x + 0.5, y + 0.5))]
+        if len(celle) < 6: continue
+        zt = np.array([dsm("edifici", x, y) - Z0 for x, y in celle])
+        zg_ = np.array([trend(x, y) for x, y in celle])
+        alto = (zt - zg_) > 2.0
+        e["dsm_copertura"] = round(float(alto.mean()), 2)
+        if alto.mean() < 0.6:   # edificio assente nel DSM (costruito dopo il volo) o troppo piccolo: restano le stime
+            e["quote_fonte"] = f"stima (assente nel DSM {ANNO})"; continue
+        bordo = np.array([P_e.exterior.distance(Point(c)) < 1.3 for c in celle])
+        g_abs = float(np.percentile(zt[alto & bordo] if (alto & bordo).sum() >= 4 else zt[alto], 35))
+        c_abs = float(np.percentile(zt[alto], 97))
+        e["gronda_z"] = round(g_abs, 2); e["colmo_z"] = round(c_abs, 2)
+        e["quote_fonte"] = f"DSM LiDAR {ANNO}"
+        dz = c_abs - g_abs
+        dmax = max(0.5, max(P_e.exterior.distance(Point(c)) for c in celle))
+        f_ = (e.get("copertura") or "").lower()
+        falde = "padiglione" in f_ or "capanna" in f_ or "falda" in f_
+        if dz < 0.6:
+            e["copertura"] = "piana"; e["colmo"] = None
+        else:
+            if not falde: e["copertura"] = "a padiglione"
+            e["pendenza_pct"] = round(min(50, max(15, 100 * dz / dmax)), 0)
+        # volume alto (torretta, attico) riconosciuto dal DSM: celle oltre il colmo del corpo principale
+        alti = [c for c, z in zip(celle, zt) if z > g_abs + max(2.6, 0.75 * dz + 2.0)]
+        if len(alti) >= 6 and not e.get("volumi"):
+            from shapely.geometry import MultiPoint
+            g_t = MultiPoint(alti).convex_hull.buffer(0.5)
+            if g_t.area >= 6:
+                e["volumi_dsm"] = {"impronta": [[round(x, 2), round(y, 2)] for x, y in list(g_t.minimum_rotated_rectangle.exterior.coords)[:-1]],
+                                   "quota_z": round(float(np.percentile([z for z in zt if z > g_abs + 2.6], 90)), 2)}
+    # alberi: massimi locali del modello delle chiome (vegetazione − terreno), fuori da edifici e carreggiata
+    alberi = []
+    edif_ = unary_union([Polygon(e["impronta"]).buffer(1.0) for e in scena["edifici"]])
+    griglia = [(x + 0.5, y + 0.5) for x in range(int(-EXT), int(EXT)) for y in range(int(-EXT), int(EXT))]
+    chm = {}
+    for x, y in griglia:
+        v_ = dsm("vegetazione", x, y) - Z0 - trend(x, y); chm[(x, y)] = v_ if v_ == v_ else 0.0
+    for (x, y), h_ in chm.items():
+        if h_ < L.get("alberi_dsm", {}).get("altezza_min_m", 2.5): continue
+        if any(chm.get((x + dx, y + dy), 0) > h_ for dx in range(-2, 3) for dy in range(-2, 3) if (dx or dy)): continue
+        p_ = Point(x, y)
+        if edif_.contains(p_) or carreggiata.contains(p_) or not area.buffer(-1).contains(p_): continue
+        n_ = sum(1 for dx in range(-4, 5) for dy in range(-4, 5) if chm.get((x + dx, y + dy), 0) > 0.45 * h_)
+        alberi.append((round(x, 2), round(y, 2), round(h_, 1), round(2 * math.sqrt(n_ / math.pi), 1)))
+    # verifica sull'ortofoto più recente: l'albero c'è ancora se la chioma è scura e verde (non erba secca o suolo)
+    _OJ = D.get("ortofoto")
+    if _OJ and os.path.exists(P_(_OJ)):
+        from PIL import Image as _Im
+        _OM = jload(_OJ); _OA = np.asarray(_Im.open(os.path.join(os.path.dirname(P_(_OJ)), _OM.get("file", "ortofoto.jpg"))).convert("RGB")).astype(float)
+        _OT = Transformer.from_crs(_AEQD, _OM["crs"], always_xy=True); _oe0, _on0, _oe1, _on1 = _OM["bbox"]; _omp = _OM["m_px"]
+        AD_ = L.get("alberi_dsm", {})
+        def _verde(x, y, r):
+            E_, N_ = _OT.transform(x, y); c_ = (E_ - _oe0) / _omp; r_ = (_on1 - N_) / _omp; R_ = max(2, int(r / _omp))
+            w_ = _OA[max(0, int(r_ - R_)):int(r_ + R_), max(0, int(c_ - R_)):int(c_ + R_)]
+            if w_.size == 0: return False
+            exg = float(np.mean((2 * w_[:, :, 1] - w_[:, :, 0] - w_[:, :, 2]) / (w_.sum(2) + 1)))
+            return exg >= AD_.get("verde_min", 0.085) and float(w_.mean()) <= AD_.get("luminosita_max", 115)
+        prima = len(alberi)
+        alberi = [t for t in alberi if _verde(t[0], t[1], t[3] * 0.35)]
+        scena["alberi_dsm_controllo"] = {"trovati": prima, "presenti_ortofoto": len(alberi)}
+    scena["alberi_dsm"] = [{"xy": [x, y], "h": h_, "chioma": max(1.5, min(9.0, d_))} for x, y, h_, d_ in alberi]
+
 # --- muri di confine interni: lati delle particelle lontani dalla strada, fuori dagli edifici
 CI = L.get("confini_interni")
 if CI and not _DB_REC:

@@ -9,9 +9,15 @@ balcone visibile va osservato, descritto in forma strutturata e poi controllato 
    sede stradale, assi con nome, **recinzioni** (`elemento_divisorio`), muri di sostegno, sagome degli edifici.
    È la geometria di riferimento. Il catasto è sfasato di 1–3 m e serve solo per il lotto e le particelle.
 2. **DTM LiDAR 1 m** per le quote; le strade usano il profilo lisciato lungo gli assi DBGT.
-3. **Street View**: le riprese di piano (`piano_riprese.json`) **più una ripresa mirata per ogni edificio**
+3. **DSM LiDAR 1 m** regionale (superficie, *solo edifici*, *solo vegetazione*; volo 2008 fascia costiera o 2013
+   centri urbani; tavole dai quadri d'unione WFS `QU2k_*`): gronda e colmo **misurati** per ogni edificio esistente
+   alla data del volo, forma del tetto, volumi alti, alberi (posizione, altezza, chioma). Gli edifici assenti nel DSM
+   (più recenti) restano con le stime da foto e sono segnalati (`quote_fonte`).
+4. **Ortofoto regionale 2022** (WMS `raster:Mosaico_2022_GB`, dato aperto: se ne può ricavare geometria): controlla
+   recinzioni, bordi stradali, strisce, alberi ancora presenti (filtro automatico sulle chiome del DSM).
+5. **Street View**: le riprese di piano (`piano_riprese.json`) **più una ripresa mirata per ogni edificio**
    (`scripts/sv_edifici.py <modello>`), che riporta anche l'orientamento della facciata ripresa.
-4. **Google Earth 3D** (browser) per coperture, retri, cortili, recinzioni interne, ordine delle altezze.
+6. **Google Earth 3D** (browser) per coperture, retri, cortili, recinzioni interne, ordine delle altezze.
 Le immagini Google servono solo a descrivere: mai ricalcare o misurare geometria.
 
 ## 2. Procedura per ogni edificio (nessuno escluso, anche quelli di sfondo `CTX`/`DB`)

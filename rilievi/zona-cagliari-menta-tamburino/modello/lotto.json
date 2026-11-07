@@ -26,7 +26,24 @@
    "recinzioni": "../geometria/dbgt_elemento_divisorio.geojson",
    "muri_sostegno": "../geometria/dbgt_muro_sostegno_arc.geojson",
    "edifici": "../geometria/dbgt_edificio_ingombro_suolo.geojson"
-  }
+  },
+  "dsm": {
+   "superficie": [
+    "../geometria/dsm_2008/557100_22/557100_22_WGS.ASC",
+    "../geometria/dsm_2008/557100_23/557100_23_WGS.ASC"
+   ],
+   "edifici": [
+    "../geometria/dsm_2008/557100_22_BUILDINGS/557100_22_WGS.ASC",
+    "../geometria/dsm_2008/557100_23_BUILDINGS/557100_23_WGS.ASC"
+   ],
+   "vegetazione": [
+    "../geometria/dsm_2008/557100_22_VEGETATION/557100_22_WGS.ASC",
+    "../geometria/dsm_2008/557100_23_VEGETATION/557100_23_WGS.ASC"
+   ],
+   "anno": 2008,
+   "json": "dsm_2008.json"
+  },
+  "ortofoto": "../geometria/ortofoto_2022/ortofoto.json"
  },
  "strade": {
   "punti_aggiunti_al_sedime": [
@@ -882,7 +899,9 @@
    ],
    "n": 2,
    "h": 4.0,
-   "chioma": 3.5
+   "chioma": 3.5,
+   "nel_contesto": false,
+   "_nota": "sostituiti dagli alberi misurati dal DSM 2008"
   },
   {
    "id": "V05",
@@ -1016,5 +1035,10 @@
    "offset": 0.3,
    "_fonte": "edifici/CTX24_3"
   }
- ]
+ ],
+ "alberi_dsm": {
+  "usa": true,
+  "altezza_min_m": 2.5,
+  "distanza_da_palme_m": 3.0
+ }
 }

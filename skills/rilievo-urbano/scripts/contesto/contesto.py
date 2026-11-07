@@ -520,10 +520,14 @@ for e in sc["edifici"]:
     zb = min(zs) - 0.05
     piat = PIATT.get(e["id"], 0.0)
     h = e["altezza"] - piat + (max(zs) - min(zs)) * 0.5
+    if e.get("gronda_z") is not None:          # quota misurata dal DSM (assoluta rispetto all'origine)
+        h = max(2.5, e["gronda_z"] - zb)
     ed = {"nome": e["nome"], "tag": "10_Edifici", "impronta": [[R(x), R(y)] for x, y in imp],
           "z_base": R(zb), "altezza": R(h), "materiale": e["materiale"],
           "materiale_copertura": e.get("manto") or e["materiale"], "lod": e["lod"]}
     colmo = e.get("colmo")
+    if e.get("colmo_z") is not None and e.get("gronda_z") is not None:
+        colmo = e["altezza"] + (e["colmo_z"] - e["gronda_z"])   # così colmo - altezza = dislivello misurato
     f_ = (e.get("copertura") or "").lower()
     if not ("padiglione" in f_ or "capanna" in f_ or "falda" in f_):   # tetto piano: la gronda di scheda è la cima del parapetto
         h = max(2.5, h - 0.6); ed["altezza"] = R(h)
@@ -538,6 +542,16 @@ for e in sc["edifici"]:
         if fv and "pannelli" in fv: ed["elementi"] += fv["pannelli"]
         elif fv: ed["fotovoltaico"] = fv
     edifici.append(ed)
+    if e.get("volumi_dsm") and not e.get("volumi"):   # volume alto misurato dal DSM
+        vd = e["volumi_dsm"]; hv = max(2.5, vd["quota_z"] - (zb + h))
+        ev = {"nome": f"{e['nome']} – volume alto (DSM)", "tag": "10_Edifici", "impronta": vd["impronta"],
+              "z_base": R(zb + h), "altezza": R(hv), "materiale": e["materiale"],
+              "materiale_copertura": e.get("manto") or e["materiale"], "lod": 2}
+        tv = tetto(vd["impronta"], zb + h + hv, "a padiglione" if e.get("colmo") else "piana", e.get("pendenza_pct"), None, 0.3)
+        if tv: ev["tetto"] = tv
+        ev["elementi"] = dettagli({**e, "impronta": vd["impronta"], "altezza": hv, "piani": max(1, round(hv / 3)),
+                                   "facciate": [], "_falde": bool(tv)}, zb + h, hv)
+        edifici.append(ev)
     for v in e.get("volumi", []):   # volumi alti (torrette) sopra il tetto, con la loro copertura
         Pq = Polygon(imp); c = Pq.centroid if v.get("posizione", "centro") == "centro" else Point(*v["posizione"])
         mr = list(Pq.minimum_rotated_rectangle.exterior.coords)
@@ -637,6 +651,17 @@ for v in L.get("vegetazione", []):
                             "z": R(z_lotto2(x, y) if v.get("su_lotto") else S.trend(x, y)), "h": v["h"],
                             "chioma": v.get("chioma", 3.0), "fusto": v.get("fusto", 0.0),
                             "materiale": v.get("materiale", "C27")})
+
+# ---------------------------------------------------------------- alberi misurati dal DSM della vegetazione
+AD = L.get("alberi_dsm", {})
+if AD.get("usa", True):
+    palme = [Point(v["xy"]) for v in vegetazione]
+    for k_, a in enumerate(sc.get("alberi_dsm", [])):
+        if any(Point(a["xy"]).distance(p) < AD.get("distanza_da_palme_m", 3.0) for p in palme): continue
+        x, y = a["xy"]
+        vegetazione.append({"nome": f"VD{k_+1:02d} – albero (DSM)", "tag": "50_Vegetazione", "xy": [R(x), R(y)], "forma": "albero",
+                            "z": R(z_lotto2(x, y) if S.P03.contains(Point(x, y)) else S.trend(x, y)), "h": a["h"],
+                            "chioma": a["chioma"], "fusto": 0.0, "materiale": "C27"})
 
 # ---------------------------------------------------------------- lampioni lungo i marciapiedi (passo di scheda, sfalsati)
 def _verso_strada(x, y):

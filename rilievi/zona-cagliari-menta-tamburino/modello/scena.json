@@ -55249,14 +55249,18 @@
 "manto": "C03",
 "lod": 1,
 "colmo": 8.0,
-"pendenza_pct": 30,
+"pendenza_pct": 36.0,
 "sporto_cm": null,
 "fotovoltaico": false,
 "piani": 2,
 "facciate": [],
 "volumi": [],
 "oscurante_default": "persiane",
-"mat_ringhiera": "C06"
+"mat_ringhiera": "C06",
+"dsm_copertura": 1.0,
+"gronda_z": 5.25,
+"colmo_z": 7.02,
+"quote_fonte": "DSM LiDAR 2008"
 },
 {
 "id": "E10",
@@ -55287,7 +55291,7 @@
 "manto": "C03",
 "lod": 2,
 "colmo": 10.8,
-"pendenza_pct": 30,
+"pendenza_pct": 21.0,
 "sporto_cm": 50,
 "fotovoltaico": false,
 "piani": 3,
@@ -55326,7 +55330,11 @@
 ],
 "volumi": [],
 "oscurante_default": "avvolgibile",
-"mat_ringhiera": "C06"
+"mat_ringhiera": "C06",
+"dsm_copertura": 1.0,
+"gronda_z": 8.64,
+"colmo_z": 9.88,
+"quote_fonte": "DSM LiDAR 2008"
 },
 {
 "id": "CTX06",
@@ -55364,7 +55372,9 @@
 "facciate": [],
 "volumi": [],
 "oscurante_default": null,
-"mat_ringhiera": "C06"
+"mat_ringhiera": "C06",
+"dsm_copertura": 0.0,
+"quote_fonte": "stima (assente nel DSM 2008)"
 },
 {
 "id": "E08",
@@ -55391,10 +55401,10 @@
 "z_base": 2.371,
 "altezza": 6.5,
 "confidenza_altezza": "media",
-"copertura": "a padiglione su pi\u00f9 corpi, bassa pendenza",
+"copertura": "piana",
 "manto": "C04",
 "lod": 2,
-"colmo": 8.0,
+"colmo": null,
 "pendenza_pct": 20,
 "sporto_cm": null,
 "fotovoltaico": true,
@@ -55426,7 +55436,11 @@
 ],
 "volumi": [],
 "oscurante_default": "avvolgibile",
-"mat_ringhiera": "C06"
+"mat_ringhiera": "C06",
+"dsm_copertura": 0.84,
+"gronda_z": 5.9,
+"colmo_z": 6.48,
+"quote_fonte": "DSM LiDAR 2008"
 },
 {
 "id": "E11",
@@ -55473,7 +55487,7 @@
 "manto": "C03",
 "lod": 2,
 "colmo": 8.0,
-"pendenza_pct": 35,
+"pendenza_pct": 20.0,
 "sporto_cm": 30,
 "fotovoltaico": false,
 "piani": 2,
@@ -55507,7 +55521,11 @@
 ],
 "volumi": [],
 "oscurante_default": "avvolgibile",
-"mat_ringhiera": "C06"
+"mat_ringhiera": "C06",
+"dsm_copertura": 1.0,
+"gronda_z": 5.6,
+"colmo_z": 6.6,
+"quote_fonte": "DSM LiDAR 2008"
 },
 {
 "id": "E09",
@@ -55554,7 +55572,7 @@
 "manto": "C03",
 "lod": 2,
 "colmo": 10.5,
-"pendenza_pct": 30,
+"pendenza_pct": 19.0,
 "sporto_cm": 50,
 "fotovoltaico": true,
 "piani": 2,
@@ -55624,7 +55642,11 @@
 }
 ],
 "oscurante_default": "avvolgibile",
-"mat_ringhiera": "C06"
+"mat_ringhiera": "C06",
+"dsm_copertura": 1.0,
+"gronda_z": 9.55,
+"colmo_z": 10.18,
+"quote_fonte": "DSM LiDAR 2008"
 },
 {
 "id": "E07",
@@ -55683,7 +55705,7 @@
 "manto": "C03",
 "lod": 2,
 "colmo": 8.3,
-"pendenza_pct": 30,
+"pendenza_pct": 43.0,
 "sporto_cm": null,
 "fotovoltaico": true,
 "piani": 2,
@@ -55712,7 +55734,11 @@
 ],
 "volumi": [],
 "oscurante_default": "persiane",
-"mat_ringhiera": "C06"
+"mat_ringhiera": "C06",
+"dsm_copertura": 0.87,
+"gronda_z": 10.8,
+"colmo_z": 12.91,
+"quote_fonte": "DSM LiDAR 2008"
 },
 {
 "id": "E06",
@@ -55795,7 +55821,9 @@
 ],
 "volumi": [],
 "oscurante_default": "avvolgibile",
-"mat_ringhiera": "C06"
+"mat_ringhiera": "C06",
+"dsm_copertura": 0.0,
+"quote_fonte": "stima (assente nel DSM 2008)"
 },
 {
 "id": "E05",
@@ -55923,7 +55951,9 @@
 ],
 "volumi": [],
 "oscurante_default": "avvolgibile",
-"mat_ringhiera": "C06"
+"mat_ringhiera": "C06",
+"dsm_copertura": 0.0,
+"quote_fonte": "stima (assente nel DSM 2008)"
 },
 {
 "id": "E02",
@@ -55954,7 +55984,7 @@
 "manto": "C03",
 "lod": 2,
 "colmo": 8.3,
-"pendenza_pct": 30,
+"pendenza_pct": 20.0,
 "sporto_cm": 40,
 "fotovoltaico": false,
 "piani": 2,
@@ -55988,7 +56018,11 @@
 ],
 "volumi": [],
 "oscurante_default": "persiane",
-"mat_ringhiera": "C06"
+"mat_ringhiera": "C06",
+"dsm_copertura": 1.0,
+"gronda_z": 8.23,
+"colmo_z": 9.34,
+"quote_fonte": "DSM LiDAR 2008"
 },
 {
 "id": "E03",
@@ -56043,7 +56077,7 @@
 "manto": "C03",
 "lod": 2,
 "colmo": 8.3,
-"pendenza_pct": 30,
+"pendenza_pct": 39.0,
 "sporto_cm": 40,
 "fotovoltaico": false,
 "piani": 2,
@@ -56077,7 +56111,11 @@
 ],
 "volumi": [],
 "oscurante_default": "avvolgibile",
-"mat_ringhiera": "C06"
+"mat_ringhiera": "C06",
+"dsm_copertura": 1.0,
+"gronda_z": 14.56,
+"colmo_z": 16.44,
+"quote_fonte": "DSM LiDAR 2008"
 },
 {
 "id": "CTX16",
@@ -56152,7 +56190,9 @@
 ],
 "volumi": [],
 "oscurante_default": "avvolgibile",
-"mat_ringhiera": "C06"
+"mat_ringhiera": "C06",
+"dsm_copertura": 0.0,
+"quote_fonte": "stima (assente nel DSM 2008)"
 },
 {
 "id": "E01",
@@ -56183,7 +56223,7 @@
 "manto": "C03",
 "lod": 2,
 "colmo": 10.8,
-"pendenza_pct": 35,
+"pendenza_pct": 18.0,
 "sporto_cm": 30,
 "fotovoltaico": false,
 "piani": 3,
@@ -56220,7 +56260,11 @@
 ],
 "volumi": [],
 "oscurante_default": "persiane",
-"mat_ringhiera": "C06"
+"mat_ringhiera": "C06",
+"dsm_copertura": 1.0,
+"gronda_z": 11.0,
+"colmo_z": 11.78,
+"quote_fonte": "DSM LiDAR 2008"
 },
 {
 "id": "E04",
@@ -56272,7 +56316,9 @@
 ],
 "volumi": [],
 "oscurante_default": null,
-"mat_ringhiera": "C06"
+"mat_ringhiera": "C06",
+"dsm_copertura": 0.0,
+"quote_fonte": "stima (assente nel DSM 2008)"
 },
 {
 "id": "CTX19",
@@ -56319,7 +56365,7 @@
 "manto": "C03",
 "lod": 1,
 "colmo": 11.0,
-"pendenza_pct": 30,
+"pendenza_pct": 21.0,
 "sporto_cm": null,
 "fotovoltaico": false,
 "piani": 3,
@@ -56361,7 +56407,11 @@
 ],
 "volumi": [],
 "oscurante_default": "persiane",
-"mat_ringhiera": "C06"
+"mat_ringhiera": "C06",
+"dsm_copertura": 1.0,
+"gronda_z": 11.93,
+"colmo_z": 12.89,
+"quote_fonte": "DSM LiDAR 2008"
 },
 {
 "id": "CTX21",
@@ -56400,14 +56450,18 @@
 "manto": "C03",
 "lod": 1,
 "colmo": 4.6,
-"pendenza_pct": 30,
+"pendenza_pct": 33.0,
 "sporto_cm": null,
 "fotovoltaico": false,
 "piani": 1,
 "facciate": [],
 "volumi": [],
 "oscurante_default": null,
-"mat_ringhiera": "C06"
+"mat_ringhiera": "C06",
+"dsm_copertura": 1.0,
+"gronda_z": 8.55,
+"colmo_z": 10.3,
+"quote_fonte": "DSM LiDAR 2008"
 },
 {
 "id": "CTX24",
@@ -56442,14 +56496,18 @@
 "manto": "C03",
 "lod": 1,
 "colmo": 11.0,
-"pendenza_pct": 30,
+"pendenza_pct": 41.0,
 "sporto_cm": null,
 "fotovoltaico": false,
 "piani": null,
 "facciate": [],
 "volumi": [],
 "oscurante_default": null,
-"mat_ringhiera": "C06"
+"mat_ringhiera": "C06",
+"dsm_copertura": 1.0,
+"gronda_z": 9.66,
+"colmo_z": 11.29,
+"quote_fonte": "DSM LiDAR 2008"
 },
 {
 "id": "DB30",
@@ -56492,7 +56550,11 @@
 "manto": "C03",
 "lod": 1,
 "colmo": 9.8,
-"pendenza_pct": 30
+"pendenza_pct": 33.0,
+"dsm_copertura": 1.0,
+"gronda_z": 14.85,
+"colmo_z": 16.01,
+"quote_fonte": "DSM LiDAR 2008"
 },
 {
 "id": "DB31",
@@ -56523,7 +56585,11 @@
 "manto": null,
 "lod": 1,
 "colmo": null,
-"pendenza_pct": null
+"pendenza_pct": null,
+"dsm_copertura": 1.0,
+"gronda_z": 5.57,
+"colmo_z": 5.75,
+"quote_fonte": "DSM LiDAR 2008"
 }
 ],
 "vegetazione": [
@@ -56611,7 +56677,8 @@
 "forma": "albero",
 "n": 2,
 "h": 4.0,
-"chioma": 3.5
+"chioma": 3.5,
+"_nota": "sostituiti dagli alberi misurati dal DSM 2008"
 },
 {
 "id": "V05",
@@ -57170,6 +57237,292 @@
 0.4479,
 -0.8941
 ]
+}
+],
+"alberi_dsm_controllo": {
+"trovati": 81,
+"presenti_ortofoto": 35
+},
+"alberi_dsm": [
+{
+"xy": [
+-71.5,
+14.5
+],
+"h": 2.8,
+"chioma": 6.4
+},
+{
+"xy": [
+-70.5,
+4.5
+],
+"h": 3.5,
+"chioma": 4.2
+},
+{
+"xy": [
+-70.5,
+20.5
+],
+"h": 4.4,
+"chioma": 5.0
+},
+{
+"xy": [
+-65.5,
+1.5
+],
+"h": 3.0,
+"chioma": 4.4
+},
+{
+"xy": [
+-65.5,
+23.5
+],
+"h": 2.8,
+"chioma": 5.4
+},
+{
+"xy": [
+-64.5,
+12.5
+],
+"h": 2.9,
+"chioma": 5.5
+},
+{
+"xy": [
+-61.5,
+11.5
+],
+"h": 3.1,
+"chioma": 5.2
+},
+{
+"xy": [
+-55.5,
+14.5
+],
+"h": 3.1,
+"chioma": 3.6
+},
+{
+"xy": [
+-54.5,
+-1.5
+],
+"h": 5.1,
+"chioma": 5.0
+},
+{
+"xy": [
+-50.5,
+-0.5
+],
+"h": 4.8,
+"chioma": 5.0
+},
+{
+"xy": [
+-49.5,
+5.5
+],
+"h": 3.3,
+"chioma": 4.5
+},
+{
+"xy": [
+-49.5,
+8.5
+],
+"h": 3.4,
+"chioma": 4.2
+},
+{
+"xy": [
+-41.5,
+-3.5
+],
+"h": 3.5,
+"chioma": 4.4
+},
+{
+"xy": [
+-38.5,
+2.5
+],
+"h": 3.4,
+"chioma": 3.9
+},
+{
+"xy": [
+-34.5,
+-10.5
+],
+"h": 4.1,
+"chioma": 4.5
+},
+{
+"xy": [
+-33.5,
+-7.5
+],
+"h": 3.1,
+"chioma": 4.9
+},
+{
+"xy": [
+-31.5,
+-67.5
+],
+"h": 3.1,
+"chioma": 4.2
+},
+{
+"xy": [
+-29.5,
+-5.5
+],
+"h": 3.1,
+"chioma": 4.5
+},
+{
+"xy": [
+-26.5,
+-21.5
+],
+"h": 3.2,
+"chioma": 7.0
+},
+{
+"xy": [
+-26.5,
+22.5
+],
+"h": 2.8,
+"chioma": 3.0
+},
+{
+"xy": [
+-16.5,
+67.5
+],
+"h": 4.1,
+"chioma": 5.2
+},
+{
+"xy": [
+-13.5,
+72.5
+],
+"h": 2.6,
+"chioma": 4.8
+},
+{
+"xy": [
+-7.5,
+-41.5
+],
+"h": 3.2,
+"chioma": 4.5
+},
+{
+"xy": [
+1.5,
+-33.5
+],
+"h": 4.8,
+"chioma": 6.2
+},
+{
+"xy": [
+2.5,
+-30.5
+],
+"h": 4.1,
+"chioma": 6.7
+},
+{
+"xy": [
+10.5,
+-59.5
+],
+"h": 2.8,
+"chioma": 4.1
+},
+{
+"xy": [
+15.5,
+-62.5
+],
+"h": 3.7,
+"chioma": 5.5
+},
+{
+"xy": [
+15.5,
+-48.5
+],
+"h": 3.2,
+"chioma": 8.5
+},
+{
+"xy": [
+18.5,
+-61.5
+],
+"h": 3.7,
+"chioma": 6.6
+},
+{
+"xy": [
+20.5,
+-50.5
+],
+"h": 2.8,
+"chioma": 6.3
+},
+{
+"xy": [
+24.5,
+-51.5
+],
+"h": 2.8,
+"chioma": 5.3
+},
+{
+"xy": [
+26.5,
+-67.5
+],
+"h": 5.7,
+"chioma": 5.4
+},
+{
+"xy": [
+28.5,
+-57.5
+],
+"h": 2.8,
+"chioma": 4.9
+},
+{
+"xy": [
+66.5,
+11.5
+],
+"h": 3.7,
+"chioma": 4.8
+},
+{
+"xy": [
+67.5,
+14.5
+],
+"h": 3.5,
+"chioma": 4.4
 }
 ],
 "arredo": [
