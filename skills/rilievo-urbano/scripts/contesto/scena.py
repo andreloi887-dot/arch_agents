@@ -311,14 +311,19 @@ if _DB_REC:
     def _idx_edificio(eid):
         e = [x for x in scheda["edifici"] if x["id"] == eid][0]
         return _idx_part_di(poly(FABB[e["impronta"]["indice"]]).centroid)
-    _cand = []   # (attributi, indice particella, zona o None)
+    _cand = []   # (attributi, indice particella, zona o None); attributi["_ed"] = impronta dell'edificio
+    def _impronta_edificio(eid):
+        e = [x for x in scheda["edifici"] if x["id"] == eid][0]
+        return poly(FABB[e["impronta"]["indice"]])
     for mc in L.get("muri_contorno", []):
         j_ = _idx_edificio(mc["edificio"])
         if j_ is None: continue
         zona = Point(*loc(mc["presso"][1], mc["presso"][0])).buffer(mc.get("raggio_m", 8.0)) if mc.get("presso") else None
         r = RW[mc["id"]]
-        _cand.append(({"id": mc["id"], "nome": f"{mc['id']} – {r['tipo']}", "mat": r["materiali"][0],
-                       "hm": mc.get("altezza_muro", h_of(r)), "sopra": mc.get("sopra"), "verso": mc.get("verso")}, j_, zona))
+        _cand.append(({"id": mc["id"], "nome": f"{mc['id']} – {r['tipo']}", "mat": mc.get("materiale", r["materiali"][0]),
+                       "hm": mc.get("altezza_muro", h_of(r)), "sopra": mc.get("sopra"), "verso": mc.get("verso"),
+                       "pilastri_passo": mc.get("pilastri_passo"), "copertina": mc.get("copertina", True),
+                       "cancelli": mc.get("cancelli", []), "_ed": _impronta_edificio(mc["edificio"])}, j_, zona))
     EID = {e["impronta"]["indice"]: e for e in scheda["edifici"]}
     _con_mc = {mc["edificio"] for mc in L.get("muri_contorno", [])}
     for i, f in enumerate(FABB):
@@ -328,8 +333,22 @@ if _DB_REC:
         j_ = _idx_part_di(poly(f).centroid)
         if j_ is None: continue
         _cand.append(({"id": fs.get("id", f"RS-{eid}"), "nome": f"{fs.get('id', 'RS-' + eid)} – {fs.get('tipo', 'recinzione su strada')}",
-                       "mat": fs.get("materiale", "C04"), "hm": fs.get("muro_h", 1.8), "sopra": fs.get("sopra"), "verso": None},
-                      j_, None))
+                       "mat": fs.get("materiale", "C04"), "hm": fs.get("muro_h", 1.8), "sopra": fs.get("sopra"), "verso": None,
+                       "pilastri_passo": fs.get("pilastri_passo"), "copertina": fs.get("copertina", True),
+                       "cancelli": fs.get("cancelli", []), "_ed": poly(f)}, j_, None))
+    # edifici presenti solo nel DBGT (stesso elenco e indici della sezione edifici)
+    _DBE = [g if g.geom_type == "Polygon" else max(g.geoms, key=lambda q: q.area) for g in dbgt("edifici")]
+    _DBE = [Polygon(g.exterior) for g in _DBE if not g.is_empty and g.area > 8]
+    for jd, g in enumerate(_DBE):
+        fs = _PE.get(f"DB{jd:02d}", {}).get("fronte_strada")
+        if not fs: continue
+        j_ = _idx_part_di(g.centroid)
+        if j_ is None: continue
+        eid = f"DB{jd:02d}"
+        _cand.append(({"id": fs.get("id", f"RS-{eid}"), "nome": f"{fs.get('id', 'RS-' + eid)} – {fs.get('tipo', 'recinzione su strada')}",
+                       "mat": fs.get("materiale", "C04"), "hm": fs.get("muro_h", 1.8), "sopra": fs.get("sopra"), "verso": None,
+                       "pilastri_passo": fs.get("pilastri_passo"), "copertina": fs.get("copertina", True),
+                       "cancelli": fs.get("cancelli", []), "_ed": g}, j_, None))
     _edificate = {j for j, p in particelle if any(p.contains(poly(f).centroid) for f in FABB)} | {c[1] for c in _cand}
     _VICINI = ST.get("distanza_fronte_particella_m", 6.0)
     def _proprietario(mid):
@@ -360,9 +379,12 @@ if _DB_REC:
         j_ = _proprietario(mid)
         if j_ is None or j_ in IL_TUTTE: return None
         if j_ not in _edificate: return "CI"          # campo o terreno incolto: rete (vedi _muro_interno)
-        c_ = [at for at, jj, zona in _cand if jj == j_ and (zona is None or zona.contains(mid))
-              and _orient_ok(at.get("verso"), a_, b_)]
-        if not c_: c_ = [at for at, jj, zona in _cand if jj == j_ and (zona is None or zona.contains(mid))]
+        # le zone (presso/raggio) hanno la precedenza; poi, nella stessa particella, l'edificio più vicino al tratto
+        z_ = [at for at, jj, zona in _cand if jj == j_ and zona is not None and zona.contains(mid)]
+        if z_: return z_[0]
+        c_ = [at for at, jj, zona in _cand if jj == j_ and zona is None and _orient_ok(at.get("verso"), a_, b_)]
+        if not c_: c_ = [at for at, jj, zona in _cand if jj == j_ and zona is None]
+        c_.sort(key=lambda at: at["_ed"].distance(mid))
         return c_[0] if c_ else _DEF
     def _normali_prop(seg_pts):
         ns = []   # normale verso l'interno della proprietà = lontano dalla strada
@@ -374,6 +396,7 @@ if _DB_REC:
             ns.append((nx, ny))
         return ns
     nci = 0
+    _CANC = {}
     def _muro_strada(seg_pts, at, fonte):
         ns = _normali_prop(seg_pts)
         base = [round(z_marc(x, y) if sedime.distance(Point(x, y)) < 2.5 else trend(x, y), 3) for x, y in seg_pts]
@@ -383,7 +406,9 @@ if _DB_REC:
         scena["muri"].append({"id": at["id"], "nome": at["nome"], "materiale": at["mat"], "spessore": 0.25,
             "punti": [[round(x, 3), round(y, 3)] for x, y in seg_pts],
             "normali_interno": [[round(a, 4), round(b, 4)] for a, b in ns], "z_base": base,
-            "z_sommita": top, "z_terreno_interno": interno, "confidenza": "media", "quote": fonte})
+            "z_sommita": top, "z_terreno_interno": interno, "confidenza": "media", "quote": fonte,
+            "pilastri_passo": at.get("pilastri_passo"), "copertina": at.get("copertina", True), "su_strada": True})
+        if at.get("cancelli"): _CANC.setdefault(at["id"], at["cancelli"])
         if at.get("sopra"):
             t, h2, m2 = at["sopra"]
             scena["recinzioni"].append({"id": at["id"], "nome": f"{at['id']} – {t}", "tipo": t, "materiale": m2, "altezza": h2,
@@ -441,6 +466,57 @@ if _DB_REC:
             if at is None or len(seg_pts) < 2 or LineString(seg_pts).length < 1.5: continue
             if at == "CI": _muro_interno(seg_pts)
             else: _muro_strada(seg_pts, at, "bordo sede stradale DBGT + DTM")
+# --- cancelli e cancelletti: interrompono il muro del fronte (e la recinzione sopra) e diventano oggetti propri.
+# `posizione` è la frazione (0–1) lungo il tratto di fronte più lungo di quel muro, nel verso dei suoi punti.
+scena["cancelli"] = []
+from shapely.ops import substring as _substr
+def _taglia(lista, idx, s0, s1):
+    el = lista[idx]; ln = LineString([p[:2] for p in el["punti"]])
+    def pezzo(a_, b_):
+        if b_ - a_ < 0.3: return None
+        g = _substr(ln, a_, b_); pts = list(g.coords)
+        def zint(arr):
+            out = []
+            for q in pts:
+                s_ = ln.project(Point(q)); acc = 0.0
+                for k in range(len(el["punti"]) - 1):
+                    L_ = math.dist(el["punti"][k][:2], el["punti"][k+1][:2])
+                    if acc + L_ >= s_ - 1e-9 or k == len(el["punti"]) - 2:
+                        t = 0 if L_ == 0 else min(1, max(0, (s_ - acc) / L_)); out.append(round(arr[k] + (arr[k+1] - arr[k]) * t, 3)); break
+                    acc += L_
+            return out
+        nuovo = dict(el)
+        if "z_base" in el:
+            nuovo["z_base"] = zint(el["z_base"]); nuovo["z_sommita"] = zint(el["z_sommita"])
+            if "z_terreno_interno" in el: nuovo["z_terreno_interno"] = zint(el["z_terreno_interno"])
+            nn = el["normali_interno"][0]; nuovo["normali_interno"] = [nn for _ in pts]
+            nuovo["punti"] = [[round(x, 3), round(y, 3)] for x, y in pts]
+        else:
+            zz = zint([p[2] for p in el["punti"]]); nuovo["punti"] = [[round(x, 3), round(y, 3), z] for (x, y), z in zip(pts, zz)]
+        return nuovo
+    parti = [p for p in (pezzo(0, s0), pezzo(s1, ln.length)) if p]
+    lista[idx:idx + 1] = parti
+for rid, canc in (_CANC.items() if _DB_REC else []):
+    cand_m = [k for k, m in enumerate(scena["muri"]) if m["id"] == rid]
+    if not cand_m: continue
+    for cz in sorted(canc, key=lambda c: -c.get("posizione", 0.5)):
+        cand_m = [k for k, m in enumerate(scena["muri"]) if m["id"] == rid]
+        k = max(cand_m, key=lambda k: LineString(scena["muri"][k]["punti"]).length)
+        m = scena["muri"][k]; ln = LineString(m["punti"]); w_ = cz.get("larghezza", 3.5 if cz.get("tipo") == "carraio" else 1.1)
+        if ln.length < w_ + 0.6: continue
+        sc_ = min(max(cz.get("posizione", 0.5) * ln.length, w_ / 2 + 0.3), ln.length - w_ / 2 - 0.3)
+        s0, s1 = sc_ - w_ / 2, sc_ + w_ / 2
+        a_, b_ = ln.interpolate(s0), ln.interpolate(s1); zc = z_marc((a_.x + b_.x) / 2, (a_.y + b_.y) / 2)
+        scena["cancelli"].append({"id": f"{rid}-{cz.get('tipo', 'cancello')}", "tipo": cz.get("tipo", "carraio"),
+            "stile": cz.get("stile", "sbarre"), "materiale": cz.get("materiale", "C06"), "h": cz.get("h", 1.8),
+            "pensilina": cz.get("pensilina", False), "punti": [[round(a_.x, 3), round(a_.y, 3)], [round(b_.x, 3), round(b_.y, 3)]],
+            "z": round(zc, 3), "normale": m["normali_interno"][0]})
+        p0 = m["punti"][0]
+        _taglia(scena["muri"], k, s0, s1)
+        for j, r in enumerate(scena["recinzioni"]):
+            if r["id"] == rid and math.dist(r["punti"][0][:2], p0) < 0.05:
+                _taglia(scena["recinzioni"], j, s0, s1); break
+
 # --- muri di sostegno DBGT: altezza = salto del DTM fra i due lati (+ coronamento); esclusi quelli già modellati
 _DB_MS = dbgt("muri_sostegno")
 if _DB_MS:
@@ -451,6 +527,9 @@ if _DB_MS:
         ln = ln.intersection(area.buffer(-0.5)).difference(_gia)
         for part in getattr(ln, "geoms", [ln]):
             if part.is_empty or part.geom_type != "LineString" or part.length < 2: continue
+            # mai sulla sede stradale (marciapiedi compresi) né sul fronte del lotto, che ha già il suo muro
+            if part.intersection(sedime.buffer(0.3)).length > 0.3 * part.length: continue
+            if part.distance(P03.exterior) < 1.5 and part.intersection(P03.exterior.buffer(1.5)).length > 0.5 * part.length: continue
             pts = dens(list(part.coords), 1.0); ns, zb, zt = [], [], []
             for j, (x, y) in enumerate(pts):
                 a2 = pts[max(0, j-1)]; b2 = pts[min(len(pts)-1, j+1)]
@@ -547,7 +626,8 @@ for i, f in enumerate(FABB):
         "fotovoltaico": bool((ov or {}).get("fotovoltaico", cop.get("fotovoltaico") or
                              any("fotovolt" in str(x) for x in cop.get("elementi", [])))),
         "piani": (ov or {}).get("piani") or (e or {}).get("piani_ft"),
-        "facciate": (ov or {}).get("facciate") or (e or {}).get("facciate", []), "volumi": (ov or {}).get("volumi", [])})
+        "facciate": (ov or {}).get("facciate") or (e or {}).get("facciate", []), "volumi": (ov or {}).get("volumi", []),
+        "oscurante_default": (ov or {}).get("oscurante"), "mat_ringhiera": (ov or {}).get("mat_ringhiera", "C06")})
 # edifici del DBGT senza corrispondenza in catasto (spesso più recenti): LOD1 generici
 for j, g in enumerate(_DB_ED):
     if j in _usati or not area.contains(g.centroid): continue

@@ -112,23 +112,38 @@
    "id": "R12",
    "edificio": "E03",
    "altezza_muro": 2.0,
+   "copertina": false,
    "presso": [
     39.2525892,
     9.1154322
    ],
-   "raggio_m": 9.0,
-   "_nota": "muro curvo in cls sull'angolo Menta/Moravia (SV-16): vale solo entro 9 m dall'angolo"
+   "raggio_m": 9.0
+  },
+  {
+   "id": "R13",
+   "edificio": "E03",
+   "verso": "NS",
+   "altezza_muro": 1.0,
+   "sopra": [
+    "telo",
+    1.4,
+    "C20"
+   ],
+   "copertina": false,
+   "pilastri_passo": 3.0
   },
   {
    "id": "R05",
-   "edificio": "E03",
-   "verso": "NS",
-   "altezza_muro": 2.5
+   "edificio": "E04",
+   "altezza_muro": 2.3,
+   "copertina": false,
+   "pilastri_passo": 3.0
   },
   {
-   "id": "R01",
-   "edificio": "E09",
-   "altezza_muro": 1.6,
+   "id": "R11",
+   "edificio": "E03",
+   "verso": "EO",
+   "altezza_muro": 2.5,
    "sopra": [
     "ringhiera",
     1.0,
@@ -136,61 +151,207 @@
    ]
   },
   {
-   "id": "R02",
-   "edificio": "E08",
+   "id": "R01",
+   "edificio": "E09",
    "altezza_muro": 2.0,
    "sopra": [
+    "ringhiera",
+    0.8,
+    "C06"
+   ],
+   "pilastri_passo": 4.0,
+   "cancelli": [
+    {
+     "tipo": "carraio",
+     "posizione": 0.85,
+     "stile": "pieno",
+     "materiale": "C06",
+     "larghezza": 4.0
+    },
+    {
+     "tipo": "pedonale",
+     "posizione": 0.6,
+     "stile": "sbarre",
+     "materiale": "C06",
+     "larghezza": 1.1
+    }
+   ]
+  },
+  {
+   "id": "R02",
+   "edificio": "E08",
+   "altezza_muro": 1.8,
+   "materiale": "C09",
+   "sopra": [
     "doghe",
-    1.2,
+    0.9,
     "C05"
+   ],
+   "pilastri_passo": 3.5,
+   "cancelli": [
+    {
+     "tipo": "carraio",
+     "posizione": 0.75,
+     "stile": "doghe",
+     "materiale": "C05",
+     "larghezza": 4.0
+    },
+    {
+     "tipo": "pedonale",
+     "posizione": 0.45,
+     "stile": "doghe",
+     "materiale": "C05",
+     "larghezza": 1.0
+    }
    ]
   },
   {
    "id": "R03",
    "edificio": "E06",
-   "altezza_muro": 1.2,
+   "altezza_muro": 1.0,
    "sopra": [
     "ringhiera",
-    0.8,
+    0.9,
     "C06"
+   ],
+   "cancelli": [
+    {
+     "tipo": "carraio",
+     "posizione": 0.2,
+     "stile": "sbarre",
+     "materiale": "C06",
+     "larghezza": 3.0
+    },
+    {
+     "tipo": "pedonale",
+     "posizione": 0.4,
+     "stile": "doghe",
+     "materiale": "C05",
+     "larghezza": 1.0
+    }
    ]
   },
   {
    "id": "R04",
    "edificio": "E05",
-   "altezza_muro": 0.6,
+   "altezza_muro": 0.8,
    "sopra": [
     "doghe",
-    1.3,
+    1.0,
     "C05"
-   ]
-  },
-  {
-   "id": "R11",
-   "edificio": "E03",
-   "verso": "EO",
-   "altezza_muro": 1.5,
-   "sopra": [
-    "ringhiera",
-    0.9,
-    "C06"
+   ],
+   "pilastri_passo": 3.0,
+   "cancelli": [
+    {
+     "tipo": "carraio",
+     "posizione": 0.8,
+     "stile": "doghe",
+     "materiale": "C05",
+     "larghezza": 3.5
+    },
+    {
+     "tipo": "pedonale",
+     "posizione": 0.55,
+     "stile": "doghe",
+     "materiale": "C05",
+     "larghezza": 1.0
+    }
    ]
   },
   {
    "id": "R07",
-   "edificio": "E02"
+   "edificio": "E02",
+   "altezza_muro": 1.6,
+   "pilastri_passo": 4.0,
+   "cancelli": [
+    {
+     "tipo": "pedonale",
+     "posizione": 0.55,
+     "stile": "sbarre",
+     "materiale": "C06",
+     "larghezza": 1.2,
+     "pensilina": true
+    },
+    {
+     "tipo": "carraio",
+     "posizione": 0.9,
+     "stile": "sbarre",
+     "materiale": "C06",
+     "larghezza": 3.5
+    }
+   ]
   },
   {
    "id": "R08",
-   "edificio": "E01"
+   "edificio": "E01",
+   "altezza_muro": 1.8,
+   "materiale": "C09",
+   "copertina": true,
+   "cancelli": [
+    {
+     "tipo": "pedonale",
+     "posizione": 0.6,
+     "stile": "sbarre",
+     "materiale": "C06",
+     "larghezza": 1.2,
+     "pensilina": true
+    },
+    {
+     "tipo": "carraio",
+     "posizione": 0.2,
+     "stile": "sbarre",
+     "materiale": "C06",
+     "larghezza": 3.0
+    }
+   ]
   },
   {
    "id": "R09",
-   "edificio": "E11"
+   "edificio": "E11",
+   "altezza_muro": 0.9,
+   "materiale": "C09",
+   "sopra": [
+    "doghe",
+    0.8,
+    "C05"
+   ],
+   "cancelli": [
+    {
+     "tipo": "carraio",
+     "posizione": 0.6,
+     "stile": "sbarre",
+     "materiale": "C06",
+     "larghezza": 3.5
+    }
+   ]
   },
   {
    "id": "R10",
-   "edificio": "E10"
+   "edificio": "E10",
+   "altezza_muro": 1.5,
+   "sopra": [
+    "ringhiera",
+    0.6,
+    "C06"
+   ],
+   "pilastri_passo": 3.0,
+   "cancelli": [
+    {
+     "tipo": "carraio",
+     "posizione": 0.4,
+     "stile": "doghe",
+     "materiale": "C06",
+     "larghezza": 4.0
+    },
+    {
+     "tipo": "pedonale",
+     "posizione": 0.75,
+     "stile": "pieno",
+     "materiale": "C06",
+     "larghezza": 1.1,
+     "pensilina": true
+    }
+   ]
   }
  ],
  "edifici": {
@@ -228,18 +389,54 @@
        2
       ],
       "balcone_frazione": 0.85
+     },
+     {
+      "orientamento": "SE",
+      "aperture": {
+       "assi": 2,
+       "tipo": [
+        {
+         "l_m": 1.2,
+         "h_m": 1.4
+        }
+       ]
+      },
+      "balconi_piani": [
+       1,
+       2
+      ],
+      "balcone_frazione": 0.7
      }
     ],
     "fronte_strada": {
      "tipo": "muretto intonacato rosa con pilastri in mattoni + ringhiera",
-     "muro_h": 0.8,
-     "materiale": "C04",
+     "muro_h": 0.6,
+     "materiale": "C12",
+     "copertina": true,
      "sopra": [
       "ringhiera",
-      0.9,
+      1.0,
       "C06"
+     ],
+     "pilastri_passo": 2.5,
+     "cancelli": [
+      {
+       "tipo": "pedonale",
+       "posizione": 0.55,
+       "stile": "sbarre",
+       "materiale": "C06",
+       "larghezza": 1.1
+      },
+      {
+       "tipo": "carraio",
+       "posizione": 0.9,
+       "stile": "sbarre",
+       "materiale": "C06",
+       "larghezza": 3.0
+      }
      ]
-    }
+    },
+    "oscurante": "persiane"
    },
    "CTX24": {
     "altezza": 9.5,
@@ -249,9 +446,16 @@
     "manto": "C03",
     "nota": "3 piani",
     "fronte_strada": {
-     "tipo": "muro intonacato con aperture ad arco e grigliato in cotto, coppo in sommità",
-     "muro_h": 2.0,
-     "materiale": "C04"
+     "tipo": "muro intonacato con grigliato in cotto ad archi e coppi in sommità",
+     "muro_h": 1.0,
+     "materiale": "C04",
+     "copertina": true,
+     "sopra": [
+      "grigliato",
+      1.1,
+      "C07"
+     ],
+     "pilastri_passo": 2.6
     }
    },
    "CTX02": {
@@ -263,24 +467,69 @@
     "nota": "2 piani",
     "piani": 2,
     "fronte_strada": {
-     "tipo": "muretto in cls a vista + ringhiera in ferro",
+     "tipo": "muretto in cls a vista + ringhiera in ferro a lance",
      "muro_h": 1.0,
      "materiale": "C15",
+     "copertina": true,
      "sopra": [
       "ringhiera",
       1.0,
       "C06"
+     ],
+     "pilastri_passo": 3.0,
+     "cancelli": [
+      {
+       "tipo": "pedonale",
+       "posizione": 0.12,
+       "stile": "sbarre",
+       "materiale": "C06",
+       "larghezza": 1.2,
+       "pensilina": true
+      },
+      {
+       "tipo": "carraio",
+       "posizione": 0.92,
+       "stile": "sbarre",
+       "materiale": "C06",
+       "larghezza": 3.5
+      }
+     ]
+    },
+    "oscurante": "persiane"
+   },
+   "CTX21": {
+    "altezza": 3.4,
+    "copertura": "a padiglione",
+    "fotovoltaico": false,
+    "nota": "casa a un piano con tetto in coppi (riprese mirate)",
+    "piani": 1,
+    "colmo": 4.6,
+    "pendenza_pct": 30,
+    "manto": "C03",
+    "fronte_strada": {
+     "tipo": "cordolo + recinzione a sbarre",
+     "muro_h": 0.3,
+     "materiale": "C15",
+     "copertina": true,
+     "sopra": [
+      "ringhiera",
+      1.6,
+      "C06"
+     ],
+     "cancelli": [
+      {
+       "tipo": "carraio",
+       "posizione": 0.5,
+       "stile": "sbarre",
+       "materiale": "C06",
+       "larghezza": 3.5
+      }
      ]
     }
    },
-   "CTX21": {
-    "altezza": 6.8,
-    "copertura": "piana",
-    "fotovoltaico": true,
-    "nota": "2 piani, tetto piano con fotovoltaico"
-   },
    "E08": {
-    "fotovoltaico": true
+    "fotovoltaico": true,
+    "oscurante": "avvolgibile"
    },
    "E09": {
     "fotovoltaico": true,
@@ -294,7 +543,8 @@
       "altezza_extra": 3.0,
       "copertura": "a padiglione"
      }
-    ]
+    ],
+    "oscurante": "avvolgibile"
    },
    "CTX16": {
     "piani": 2,
@@ -323,15 +573,35 @@
      }
     ],
     "fronte_strada": {
-     "tipo": "muro intonacato + rete con telo verde",
-     "muro_h": 1.6,
+     "tipo": "muro intonacato con pilastri + rete con telo verde",
+     "muro_h": 1.2,
      "materiale": "C04",
+     "copertina": true,
      "sopra": [
-      "rete",
-      0.6,
+      "telo",
+      1.0,
       "C20"
+     ],
+     "pilastri_passo": 3.0,
+     "cancelli": [
+      {
+       "tipo": "pedonale",
+       "posizione": 0.7,
+       "stile": "pieno",
+       "materiale": "C06",
+       "larghezza": 1.1,
+       "pensilina": true
+      },
+      {
+       "tipo": "carraio",
+       "posizione": 0.3,
+       "stile": "pieno",
+       "materiale": "C06",
+       "larghezza": 3.0
+      }
      ]
-    }
+    },
+    "oscurante": "avvolgibile"
    },
    "DB30": {
     "piani": 3,
@@ -360,15 +630,35 @@
      }
     ],
     "fronte_strada": {
-     "tipo": "muretto rivestito + recinzione metallica grigia",
+     "tipo": "muretto rivestito + pannelli metallici grigi tra pilastri bianchi",
      "muro_h": 0.6,
-     "materiale": "C04",
+     "materiale": "C09",
+     "copertina": true,
      "sopra": [
       "doghe",
       1.0,
       "C06"
+     ],
+     "pilastri_passo": 2.5,
+     "cancelli": [
+      {
+       "tipo": "carraio",
+       "posizione": 0.45,
+       "stile": "pieno",
+       "materiale": "C06",
+       "larghezza": 3.5
+      },
+      {
+       "tipo": "pedonale",
+       "posizione": 0.3,
+       "stile": "pieno",
+       "materiale": "C06",
+       "larghezza": 1.1,
+       "pensilina": true
+      }
      ]
-    }
+    },
+    "oscurante": "persiane"
    },
    "DB31": {
     "altezza": 2.6,
@@ -378,14 +668,54 @@
    "E07": {
     "fronte_strada": {
      "tipo": "muretto rivestito in pietra chiara + pannelli metallici grigi",
-     "muro_h": 1.2,
+     "muro_h": 0.8,
      "materiale": "C09",
+     "copertina": true,
      "sopra": [
       "doghe",
       1.0,
       "C06"
+     ],
+     "pilastri_passo": 2.5,
+     "cancelli": [
+      {
+       "tipo": "carraio",
+       "posizione": 0.75,
+       "stile": "pieno",
+       "materiale": "C06",
+       "larghezza": 3.5
+      },
+      {
+       "tipo": "pedonale",
+       "posizione": 0.55,
+       "stile": "pieno",
+       "materiale": "C06",
+       "larghezza": 1.0
+      }
      ]
-    }
+    },
+    "oscurante": "persiane"
+   },
+   "E01": {
+    "oscurante": "persiane"
+   },
+   "E02": {
+    "oscurante": "persiane"
+   },
+   "E03": {
+    "oscurante": "avvolgibile"
+   },
+   "E05": {
+    "oscurante": "avvolgibile"
+   },
+   "E06": {
+    "oscurante": "avvolgibile"
+   },
+   "E10": {
+    "oscurante": "avvolgibile"
+   },
+   "E11": {
+    "oscurante": "avvolgibile"
    }
   },
   "_nota_piattaforma": "gronde in scheda misurate dal marciapiede: si toglie la piattaforma (già nel DTM)"
@@ -400,21 +730,56 @@
  },
  "lampioni": {
   "passo_m": 27,
-  "h": 8.0,
+  "h": 8.5,
   "materiale": "C20",
-  "_nota": "scheda A01: su entrambe le strade, a ~0,5 m dal cordolo, passo 25-30 m"
+  "_nota": "palo zincato conico a testa-palo con armatura piatta (SV-04, SV-05, SV-16, SV-18), passo 25-30 m sfalsato",
+  "d_base_m": 0.16,
+  "d_cima_m": 0.08,
+  "sbraccio_m": 0.5,
+  "armatura": [
+   0.75,
+   0.32,
+   0.12
+  ],
+  "plinto": [
+   0.35,
+   0.35,
+   0.2
+  ],
+  "dal_cordolo_m": 0.5
  },
  "segnaletica_stradale": {
   "mezzeria": true,
+  "mezzeria_tratto_m": 3.0,
+  "mezzeria_intervallo_m": 4.5,
+  "mezzeria_stop_incrocio_m": 10,
+  "margini": true,
+  "margine_dal_cordolo_m": 0.3,
+  "margine_stop_incrocio_m": 12,
+  "larghezza_linee_m": 0.12,
   "distanza_incrocio_m": 6.0,
+  "cartelli_attraversamento": true,
   "strisce_pedonali": [
    {
-    "strada": "VIA TAMBURINO SARDO"
+    "strada": "VIA TAMBURINO SARDO",
+    "lato": "SE",
+    "distanza_incrocio_m": 7.0,
+    "incrocio": [
+     -1.3,
+     0.0
+    ]
    },
    {
-    "strada": "VIA DELLA MENTA"
+    "strada": "VIA TAMBURINO SARDO",
+    "lato": "NO",
+    "distanza_incrocio_m": 9.0,
+    "incrocio": [
+     -1.3,
+     0.0
+    ]
    }
-  ]
+  ],
+  "_nota": "SV-01: strisce su Tamburino a SE dell'incrocio; SV-18: strisce e cartello a NO; SV-16: nessuna striscia su Via della Menta; mezzeria tratteggiata e linee di margine (SV-04, SV-11, SV-17, SV-19)"
  },
  "arredo": [
   {
@@ -436,23 +801,6 @@
     0.8,
     0.35
    ]
-  },
-  {
-   "id": "A01",
-   "tipo": "lampione",
-   "lungo_fronte_m": 2.0,
-   "offset": 0.6,
-   "h": 8.0,
-   "materiale": "C20",
-   "nota": "sul marciapiede all'angolo, lato Via della Menta"
-  },
-  {
-   "id": "A02",
-   "tipo": "cartello divieto di sosta",
-   "fronte_y": 15.5,
-   "offset": 0.8,
-   "h": 2.4,
-   "materiale": "C20"
   },
   {
    "id": "R06",
@@ -519,7 +867,8 @@
    "tipo": "canneto (Arundo donax)",
    "forma": "canneto",
    "dietro_muro": "R07",
-   "h": 3.5
+   "h": 3.5,
+   "lunghezza_max_m": 8.0
   },
   {
    "id": "V04",
@@ -540,7 +889,6 @@
    "tipo": "siepi e rampicanti sui muri",
    "forma": "siepe",
    "su_muri": [
-    "R01",
     "R03",
     "R04"
    ],
@@ -589,5 +937,84 @@
  },
  "fonti_extra": [
   "Altezze e rialzi da osservazioni Street View (scheda rev. 2), confidenza media/bassa"
+ ],
+ "segnaletica_verticale": [
+  {
+   "tipo": "divieto_sosta",
+   "vicino_a": "E08",
+   "offset": 0.3,
+   "pannello": {
+    "dim": [
+     0.5,
+     0.35
+    ]
+   },
+   "_fonte": "SV-03, SV-14: 0-24 con rimozione"
+  },
+  {
+   "tipo": "divieto_sosta",
+   "vicino_a": "E11",
+   "offset": 0.3,
+   "pannello": {
+    "dim": [
+     0.5,
+     0.35
+    ]
+   },
+   "_fonte": "SV-04, edifici/E11_1"
+  },
+  {
+   "tipo": "divieto_sosta",
+   "xy": [
+    7.5,
+    3.0
+   ],
+   "pannello": {
+    "dim": [
+     0.5,
+     0.25
+    ]
+   },
+   "_fonte": "SV-01: angolo di E09"
+  },
+  {
+   "tipo": "frecce_direzione",
+   "xy": [
+    5.5,
+    4.5
+   ],
+   "h": 2.4,
+   "_fonte": "SV-01: frecce blu all'angolo"
+  },
+  {
+   "tipo": "nome_via",
+   "xy": [
+    6.0,
+    3.5
+   ],
+   "h": 2.2,
+   "_fonte": "SV-01: targhe Via Tamburino Sardo / Via A. Moravia"
+  },
+  {
+   "tipo": "divieto_sosta",
+   "fronte_y": 15.5,
+   "offset": 0.8,
+   "_fonte": "SV-16: lato lotto su Via della Menta"
+  },
+  {
+   "tipo": "frecce_direzione",
+   "da_punta": [
+    -0.6,
+    -1.3
+   ],
+   "h": 2.4,
+   "_fonte": "SV-18: frecce alla punta del lotto"
+  },
+  {
+   "tipo": "senso_vietato",
+   "vicino_a": "CTX24",
+   "offset": 0.3,
+   "_fonte": "edifici/CTX24_3"
+  }
  ]
 }

@@ -47,3 +47,19 @@ L'esempio completo è `rilievi/zona-cagliari-menta-tamburino/modello/lotto.json`
 Dopo ogni modifica: lancia `contesto.py` e verifica come descritto in `../../references/05-verifica.md`.
 Limiti: il DTM LiDAR regionale copre la Sardegna (fuori copertura lo script si ferma); l'origine non deve cadere a più di
 `semilato_m` dal lotto.
+
+## Dettagli generati (regole generali, dati dal rilievo)
+- Fronti su strada: muro + `sopra` (ringhiera a bacchette, doghe, grigliato, telo), pilastri a passo, copertina,
+  cancelli e cancelletti (`cancelli`: tipo, larghezza, posizione 0–1 lungo il fronte, stile, pensilina) che
+  interrompono il muro. Ogni tratto di bordo stradale va alla particella edificata più vicina e, dentro la
+  particella, all'edificio più vicino.
+- Facciate: infissi completi (telaio, vetro, davanzale, persiane o avvolgibile con cassonetto), balconi per piano
+  (`balconi_piani`, `balcone_frazione`), portoncino al piano terra del fronte principale.
+- Coperture: falde, sporti, timpani, parapetti dei tetti piani, moduli fotovoltaici rettangolari 1,0 × 1,7 m sulle
+  falde rivolte a sud e a file inclinate sui tetti piani, torrette (`volumi`).
+- Strade: profilo lisciato lungo gli assi, mezzeria tratteggiata (3 + 4,5 m), linee di margine, strisce pedonali solo
+  dove rilevate (`strada`, `lato`, `incrocio`), cartelli di attraversamento ai due capi.
+- Segnaletica verticale (`segnaletica_verticale`): divieto di sosta (+ pannello), divieto di fermata, senso vietato,
+  attraversamento pedonale, dare precedenza, frecce di direzione, targhe delle vie; piastra orientata sul traffico.
+- Lampioni: palo conico zincato su plinto, sbraccio e armatura verso la carreggiata, passo e lato da `lampioni`.
+- Controlli: nessun muro di sostegno DBGT sulla sede stradale o sul fronte del lotto.

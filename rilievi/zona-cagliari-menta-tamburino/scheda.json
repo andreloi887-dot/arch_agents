@@ -652,7 +652,11 @@
           "aggetti": "veranda/loggia chiusa a vetri sul fronte S",
           "riprese": [
             "SV-11"
-          ]
+          ],
+          "balconi_piani": [
+            2
+          ],
+          "balcone_frazione": 0.5
         }
       ],
       "note": ""
@@ -1017,7 +1021,11 @@
           ],
           "materiali_accento": [
             "C11"
-          ]
+          ],
+          "balconi_piani": [
+            2
+          ],
+          "balcone_frazione": 0.5
         }
       ],
       "note": "edificio adiacente a E: stesse forme con rivestimento in pietra C12 (vedi E05)"
@@ -1077,7 +1085,22 @@
           "fronte": "—",
           "visibile": false,
           "materiale": "C08",
-          "riprese": []
+          "riprese": [],
+          "orientamento": "SE",
+          "balconi_piani": [
+            1
+          ],
+          "aperture": {
+            "assi": 3,
+            "tipo": [
+              {
+                "codice": "F1",
+                "l_m": 1.0,
+                "h_m": 1.3,
+                "oscurante": "persiane in legno marrone"
+              }
+            ]
+          }
         }
       ],
       "note": "solo satellite: fondale"
@@ -1235,7 +1258,7 @@
                 "l_m": 1.2,
                 "h_m": 2.4,
                 "serramento": "C06",
-                "oscurante": "persiane/avvolgibili",
+                "oscurante": "avvolgibili grigi",
                 "cornice": "piatta 10 cm",
                 "cornice_colore": "C04"
               },
@@ -1244,7 +1267,8 @@
                 "l_m": 0.9,
                 "h_m": 1.3,
                 "cornice": "piatta 10 cm",
-                "cornice_colore": "C04"
+                "cornice_colore": "C04",
+                "oscurante": "avvolgibili grigi"
               }
             ]
           },
@@ -1259,7 +1283,8 @@
             1,
             2
           ],
-          "balcone_frazione": 0.8
+          "balcone_frazione": 0.8,
+          "mat_telaio": "TELAIO_GRIGIO"
         }
       ],
       "note": "elemento più visibile dall'incrocio: priorità di modellazione"
@@ -1420,7 +1445,8 @@
           ],
           "materiali_accento": [
             "C23"
-          ]
+          ],
+          "mat_telaio": "TELAIO_ROSSO"
         }
       ],
       "note": "quasi interamente nascosto dal muro R09"
@@ -1596,7 +1622,7 @@
         "confidenza": "media"
       },
       "dettagli": "pilastrini in cls ogni ~3 m; base degradata con distacchi; rete metallica sopra in un tratto",
-      "note": "Fronte di E04 su Via della Menta (SV-09), non di E03 (verifica foto Street View mirate (_rif_google/edifici), sessione 2026-11-07). Fronte N di E03 su Via della Menta (SV-09: la casa dietro è E03)."
+      "note": "Fronte di E04 su Via della Menta (SV-09, edifici/E04_1-3: muro in blocchi 2,2-2,5 m)."
     },
     {
       "id": "R06",
@@ -1745,6 +1771,24 @@
         "SV-19"
       ],
       "note": "graffiti; segue la curva del marciapiede (verifica foto Street View mirate (_rif_google/edifici), sessione 2026-11-07)"
+    },
+    {
+      "id": "R13",
+      "tipo": "muretto in blocchi di cls + rete con telo verde",
+      "lod": "LOD2",
+      "materiali": [
+        "C10",
+        "C20"
+      ],
+      "h": {
+        "m": 2.4,
+        "fonte": "stima-riferimento",
+        "confidenza": "media"
+      },
+      "riprese": [
+        "edifici/E03_3"
+      ],
+      "note": "fronte di E03 su Via della Menta (riprese mirate a 3 viste (_rif_google/edifici, 2026-04), sessione 2026-11-07)"
     }
   ],
   "arredo": [

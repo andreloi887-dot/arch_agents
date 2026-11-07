@@ -329,8 +329,10 @@ module RilievoUrbano
       sub = g.entities.add_group
       box(sub.entities, 0, 0, 0, l, d, h, mat!(model, x['materiale']))
       c = x['c']
-      sub.transformation = Geom::Transformation.translation(Geom::Vector3d.new(c[0].to_f.m, c[1].to_f.m, c[2].to_f.m)) *
-                           Geom::Transformation.rotation(ORIGIN, Z_AXIS, x['rot_deg'].to_f.degrees)
+      tr = Geom::Transformation.translation(Geom::Vector3d.new(c[0].to_f.m, c[1].to_f.m, c[2].to_f.m)) *
+           Geom::Transformation.rotation(ORIGIN, Z_AXIS, x['rot_deg'].to_f.degrees)
+      tr *= Geom::Transformation.rotation(ORIGIN, X_AXIS, x['incl_deg'].to_f.degrees) if x['incl_deg']
+      sub.transformation = tr
     rescue ArgumentError
       nil
     end
@@ -398,10 +400,85 @@ module RilievoUrbano
       sub.grep(Sketchup::Face).each { |x| x.material = mat }
     end
 
+    def self.cilindro(ents, r0, r1, h, mat, z0 = 0.0, seg = 12)
+      sub = ents.add_group.entities
+      pts = ->(r, z) { (0...seg).map { |k| a = 2 * Math::PI * k / seg; Geom::Point3d.new((r * Math.cos(a)).m, (r * Math.sin(a)).m, z.m) } }
+      b = pts.call(r0, z0); t = pts.call(r1, z0 + h)
+      seg.times do |k|
+        k2 = (k + 1) % seg
+        [[b[k], b[k2], t[k2]], [b[k], t[k2], t[k]]].each { |tri| f = sub.add_face(tri) rescue nil; (f.material = mat; f.back_material = mat) if f }
+      end
+      [b.reverse, t].each { |pl| f = sub.add_face(pl) rescue nil; (f.material = mat; f.back_material = mat) if f }
+      sub.grep(Sketchup::Edge).each { |e| e.soft = e.smooth = true if e.faces.size == 2 && e.faces[0].normal.angle_between(e.faces[1].normal) < 35.degrees }
+    end
+
+    def self.lampione(model, g, l)
+      h = l['h'].to_f
+      pl = l['plinto'].map(&:to_f)
+      box(g.entities, 0, 0, -0.05, pl[0], pl[1], pl[2] + 0.05, mat!(model, 'PLINTO'))
+      cilindro(g.entities, l['d_base'].to_f / 2, l['d_cima'].to_f / 2, h - pl[2], mat!(model, 'PALO_LUCE'), pl[2])
+      sb = l['sbraccio'].to_f; a = l['armatura'].map(&:to_f)
+      box(g.entities, sb / 2, 0, h - 0.05, sb + 0.05, 0.05, 0.05, mat!(model, 'PALO_LUCE'))        # sbraccio verso la strada (+x)
+      box(g.entities, sb + a[0] / 2 - 0.05, 0, h - 0.12, a[0], a[1], a[2], mat!(model, 'ARMATURA'))  # armatura stradale
+    end
+
+    def self.segnale(model, g, o)
+      s = o['segnale']; h = o['dim'][2].to_f
+      cilindro(g.entities, 0.03, 0.03, h + 0.1, mat!(model, 'PALO_LUCE'), 0.0, 8)
+      mb = mat!(model, s['bordo']); mc = mat!(model, s['campo'])
+      ents = g.entities.add_group.entities
+      dim = s['d'].is_a?(Array) ? s['d'].map(&:to_f) : [s['d'].to_f, s['d'].to_f]
+      zc = h - dim[1] / 2
+      piastra = lambda do |w, hh, y, mat, sporg = 0.0|
+        box(ents, 0, y, zc - hh / 2, w, 0.012, hh, mat) if hh > 0
+      end
+      case s['forma']
+      when 'tondo'
+        [[dim[0] / 2, -0.04, mb], [dim[0] / 2 * 0.78, -0.047, mc]].each do |r, y, m|
+          c = ents.add_circle(Geom::Point3d.new(0, y.m, zc.m), Geom::Vector3d.new(0, -1, 0), r.m, 24)
+          f = ents.add_face(c); (f.material = m; f.back_material = m) if f
+        end
+        r = dim[0] / 2 * 0.78
+        case s['simbolo']
+        when 'diagonale' then sub = ents.add_group; box(sub.entities, 0, 0, -0.05, r * 2, 0.004, 0.1, mb)
+                              sub.transformation = Geom::Transformation.translation([0, -0.053.m, zc.m]) * Geom::Transformation.rotation(ORIGIN, Y_AXIS, 45.degrees)
+        when 'croce' then [45, -45].each { |ang| sub = ents.add_group; box(sub.entities, 0, 0, -0.05, r * 2, 0.004, 0.1, mb)
+                              sub.transformation = Geom::Transformation.translation([0, -0.053.m, zc.m]) * Geom::Transformation.rotation(ORIGIN, Y_AXIS, ang.degrees) }
+        when 'barra' then box(ents, 0, -0.053, zc - 0.06, r * 1.4, 0.004, 0.12, mat!(model, 'SEGN_BIANCO'))
+        end
+      when 'quadro'
+        piastra.call(dim[0], dim[1], -0.04, mb); piastra.call(dim[0] * 0.9, dim[1] * 0.9, -0.047, mc)
+        tri = [[-0.25, -0.2], [0.25, -0.2], [0, 0.22]].map { |x, z| Geom::Point3d.new((x * dim[0]).m, -0.053.m, (zc + z * dim[1]).m) }
+        f = ents.add_face(tri); (f.material = mat!(model, 'SEGN_BIANCO'); f.back_material = f.material) if f
+      when 'triangolo_giu'
+        tri = [[-0.5, 0.29], [0.5, 0.29], [0, -0.58]].map { |x, z| Geom::Point3d.new((x * dim[0]).m, -0.04.m, (zc + z * dim[0]).m) }
+        f = ents.add_face(tri); (f.material = mb; f.back_material = mb) if f
+        tri2 = [[-0.36, 0.22], [0.36, 0.22], [0, -0.40]].map { |x, z| Geom::Point3d.new((x * dim[0]).m, -0.047.m, (zc + z * dim[0]).m) }
+        f = ents.add_face(tri2); (f.material = mc; f.back_material = mc) if f
+      when 'freccia', 'rettangolo'
+        piastra.call(dim[0], dim[1], -0.04, mb); piastra.call(dim[0] - 0.03, dim[1] - 0.03, -0.047, mc)
+        if s['forma'] == 'freccia'
+          pts = [[-0.40, -0.03], [0.25, -0.03], [0.25, -0.08], [0.42, 0], [0.25, 0.08], [0.25, 0.03], [-0.40, 0.03]]
+          f = ents.add_face(pts.map { |x, z| Geom::Point3d.new((x * dim[0]).m, -0.053.m, (zc + z).m) })
+          (f.material = mat!(model, 'SEGN_BIANCO'); f.back_material = f.material) if f
+        end
+      end
+      if s['pannello']
+        p = s['pannello']; w, hh = p['dim'].map(&:to_f)
+        box(ents, 0, -0.04, zc - dim[1] / 2 - 0.05 - hh, w, 0.012, hh, mat!(model, 'SEGN_BIANCO'))
+      end
+    end
+
     def self.oggetto(model, parent, o)
       mat = mat!(model, o['materiale'])
       g = parent.add_group
       g.name = o['nome']
+      if o['lampione'] || o['segnale']
+        o['lampione'] ? lampione(model, g, o['lampione']) : segnale(model, g, o)
+        rot = Geom::Transformation.rotation(ORIGIN, Z_AXIS, (o['rot_deg'] || 0).to_f.degrees)
+        g.transformation = Geom::Transformation.translation(Geom::Vector3d.new(o['xy'][0].to_f.m, o['xy'][1].to_f.m, o['z'].to_f.m)) * rot
+        return g
+      end
       w, d, h = o['dim']
       box(g.entities, 0, 0, 0, w, d, h, mat)
       box(g.entities, -0.25, 0, h - 0.15, 0.6, 0.3, 0.15, mat) if o['testa'] == 'lampione'

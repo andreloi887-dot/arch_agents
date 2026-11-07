@@ -208,7 +208,7 @@ for m in sc["muri"]:
 # ---------------------------------------------------------------- recinzioni (asse = mezzeria della testa del muro)
 MAT_REC = {"rete": ("C20", "C20_rete"), "ringhiera": ("C06", "C06_ringhiera"), "doghe": ("C05", "C05_doghe")}
 recinzioni = []
-for r in sc["recinzioni"]:
+for r in [r for r in sc["recinzioni"] if r["tipo"] not in ("ringhiera", "doghe", "grigliato", "telo")]:
     pal, ret = MAT_REC[r["tipo"]]
     muro = [m for m in sc["muri"] if m["id"] == r["id"]]
     def asse_pt(x, y, z):
@@ -323,8 +323,66 @@ def lati(imp):
         out.append({"a": a, "b": b, "L": L_, "n": (nx, ny), "ang": math.degrees(math.atan2(ny, nx))})
     return out
 def _dang(a, b): return abs((a - b + 180) % 360 - 180)
-def box(cx, cy, z, l, d, h, rot, mat, nome=None):
-    return {"c": [R(cx), R(cy), R(z)], "dim": [R(l), R(d), R(h)], "rot_deg": round(rot, 2), "materiale": mat}
+def box(cx, cy, z, l, d, h, rot, mat, nome=None, incl=0.0):
+    b_ = {"c": [R(cx), R(cy), R(z)], "dim": [R(l), R(d), R(h)], "rot_deg": round(rot, 2), "materiale": mat}
+    if incl: b_["incl_deg"] = round(incl, 2)
+    return b_
+def _oscurante(tipo):
+    o = (str(tipo.get("oscurante", "")) + " " + str(tipo.get("note", ""))).lower()
+    if "persian" in o: return "persiane"
+    if "avvolg" in o or "tapparell" in o: return "avvolgibile"
+    return tipo.get("_oscurante_default", "avvolgibile")
+def finestra(out, cx, cy, z, w, h, rot, n, tipo, porta=False):
+    """infisso completo: telaio, vetro arretrato, davanzale, oscurante (persiane aperte ai lati o avvolgibile con
+    cassonetto). Coordinate: (cx, cy) sul filo esterno del muro, n = normale esterna, z = quota del davanzale."""
+    nx, ny = n; f = lambda d: (cx + nx * d, cy + ny * d)
+    tel = tipo.get("mat_telaio", "INFISSO"); osc = _oscurante(tipo)
+    x, y = f(0.02); out.append(box(x, y, z, w + 0.10, 0.04, h + 0.08, rot, tel))           # telaio (sporge 4 cm)
+    x, y = f(0.035); out.append(box(x, y, z + 0.06, w - 0.06, 0.02, h - 0.06, rot, "VETRO")) # vetro
+    if not porta:
+        x, y = f(0.06); out.append(box(x, y, z - 0.05, w + 0.16, 0.14, 0.05, rot, "DAVANZALE"))
+    if osc == "persiane":
+        ux, uy = math.cos(math.radians(rot)), math.sin(math.radians(rot))
+        for sg in (-1, 1):
+            px, py = f(0.06)
+            out.append(box(px + ux * sg * (w / 2 + w / 4 + 0.04), py + uy * sg * (w / 2 + w / 4 + 0.04), z, w / 2, 0.03, h,
+                           rot, tipo.get("mat_oscurante", "PERSIANA")))
+    elif osc != "nessuno":
+        x, y = f(0.045); out.append(box(x, y, z + h * 0.55, w - 0.04, 0.02, h * 0.45, rot, tipo.get("mat_oscurante", "AVVOLGIBILE")))
+        x, y = f(0.05); out.append(box(x, y, z + h + 0.02, w + 0.10, 0.08, 0.18, rot, "CASSONETTO"))
+def _tratti(pts, zs):
+    for (a_, b_), (za, zb_) in zip(zip(pts, pts[1:]), zip(zs, zs[1:])):
+        L_ = math.dist(a_[:2], b_[:2])
+        if L_ > 0.05: yield a_, b_, za, zb_, L_, math.degrees(math.atan2(b_[1]-a_[1], b_[0]-a_[0]))
+def ringhiera(out, pts, zs, h, mat, passo_bacchette=0.12, passo_montanti=2.0):
+    """ringhiera a bacchette: corrimano e traverso basso, bacchette verticali, montanti."""
+    for a_, b_, za, zb_, L_, rot in _tratti(pts, zs):
+        z0 = min(za, zb_); mx_, my_ = (a_[0]+b_[0])/2, (a_[1]+b_[1])/2
+        out.append(box(mx_, my_, z0 + h - 0.04, L_, 0.05, 0.04, rot, mat))
+        out.append(box(mx_, my_, z0 + 0.08, L_, 0.03, 0.03, rot, mat))
+        n_ = max(1, int(L_ / passo_bacchette))
+        for k in range(n_):
+            t = (k + 0.5) / n_
+            out.append(box(a_[0] + (b_[0]-a_[0])*t, a_[1] + (b_[1]-a_[1])*t, z0 + 0.08, 0.018, 0.018, h - 0.12, rot, mat))
+        m_ = max(1, int(L_ / passo_montanti))
+        for k in range(m_ + 1):
+            t = k / m_
+            out.append(box(a_[0] + (b_[0]-a_[0])*t, a_[1] + (b_[1]-a_[1])*t, z0, 0.05, 0.05, h, rot, mat))
+def doghe(out, pts, zs, h, mat, alt_doga=0.12, fuga=0.04):
+    for a_, b_, za, zb_, L_, rot in _tratti(pts, zs):
+        z0 = min(za, zb_); mx_, my_ = (a_[0]+b_[0])/2, (a_[1]+b_[1])/2
+        z = z0 + 0.05
+        while z + alt_doga <= z0 + h:
+            out.append(box(mx_, my_, z, L_, 0.03, alt_doga, rot, mat)); z += alt_doga + fuga
+        for k in range(max(1, int(L_ / 2.0)) + 1):
+            t = k / max(1, int(L_ / 2.0))
+            out.append(box(a_[0] + (b_[0]-a_[0])*t, a_[1] + (b_[1]-a_[1])*t, z0, 0.06, 0.06, h, rot, mat))
+def pannello(out, pts, zs, h, mat):
+    for a_, b_, za, zb_, L_, rot in _tratti(pts, zs):
+        out.append(box((a_[0]+b_[0])/2, (a_[1]+b_[1])/2, min(za, zb_), L_, 0.03, h, rot, mat))
+        for k in range(max(1, int(L_ / 2.5)) + 1):
+            t = k / max(1, int(L_ / 2.5))
+            out.append(box(a_[0] + (b_[0]-a_[0])*t, a_[1] + (b_[1]-a_[1])*t, min(za, zb_), 0.06, 0.06, h, rot, "C20"))
 def dettagli(e, zb, h):
     """finestre e balconi dalle facciate della scheda (orientamento, assi, dimensioni, aggetti); per gli edifici
     senza scheda, una finestra ogni ~3,2 m di facciata per piano. Parapetto sui tetti piani."""
@@ -355,14 +413,18 @@ def dettagli(e, zb, h):
                 bal = [int(m.group(1))] if m else list(range(1, piani))
             Ltot = sum(s["L"] for s in cand)
             for s in cand:
-                spec.append((s, max(1, round(assi_tot * s["L"] / Ltot)), wl, wh, bal, f.get("balcone_frazione", 0.6)))
+                spec.append((s, max(1, round(assi_tot * s["L"] / Ltot)), wl, wh, bal, f.get("balcone_frazione", 0.6),
+                         {**tipo, **{k: f[k] for k in ("mat_telaio", "mat_oscurante") if k in f},
+                          "_oscurante_default": e.get("_osc", "avvolgibile")}))
         visti = {id(x[0]) for x in spec}
         for s in LS:   # gli altri lati: aperture generiche, meno fitte (fronti non rilevati)
-            if id(s) not in visti and s["L"] >= 3.0: spec.append((s, max(1, int(s["L"] / 4.0)), 1.0, 1.2, None, 0.6))
+            if id(s) not in visti and s["L"] >= 3.0: spec.append((s, max(1, int(s["L"] / 4.0)), 1.0, 1.2, None, 0.6,
+                                                                    {"_oscurante_default": e.get("_osc", "avvolgibile")}))
     else:
         for s in LS:
-            if s["L"] >= 3.0: spec.append((s, max(1, int(s["L"] / 3.2)), 1.0, 1.25, None, 0.6))
-    for s, assi, wl, wh, bal, frz in spec:
+            if s["L"] >= 3.0: spec.append((s, max(1, int(s["L"] / 3.2)), 1.0, 1.25, None, 0.6,
+                                           {"_oscurante_default": e.get("_osc", "avvolgibile")}))
+    for s, assi, wl, wh, bal, frz, tinfo in spec:
         (ax, ay), (bx, by) = s["a"], s["b"]; nx, ny = s["n"]
         rot = math.degrees(math.atan2(by - ay, bx - ax))
         assi = min(assi, max(1, int(s["L"] / (wl + 0.6))))
@@ -371,19 +433,22 @@ def dettagli(e, zb, h):
             for i in range(assi):
                 t = (i + 0.5) / assi
                 cx, cy = ax + (bx - ax) * t + nx * 0.03, ay + (by - ay) * t + ny * 0.03
+                cx0, cy0 = ax + (bx - ax) * t, ay + (by - ay) * t
                 if k == 0 and fac and i == assi // 2 and s is spec[0][0]:
-                    out.append(box(cx, cy, zf - 0.3, 1.0, 0.06, 2.3, rot, "PORTONCINO")); continue
-                out.append(box(cx, cy, zf + 0.9, wl, 0.06, wh, rot, "VETRO"))
+                    finestra(out, cx0, cy0, zf - 0.3, 1.0, 2.3, rot, (nx, ny), {"mat_telaio": "PORTONCINO", "oscurante": "nessuno",
+                             "_oscurante_default": "nessuno"}, porta=True); continue
+                finestra(out, cx0, cy0, zf + 0.9, wl, wh, rot, (nx, ny), tinfo)
             if bal and k in bal and s["L"] >= 3.0:
                 lb = s["L"] * frz if frz != 0.6 else min(s["L"] * 0.6, max(2.5, assi * 2.2)); dp = 1.2
                 mx_, my_ = (ax + bx) / 2 + nx * dp / 2, (ay + by) / 2 + ny * dp / 2
                 out.append(box(mx_, my_, zf - 0.15, lb, dp, 0.15, rot, e["materiale"]))
-                ex, ey = (ax + bx) / 2 + nx * (dp - 0.03), (ay + by) / 2 + ny * (dp - 0.03)
-                out.append(box(ex, ey, zf, lb, 0.04, 1.0, rot, "RINGHIERA"))
                 ux, uy = (bx - ax) / s["L"], (by - ay) / s["L"]
+                ex, ey = (ax + bx) / 2 + nx * (dp - 0.03), (ay + by) / 2 + ny * (dp - 0.03)
+                pa_, pb_ = (ex - ux * lb / 2, ey - uy * lb / 2), (ex + ux * lb / 2, ey + uy * lb / 2)
+                ringhiera(out, [pa_, pb_], [zf, zf], 1.0, e.get("mat_ringhiera", "C06"))
                 for sg in (-1, 1):
-                    sx, sy = mx_ + ux * sg * lb / 2, my_ + uy * sg * lb / 2
-                    out.append(box(sx, sy, zf, 0.04, dp, 1.0, rot, "RINGHIERA"))
+                    sx, sy = (ax + bx) / 2 + ux * sg * lb / 2, (ay + by) / 2 + uy * sg * lb / 2
+                    ringhiera(out, [(sx, sy), (sx + nx * dp, sy + ny * dp)], [zf, zf], 1.0, e.get("mat_ringhiera", "C06"))
     if not e.get("_falde"):   # tetto piano: parapetto lungo tutto il perimetro
         for s in LS:
             (ax, ay), (bx, by) = s["a"], s["b"]; nx, ny = s["n"]
@@ -394,32 +459,58 @@ def fotovoltaico(e, zb, h, tt):
     """pannelli: sulle falde rivolte a sud (sottoinsieme dei triangoli del tetto alzato di 7 cm, lontano dal bordo);
     sui tetti piani, file di pannelli inclinati verso sud."""
     P = Polygon(e["impronta"]).buffer(0)
+    MW, ML = 1.02, 1.72                      # modulo standard (m): lato lungo lungo la pendenza
+    out = []
     if tt:
-        V = tt["vertici"]; dentro = P.buffer(-0.8)
-        vs, ts, idx = [], [], {}
+        # falde = triangoli con la stessa normale; moduli rettangolari in griglia sulle falde rivolte a S/SE/SO
+        V = tt["vertici"]; falde = {}
         for a_, b_, c_ in tt["triangoli"]:
             pa, pb, pc = V[a_], V[b_], V[c_]
             ux, uy, uz = pb[0]-pa[0], pb[1]-pa[1], pb[2]-pa[2]; vx, vy, vz = pc[0]-pa[0], pc[1]-pa[1], pc[2]-pa[2]
             nx, ny, nz = uy*vz-uz*vy, uz*vx-ux*vz, ux*vy-uy*vx; nn = math.sqrt(nx*nx+ny*ny+nz*nz) or 1
-            if nz / nn > 0.995 or ny / nn > -0.08: continue           # piano o non rivolto a sud
-            if not dentro.contains(Point((pa[0]+pb[0]+pc[0])/3, (pa[1]+pb[1]+pc[1])/3)): continue
-            ids = []
-            for q in (pa, pb, pc):
-                kq = (q[0], q[1])
-                if kq not in idx: idx[kq] = len(vs); vs.append([q[0], q[1], R(q[2] + 0.07)])
-                ids.append(idx[kq])
-            ts.append(ids)
-        return {"vertici": vs, "triangoli": ts} if ts else None
-    out = []; dentro = P.buffer(-1.2)
+            nx, ny, nz = nx/nn, ny/nn, nz/nn
+            hh_ = math.hypot(nx, ny)
+            if nz > 0.995 or hh_ < 1e-6 or ny / hh_ > -0.5: continue      # falde rivolte a S (±60°)
+            k_ = (round(nx, 1), round(ny, 1))
+            falde.setdefault(k_, {"n": (nx, ny, nz), "p0": pa, "tri": []})["tri"].append(Polygon([pa[:2], pb[:2], pc[:2]]))
+        for k_, F in falde.items():
+          for poly_f in getattr(unary_union(F["tri"]).buffer(0.02).buffer(-0.37, join_style=2), "geoms",
+                                [unary_union(F["tri"]).buffer(0.02).buffer(-0.37, join_style=2)]):
+            if poly_f.is_empty or poly_f.geom_type != "Polygon" or poly_f.area < 3: continue
+            nx, ny, nz = F["n"]; hh = math.hypot(nx, ny)
+            dx, dy = nx / hh, ny / hh                     # verso valle (orizzontale)
+            ax_, ay_ = -dy, dx                            # lungo la linea di gronda
+            incl = math.degrees(math.atan2(hh, nz))
+            Lp = ML * math.cos(math.radians(incl))        # proiezione orizzontale del modulo
+            px0, py0, pz0 = F["p0"]
+            def zpl(x, y): return pz0 - (nx * (x - px0) + ny * (y - py0)) / nz
+            c0 = poly_f.centroid; cs = list(poly_f.exterior.coords) if poly_f.geom_type == "Polygon" else []
+            if not cs: continue
+            us = [(q[0]-c0.x)*ax_ + (q[1]-c0.y)*ay_ for q in cs]; vs_ = [(q[0]-c0.x)*dx + (q[1]-c0.y)*dy for q in cs]
+            u = min(us) + MW / 2
+            while u <= max(us) - MW / 2:
+                v = min(vs_) + Lp / 2
+                while v <= max(vs_) - Lp / 2:
+                    x, y = c0.x + ax_ * u + dx * v, c0.y + ay_ * u + dy * v
+                    rect = Polygon([(x + ax_*su*MW/2 + dx*sv*Lp/2, y + ay_*su*MW/2 + dy*sv*Lp/2)
+                                    for su, sv in ((-1, -1), (1, -1), (1, 1), (-1, 1))])
+                    if poly_f.contains(rect):
+                        rot = math.degrees(math.atan2(-dy, -dx)) - 90   # +y locale verso monte
+                        out.append(box(x, y, zpl(x, y) + 0.08 - ML / 2 * math.sin(math.radians(incl)), MW, ML, 0.04,
+                                       rot, "FV", incl=incl))
+                    v += Lp + 0.02
+                u += MW + 0.02
+        return {"pannelli": out} if out else None
+    dentro = P.buffer(-1.2)
     if dentro.is_empty: return None
-    x0, y0, x1, y1 = dentro.bounds; y = y0 + 0.6
-    while y < y1 - 0.5:
-        riga = dentro.intersection(LineString([(x0 - 1, y), (x1 + 1, y)]))
-        for q in getattr(riga, "geoms", [riga]):
-            if q.geom_type == "LineString" and q.length > 1.0:
-                (qa, _), (qb, _) = q.coords[0], q.coords[-1]
-                out.append(box((qa + qb) / 2, y, zb + h + 0.25, abs(qb - qa), 1.0, 0.05, 0, "FV"))
-        y += 2.0
+    x0, y0, x1, y1 = dentro.bounds; y = y0 + 0.8
+    while y < y1 - 0.8:                        # tetto piano: file di moduli inclinati di 20° verso sud
+        x = x0 + MW / 2
+        while x < x1 - MW / 2:
+            rect = Polygon([(x - MW/2, y - 0.8), (x + MW/2, y - 0.8), (x + MW/2, y + 0.8), (x - MW/2, y + 0.8)])
+            if dentro.contains(rect): out.append(box(x, y, zb + h + 0.3, MW, ML, 0.04, 0, "FV", incl=20))
+            x += MW + 0.02
+        y += 2.6
     return {"pannelli": out} if out else None
 
 edifici = []
@@ -440,6 +531,7 @@ for e in sc["edifici"]:
                (colmo - e["altezza"]) if colmo else None, (e.get("sporto_cm") or 0) / 100.0)
     if tt: ed["tetto"] = tt
     e["_falde"] = bool(tt)
+    e["_osc"] = e.get("oscurante_default") or "avvolgibile"
     ed["elementi"] = dettagli(e, zb, h)
     if e.get("fotovoltaico"):
         fv = fotovoltaico(e, zb, h, tt)
@@ -473,7 +565,47 @@ for a in sc["arredo"]:
                     "rot_deg": a.get("rot_deg", 0.0),
                     "testa": "lampione" if a["tipo"] == "lampione" else ("disco" if "cartello" in a["tipo"] else None)})
 vegetazione = []
-dettagli = []   # scatole libere (segnaletica, siepi, canneti): stesso formato degli elementi degli edifici
+dettagli = []   # scatole libere (segnaletica, siepi, canneti, recinzioni, cancelli): formato degli elementi degli edifici
+MAT_DETT = {"ringhiera": None, "doghe": None, "grigliato": "GRIGLIATO", "telo": "TELO_VERDE"}
+recinzioni_dett = []
+for r in sc["recinzioni"]:
+    if r["tipo"] not in ("ringhiera", "doghe", "grigliato", "telo"): continue
+    pts = [p[:2] for p in r["punti"]]; zs = [p[2] for p in r["punti"]]
+    if r["tipo"] == "ringhiera": ringhiera(dettagli, pts, zs, r["altezza"], r["materiale"])
+    elif r["tipo"] == "doghe": doghe(dettagli, pts, zs, r["altezza"], r["materiale"])
+    else: pannello(dettagli, pts, zs, r["altezza"], MAT_DETT[r["tipo"]])
+# pilastri e copertine sui muri su strada
+for m in sc["muri"]:
+    if not m.get("su_strada"): continue
+    pts, zt = m["punti"], m["z_sommita"]; ns_ = m["normali_interno"]
+    if m.get("copertina", True):
+        for (a_, b_, za, zb_, L_, rot), n_ in zip(_tratti(pts, zt), ns_):
+            cx, cy = (a_[0]+b_[0])/2 + n_[0]*SP/2, (a_[1]+b_[1])/2 + n_[1]*SP/2
+            dettagli.append(box(cx, cy, min(za, zb_) - 0.01, L_ + 0.02, SP + 0.06, 0.06, rot, "COPERTINA"))
+    pp = m.get("pilastri_passo")
+    if pp:
+        acc, prossimo = 0.0, 0.0
+        for (a_, b_, za, zb_, L_, rot), n_ in zip(_tratti(pts, zt), ns_):
+            while prossimo <= acc + L_:
+                t = (prossimo - acc) / L_; x = a_[0] + (b_[0]-a_[0])*t + n_[0]*SP/2; y = a_[1] + (b_[1]-a_[1])*t + n_[1]*SP/2
+                zt_ = za + (zb_ - za) * t; zb0 = S.trend(x, y) - 0.1
+                dettagli.append(box(x, y, zb0, 0.38, 0.38, zt_ - zb0 + 0.12, rot, m["materiale"]))
+                prossimo += pp
+            acc += L_
+# cancelli: ante (sbarre, doghe o pieno), pilastri ai lati, pensilina in coppi per i pedonali che la hanno
+for c_ in sc.get("cancelli", []):
+    (ax, ay), (bx, by) = c_["punti"]; L_ = math.dist((ax, ay), (bx, by)); rot = math.degrees(math.atan2(by-ay, bx-ax))
+    nx_, ny_ = c_["normale"]; z0 = c_["z"]; h = c_["h"]
+    mx_, my_ = (ax+bx)/2 + nx_*SP/2, (ay+by)/2 + ny_*SP/2
+    pts = [(ax + nx_*SP/2, ay + ny_*SP/2), (bx + nx_*SP/2, by + ny_*SP/2)]
+    if c_["stile"] == "doghe": doghe(dettagli, pts, [z0 + 0.05, z0 + 0.05], h, c_["materiale"], alt_doga=0.14, fuga=0.02)
+    elif c_["stile"] == "pieno": pannello(dettagli, pts, [z0 + 0.05, z0 + 0.05], h, c_["materiale"])
+    else: ringhiera(dettagli, pts, [z0 + 0.05, z0 + 0.05], h, c_["materiale"], passo_bacchette=0.11, passo_montanti=L_ / 2)
+    for sg in (-1, 1):
+        dettagli.append(box(mx_ + math.cos(math.radians(rot))*sg*(L_/2 + 0.2), my_ + math.sin(math.radians(rot))*sg*(L_/2 + 0.2),
+                            z0 - 0.05, 0.4, 0.4, h + 0.35, rot, c_.get("mat_pilastri", "C04")))
+    if c_.get("pensilina"):
+        dettagli.append(box(mx_, my_, z0 + h + 0.3, L_ + 0.9, 1.1, 0.12, rot, "C03"))
 for v in L.get("vegetazione", []):
     if not v.get("nel_contesto", True): continue
     vs_ = [vv for vv in sc["vegetazione"] if vv["id"] == v["id"]][0]
@@ -488,9 +620,12 @@ for v in L.get("vegetazione", []):
                                     math.degrees(math.atan2(b_[1]-a_[1], b_[0]-a_[0])), "SIEPE"))
         continue
     if forma == "canneto":  # fascia di canne lungo il lato interno del muro indicato
+        lmax, fatto = v.get("lunghezza_max_m", 1e9), 0.0
         for m in sc["muri"]:
             if m["id"] != v.get("dietro_muro"): continue
             for p_, n_, (a_, b_) in zip(m["punti"], m["normali_interno"], zip(m["punti"], m["punti"][1:])):
+                fatto += math.dist(a_, b_)
+                if fatto > lmax: break
                 cx, cy = (a_[0]+b_[0])/2 + n_[0]*1.0, (a_[1]+b_[1])/2 + n_[1]*1.0
                 dettagli.append(box(cx, cy, S.trend(cx, cy), math.dist(a_, b_) + 0.2, 1.4, v.get("h", 3.5),
                                     math.degrees(math.atan2(b_[1]-a_[1], b_[0]-a_[0])), "CANNETO"))
@@ -504,6 +639,13 @@ for v in L.get("vegetazione", []):
                             "materiale": v.get("materiale", "C27")})
 
 # ---------------------------------------------------------------- lampioni lungo i marciapiedi (passo di scheda, sfalsati)
+def _verso_strada(x, y):
+    """normale verso la carreggiata e tangente del bordo strada più vicino al punto (x, y)."""
+    bd = S.carreggiata.boundary; s_ = bd.project(Point(x, y))
+    q = bd.interpolate(s_); q2 = bd.interpolate(s_ + 0.5); q1 = bd.interpolate(max(0, s_ - 0.5))
+    tx, ty = q2.x - q1.x, q2.y - q1.y; Lt = math.hypot(tx, ty) or 1.0; tx, ty = tx / Lt, ty / Lt
+    nx, ny = q.x - x, q.y - y; Ln = math.hypot(nx, ny) or 1.0
+    return (nx / Ln, ny / Ln), (tx, ty)
 LP = L.get("lampioni")
 if LP:
     bd = S.carreggiata.boundary; cnt_ = 0
@@ -515,19 +657,30 @@ if LP:
             dx, dy = q2.x - q.x, q2.y - q.y; Ln = math.hypot(dx, dy) or 1.0
             nx, ny = -dy / Ln, dx / Ln
             if S.carreggiata.contains(Point(q.x + nx * 0.3, q.y + ny * 0.3)): nx, ny = -nx, -ny   # verso il marciapiede
-            x, y = q.x + nx * 0.5, q.y + ny * 0.5
+            x, y = q.x + nx * LP.get("dal_cordolo_m", 0.5), q.y + ny * LP.get("dal_cordolo_m", 0.5)
             if S.marciapiedi.buffer(0.1).contains(Point(x, y)) and S.area.buffer(-3).contains(Point(x, y)):
                 cnt_ += 1
                 oggetti.append({"nome": f"A01 – lampione {cnt_}", "tag": "30_Arredo", "xy": [R(x), R(y)],
-                                "z": R(S.z_marc(x, y) - 0.05), "dim": [0.12, 0.12, R(LP.get("h", 8.0) + 0.05)],
+                                "z": R(S.z_marc(x, y) - 0.05), "dim": [0.14, 0.14, R(LP.get("h", 8.0))],
                                 "materiale": LP.get("materiale", "C20"),
-                                "rot_deg": round(math.degrees(math.atan2(ny, nx)), 1), "testa": "lampione"})
+                                "rot_deg": round(math.degrees(math.atan2(-ny, -nx)), 1), "testa": "lampione",
+                                "lampione": {"h": LP.get("h", 8.0), "d_base": LP.get("d_base_m", 0.16), "d_cima": LP.get("d_cima_m", 0.08),
+                                             "sbraccio": LP.get("sbraccio_m", 0.6), "armatura": LP.get("armatura", [0.7, 0.3, 0.12]),
+                                             "plinto": LP.get("plinto", [0.35, 0.35, 0.25])}})
             s_ += LP.get("passo_m", 27)
+# i lampioni descritti in arredo (posizioni rilevate) usano la stessa forma
+for o in oggetti:
+    if o.get("testa") == "lampione" and "lampione" not in o and LP:
+        (nx, ny), _ = _verso_strada(*o["xy"])
+        o["rot_deg"] = round(math.degrees(math.atan2(ny, nx)), 1)
+        o["lampione"] = {"h": o["dim"][2], "d_base": LP.get("d_base_m", 0.16), "d_cima": LP.get("d_cima_m", 0.08),
+                         "sbraccio": LP.get("sbraccio_m", 0.6), "armatura": LP.get("armatura", [0.7, 0.3, 0.12]),
+                         "plinto": LP.get("plinto", [0.35, 0.35, 0.25])}
 
-# ---------------------------------------------------------------- segnaletica orizzontale: mezzeria e strisce pedonali
+# ---------------------------------------------------------------- segnaletica orizzontale: mezzeria, margini, strisce pedonali
 SG = L.get("segnaletica_stradale")
+incroci, assi_n = [], {}
 if SG:
-    assi_n = {}
     for f in json.load(open(S.P_(S.DB["assi"]), encoding="utf-8"))["features"] if S.DB.get("assi") else []:
         for l in f["geometry"]["coordinates"]:
             assi_n.setdefault(f["properties"].get("nome") or "?", []).append(LineString([S.loc(q[0], q[1]) for q in l]))
@@ -535,36 +688,88 @@ if SG:
     nodi = [Point(c) for ln in tutti for c in (ln.coords[0], ln.coords[-1])]
     incroci = [p for p in nodi if sum(1 for q in nodi if q.distance(p) < 1.0) >= 3]
     def zs(x, y): return S.z_strada(x, y) + 0.012
+    W_ = SG.get("larghezza_linee_m", 0.12)
     if SG.get("mezzeria", True):
+        T_, I_ = SG.get("mezzeria_tratto_m", 3.0), SG.get("mezzeria_intervallo_m", 4.5)
         for ln in tutti:
             ln = ln.intersection(carr.buffer(-1.0))
             for part in getattr(ln, "geoms", [ln]):
                 if part.is_empty or part.geom_type != "LineString": continue
                 s_ = 0.0
-                while s_ + 3.0 < part.length:
-                    a_, b_ = part.interpolate(s_), part.interpolate(s_ + 3.0)
+                while s_ + T_ < part.length:
+                    a_, b_ = part.interpolate(s_), part.interpolate(s_ + T_)
                     m_ = Point((a_.x+b_.x)/2, (a_.y+b_.y)/2)
-                    if all(m_.distance(i_) > 9 for i_ in incroci):
-                        dettagli.append(box(m_.x, m_.y, zs(m_.x, m_.y), 3.0, 0.12, 0.01,
+                    if all(m_.distance(i_) > SG.get("mezzeria_stop_incrocio_m", 10) for i_ in incroci):
+                        dettagli.append(box(m_.x, m_.y, zs(m_.x, m_.y), T_, W_, 0.01,
                                             math.degrees(math.atan2(b_.y-a_.y, b_.x-a_.x)), "SEGNALETICA"))
-                    s_ += 6.0
+                    s_ += T_ + I_
+    if SG.get("margini", False):   # linee di margine continue, a 0,3 m dal cordolo, interrotte agli incroci
+        off = SG.get("margine_dal_cordolo_m", 0.3)
+        anello = carr.buffer(-off - W_ / 2).boundary
+        for part in getattr(anello, "geoms", [anello]):
+            L_ = part.length; s_ = 0.0
+            while s_ < L_:
+                a_, b_ = part.interpolate(s_), part.interpolate(min(L_, s_ + 1.0))
+                m_ = Point((a_.x+b_.x)/2, (a_.y+b_.y)/2)
+                if all(m_.distance(i_) > SG.get("margine_stop_incrocio_m", 12) for i_ in incroci) and S.area.buffer(-1).contains(m_):
+                    dettagli.append(box(m_.x, m_.y, zs(m_.x, m_.y), math.dist((a_.x, a_.y), (b_.x, b_.y)) + 0.02, W_, 0.01,
+                                        math.degrees(math.atan2(b_.y-a_.y, b_.x-a_.x)), "SEGNALETICA"))
+                s_ += 1.0
+    CARD = {"N": 90, "NE": 45, "E": 0, "SE": -45, "S": -90, "SO": -135, "O": 180, "NO": 135}
+    strisce_fatte = []
     for sp in SG.get("strisce_pedonali", []):
         for ln in assi_n.get(sp["strada"], []):
             for estremo, verso in ((ln.coords[0], 1), (ln.coords[-1], -1)):
                 if not any(Point(estremo).distance(i_) < 1.0 for i_ in incroci): continue
-                d0 = SG.get("distanza_incrocio_m", 6.0); s0 = d0 if verso == 1 else ln.length - d0
+                if sp.get("incrocio") and Point(estremo).distance(Point(sp["incrocio"])) > 4.0: continue   # solo l'incrocio rilevato
+                d0 = sp.get("distanza_incrocio_m", SG.get("distanza_incrocio_m", 6.0)); s0 = d0 if verso == 1 else ln.length - d0
                 if not (0 < s0 < ln.length): continue
                 c_ = ln.interpolate(s0); c2 = ln.interpolate(min(ln.length, s0 + 0.5) if verso == 1 else max(0, s0 - 0.5))
+                if sp.get("lato"):   # solo il ramo che dall'incrocio va verso il lato indicato
+                    ang = math.degrees(math.atan2(c_.y - estremo[1], c_.x - estremo[0]))
+                    if abs((ang - CARD[sp["lato"]] + 180) % 360 - 180) > 50: continue
                 ux, uy = c2.x - c_.x, c2.y - c_.y; Lu = math.hypot(ux, uy) or 1.0; ux, uy = ux/Lu, uy/Lu
                 trasv = LineString([(c_.x - uy*12, c_.y + ux*12), (c_.x + uy*12, c_.y - ux*12)]).intersection(carr)
                 for tr in getattr(trasv, "geoms", [trasv]):
                     if tr.is_empty or tr.geom_type != "LineString" or not tr.buffer(0.5).intersects(c_.buffer(0.5)): continue
-                    s_ = 0.4
-                    while s_ < tr.length - 0.4:
+                    if any(tr.centroid.distance(t0.centroid) < 2.0 for t0, _ in strisce_fatte): continue   # assi DBGT doppi
+                    s_ = 0.5
+                    while s_ < tr.length - 0.5:
                         p_ = tr.interpolate(s_)
-                        dettagli.append(box(p_.x, p_.y, zs(p_.x, p_.y), 2.5, 0.5, 0.01,
+                        dettagli.append(box(p_.x, p_.y, zs(p_.x, p_.y), sp.get("profondita_m", 2.5), 0.5, 0.01,
                                             math.degrees(math.atan2(uy, ux)), "SEGNALETICA"))
                         s_ += 1.0
+                    strisce_fatte.append((tr, (ux, uy)))
+
+# ---------------------------------------------------------------- segnaletica verticale (cartelli rilevati + attraversamenti)
+SEGNALI = {
+    "divieto_sosta": {"forma": "tondo", "d": 0.6, "bordo": "SEGN_ROSSO", "campo": "SEGN_BLU", "simbolo": "diagonale"},
+    "divieto_fermata": {"forma": "tondo", "d": 0.6, "bordo": "SEGN_ROSSO", "campo": "SEGN_BLU", "simbolo": "croce"},
+    "senso_vietato": {"forma": "tondo", "d": 0.6, "bordo": "SEGN_ROSSO", "campo": "SEGN_ROSSO", "simbolo": "barra"},
+    "attraversamento_pedonale": {"forma": "quadro", "d": 0.6, "bordo": "SEGN_BIANCO", "campo": "SEGN_BLU", "simbolo": "triangolo"},
+    "dare_precedenza": {"forma": "triangolo_giu", "d": 0.9, "bordo": "SEGN_ROSSO", "campo": "SEGN_BIANCO", "simbolo": None},
+    "frecce_direzione": {"forma": "freccia", "d": [1.0, 0.25], "bordo": "SEGN_BIANCO", "campo": "SEGN_BLU", "simbolo": None},
+    "nome_via": {"forma": "rettangolo", "d": [0.7, 0.25], "bordo": "SEGN_BLU", "campo": "SEGN_BIANCO", "simbolo": None, "parallelo": True},
+}
+def cartello(nome, x, y, tipo, h=None, pannello=None, verso=None):
+    sp = dict(SEGNALI[tipo]); (nx, ny), (tx, ty) = _verso_strada(x, y)
+    if sp.pop("parallelo", False): rot = math.degrees(math.atan2(ty, tx))            # targa parallela alla strada
+    else: rot = math.degrees(math.atan2(ty * (verso or 1), tx * (verso or 1)))         # piastra di fronte al traffico
+    o = {"nome": nome, "tag": "30_Arredo", "xy": [R(x), R(y)], "z": R(S.z_marc(x, y) - 0.05),
+         "dim": [0.06, 0.06, R(h or (2.6 if sp["forma"] != "rettangolo" else 2.4))], "materiale": "C20",
+         "rot_deg": round(rot - 90, 1), "testa": "segnale", "segnale": sp}
+    if pannello: o["segnale"]["pannello"] = pannello
+    oggetti.append(o)
+for k_, sv in enumerate(L.get("segnaletica_verticale", [])):
+    pos = S.posiziona(sv)
+    if not pos: continue
+    cartello(f"A02 – {sv['tipo'].replace('_', ' ')} {k_+1}", pos[0], pos[1], sv["tipo"], sv.get("h"), sv.get("pannello"), sv.get("verso"))
+if SG and SG.get("cartelli_attraversamento", True):
+    for tr, (ux, uy) in strisce_fatte:     # un cartello su ciascun marciapiede, ai due capi delle strisce
+        for q in (tr.coords[0], tr.coords[-1]):
+            px, py = q[0] - ux * 1.4, q[1] - uy * 1.4
+            (nx, ny), _ = _verso_strada(px, py); px, py = px - nx * 0.5, py - ny * 0.5
+            cartello("A02 – attraversamento pedonale", px, py, "attraversamento_pedonale")
 
 # ---------------------------------------------------------------- materiali (+ texture a scacchiera per P02)
 pal = {p["id"]: p for p in scheda["palette"]}
@@ -577,6 +782,7 @@ for m in muri: usati.add(m["materiale"])
 for e in edifici: usati |= {e["materiale"], e["materiale_copertura"]}
 for o in oggetti: usati.add(o["materiale"])
 for e in edifici: usati |= {x["materiale"] for x in e.get("elementi", []) if x["materiale"] in pal}
+usati |= {x["materiale"] for x in dettagli if x["materiale"] in pal}
 TX = ST.get("texture_marciapiede")
 if TX: usati.add(TX["alternato"])
 for v in vegetazione: usati.add(v["materiale"])
@@ -600,7 +806,13 @@ for tipo, (pid, rid) in MAT_REC.items():
     if any(r["materiale_palo"] == f"{pid}_paletti_{tipo}" for r in recinzioni):
         materiali[f"{pid}_paletti_{tipo}"] = {"hex": pal[pid]["hex"]}
         materiali[rid] = {"hex": pal[pid]["hex"], "alpha": {"rete": 0.25, "ringhiera": 0.45, "doghe": 0.85}[tipo]}
-materiali.update({"SEGNALETICA": {"hex": "#E8E8E4"}, "SIEPE": {"hex": "#4F6B34"}, "CANNETO": {"hex": "#8A8A4E", "alpha": 0.85},
+materiali.update({"SEGN_ROSSO": {"hex": "#C0272D"}, "SEGN_BLU": {"hex": "#1F4E9E"}, "SEGN_BIANCO": {"hex": "#F4F4F2"},
+                  "PALO_LUCE": {"hex": "#A9AEB1"}, "ARMATURA": {"hex": "#5E6366"}, "PLINTO": {"hex": "#9C9890"},
+                  "INFISSO": {"hex": "#F2F1EC"}, "DAVANZALE": {"hex": "#E4DED2"}, "PERSIANA": {"hex": "#6B4A2E"},
+                  "AVVOLGIBILE": {"hex": "#E9E7E2"}, "CASSONETTO": {"hex": "#E2DFD8"}, "COPERTINA": {"hex": "#D9D3C7"},
+                  "GRIGLIATO": {"hex": "#B8643A", "alpha": 0.7}, "TELO_VERDE": {"hex": "#2F5A3A", "alpha": 0.9},
+                  "PERSIANA_VERDE": {"hex": "#3F5A3C"}, "TELAIO_ROSSO": {"hex": "#A33A2A"}, "TELAIO_GRIGIO": {"hex": "#6E7173"},
+                  "SEGNALETICA": {"hex": "#E8E8E4"}, "SIEPE": {"hex": "#4F6B34"}, "CANNETO": {"hex": "#8A8A4E", "alpha": 0.85},
                   "CHIOMA": {"hex": "#556B35"}, "FUSTO": {"hex": "#6B5A48"},
                   "VETRO": {"hex": "#2E3A42"}, "PORTONCINO": {"hex": "#5A4636"},
                   "RINGHIERA": {"hex": "#3C3F41", "alpha": 0.55}, "FV": {"hex": "#1C2A44"}})
@@ -611,6 +823,7 @@ for e in edifici: e["materiale"], e["materiale_copertura"] = rinomina(e["materia
 for o in oggetti: o["materiale"] = rinomina(o["materiale"])
 for e in edifici:
     for x in e.get("elementi", []): x["materiale"] = rinomina(x["materiale"])
+for x in dettagli: x["materiale"] = rinomina(x["materiale"])
 for v in vegetazione: v["materiale"] = rinomina(v["materiale"])
 
 # ---------------------------------------------------------------- punti di controllo della proiezione
