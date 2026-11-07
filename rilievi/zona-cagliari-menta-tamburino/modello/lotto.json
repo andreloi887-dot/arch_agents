@@ -1040,5 +1040,26 @@
   "usa": true,
   "altezza_min_m": 2.5,
   "distanza_da_palme_m": 3.0
+ },
+ "progetto_ifc": {
+  "file": "../../../../ifc via della menta per blender.ifc",
+  "_nota": "Edificius 2026-11-07, IFC4, non georiferito (sito con lat/long di default): allineato con allinea_ifc.py al perimetro catastale e ai bordi strada; quota dalla strada e dal terreno esistente dell'IFC",
+  "rotazione_gradi": -2.23,
+  "traslazione": [
+   -9.1,
+   36.63
+  ],
+  "dz": 3.92,
+  "escludi_nomi": [
+   "Strada",
+   "Estrusione (solido)"
+  ],
+  "nascondi": [
+   "P03",
+   "R06",
+   "erba lotto"
+  ],
+  "margine_m": 1.0,
+  "_nota_quota": "dz agganciato a Via della Menta (Andrea, 2026-11-07): mediana z_rilievo - z_IFC del terreno Edificius su carreggiata e marciapiede entro 7 m dall'asse DBGT, n 1589, p25/p75 3,67/4,02"
  }
 }
