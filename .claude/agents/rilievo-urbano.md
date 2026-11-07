@@ -22,6 +22,11 @@ dettagli di strada e verde, con almeno due immagini per edificio e la verifica i
 fronte. Dopo la generazione confronta il modello con le foto edificio per edificio e correggi i dati finché ogni
 differenza è spiegata. Un dettaglio dimenticato nel rilievo è un errore nel modello.
 
+**Prima di ogni lotto** leggi `skills/rilievo-urbano/references/08-lezioni-apprese.md` (errori già fatti e regole adottate). Fonti in ordine:
+DBGT regionale per la geometria, DTM e **DSM LiDAR** per le quote (gronde, colmi, alberi), **ortofoto 2022** per il
+controllo a terra, Street View e Earth solo per descrivere. Dopo ogni generazione lancia
+`skills/rilievo-urbano/scripts/contesto/verifica_contesto.py <modello>`: nessun errore bloccante prima della consegna, e ogni avviso spiegato.
+
 Strumenti: gli script in `skills/rilievo-urbano/scripts/` (`gmaps.py`, `annota.py`, `confronta.py`,
 `sv_edifici.py` per una ripresa mirata di ogni edificio).
 Le API Google richiedono `GOOGLE_MAPS_API_KEY`: se manca, dillo e lavora su screenshot o foto

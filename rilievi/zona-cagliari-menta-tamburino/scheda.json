@@ -871,7 +871,8 @@
           "materiale": "C04",
           "riprese": [
             "SV-16"
-          ]
+          ],
+          "balconi_piani": []
         }
       ],
       "note": "letto quasi solo da satellite"
@@ -942,7 +943,8 @@
           ],
           "materiali_accento": [
             "C12"
-          ]
+          ],
+          "balconi_piani": []
         }
       ],
       "note": ""
@@ -1176,7 +1178,8 @@
             "SV-02",
             "SV-03",
             "SV-14"
-          ]
+          ],
+          "balconi_piani": []
         }
       ],
       "note": "piano di calpestio del lotto ~2,5 m sopra il marciapiede (muro di sostegno R02)"
@@ -1446,7 +1449,8 @@
           "materiali_accento": [
             "C23"
           ],
-          "mat_telaio": "TELAIO_ROSSO"
+          "mat_telaio": "TELAIO_ROSSO",
+          "balconi_piani": []
         }
       ],
       "note": "quasi interamente nascosto dal muro R09"

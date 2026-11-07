@@ -95,12 +95,17 @@ Andrea deve intervenire il meno possibile.
       i valori del singolo lotto in `lotto.json` nella cartella del modello. Su Via della Menta dà geometria identica.
 - [x] Dati di un lotto nuovo in automatico (2026-11-07): `prepara_lotto.py` scarica catasto e DTM e scrive `lotto.json`.
       La scheda (altezze, materiali, arredo) la completa l'agente rilievo-urbano.
+- [x] Precisione del contesto (2026-11-07): DBGT, DSM LiDAR, ortofoto 2022, rilievo a 3 viste per edificio,
+      dettagli LOD3 (infissi, balconi, cancelli, recinzioni, segnaletica, lampioni), controlli automatici
+      (`verifica_contesto.py`); lezioni in `skills/rilievo-urbano/references/08-lezioni-apprese.md`.
 - [ ] Prova del motore su un secondo lotto.
 - [ ] Scrivere gli agenti e le skill per l'assemblaggio in Blender e per i video in Unreal.
 - [ ] Prova completa su un progetto vero.
 
 ## Stato
-- Fase 2 provata su Via della Menta / Via Tamburino Sardo (Cagliari). La pipeline funziona in SketchUp
-  2025; il motore è generico e legge `lotto.json`, ma non è ancora stato provato su un secondo lotto.
+- Fase 2 provata su Via della Menta / Via Tamburino Sardo (Cagliari): contesto LOD3 con quote misurate dal DSM,
+  verificato su foto, ortofoto e controlli automatici; SketchUp solo come vista di controllo. Da provare su un
+  secondo lotto.
+- Fase 3 (Blender) avviata.
 - Installati: Blender 5.2 + Bonsai 0.9.0, Unreal Engine 5.8, FFmpeg.
 - Fasi 3–6 ancora da costruire.

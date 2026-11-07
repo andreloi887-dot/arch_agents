@@ -179,6 +179,8 @@ def main():
                      "dbgt": dbgt, "ortofoto": "../geometria/ortofoto/ortofoto.json",
                      **({"dsm": dsm} if dsm["superficie"] else {})},
             "strade": {"punti_aggiunti_al_sedime": [], "marciapiede_m": 1.5, "rialzo_marciapiede_m": 0.10,
+                       "lisciatura_profilo_m": 9, "pendenza_trasversale": 0.02, "raccordo_assi_m": 8.0,
+                       "eccesso_muro_max_m": 0.3, "distanza_fronte_particella_m": 6.0,
                        "pendenza_marciapiede": 0.015, "raccordo_angoli_m": 2.0, "raccordo_lotto_m": 4.0,
                        "materiale_carreggiata": "C16", "materiale_marciapiede": "C17", "materiale_cordolo": "C19",
                        "texture_marciapiede": {"materiale": "C17", "alternato": "C18", "modulo_mm": [800, 800]}},
@@ -188,7 +190,19 @@ def main():
                       "muro_fronte": {"id": "M01", "nome": "M01 – muro sul fronte strada", "materiale": "C15", "spessore": 0.25,
                                       "campionamento_interno_m": 1.6, "altezza_minima_m": 0.20,
                                       "altezza_massima_m": 1.30, "scarpata_m": 2.5}},
-            "muri_contorno": [], "edifici": {"altezza_generica_m": 6.5, "materiale_generico": "C04", "piattaforma_m": {}},
+            "muri_contorno": [], "edifici": {"altezza_generica_m": 6.5, "materiale_generico": "C04", "piattaforma_m": {},
+                                             "per_edificio": {}},
+            # valori appresi nei test (references/08-lezioni-apprese.md); il rilievo li sostituisce lotto per lotto
+            "confini_interni": {"altezza": 1.8, "spessore": 0.2, "materiale": "C04", "rete_oltre_m": 12.0,
+                                "cordolo_rete_m": 0.3, "altezza_rete_m": 1.5},
+            "lampioni": {"passo_m": 27, "h": 8.5, "materiale": "C20", "d_base_m": 0.16, "d_cima_m": 0.08, "sbraccio_m": 0.5,
+                         "armatura": [0.75, 0.32, 0.12], "plinto": [0.35, 0.35, 0.2], "dal_cordolo_m": 0.5},
+            "segnaletica_stradale": {"mezzeria": True, "mezzeria_tratto_m": 3.0, "mezzeria_intervallo_m": 4.5,
+                                     "mezzeria_stop_incrocio_m": 10, "margini": True, "margine_dal_cordolo_m": 0.3,
+                                     "margine_stop_incrocio_m": 12, "larghezza_linee_m": 0.12, "distanza_incrocio_m": 6.0,
+                                     "cartelli_attraversamento": True, "strisce_pedonali": []},
+            "segnaletica_verticale": [],
+            "alberi_dsm": {"usa": True, "altezza_min_m": 2.5, "distanza_da_palme_m": 3.0, "verde_min": 0.085, "luminosita_max": 115},
             "arredo": [], "vegetazione": [],
             "punti_controllo": {"NE": [EXT - 15, EXT - 15], "SO": [15 - EXT, 15 - EXT]}}
         json.dump(lotto, open(lp, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
@@ -202,6 +216,7 @@ def main():
                   open(sp, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
     if dsm["superficie"]:
         subprocess.run([sys.executable, os.path.join(HERE, "dsm.py"), MOD], check=True)
+    print("dopo il rilievo: contesto.py, poi verifica_contesto.py (controlli automatici)")
     print(f"pronto: {MOD}\npoi: python {os.path.join(HERE, 'contesto.py')} \"{MOD}\"")
 
 if __name__ == "__main__":

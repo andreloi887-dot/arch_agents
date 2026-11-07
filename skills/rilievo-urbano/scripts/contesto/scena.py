@@ -427,7 +427,8 @@ if _DB_REC:
             scena["recinzioni"].append({"id": f"CI{nci:02d}", "nome": f"CI{nci:02d} – rete", "tipo": "rete", "materiale": "C20",
                 "altezza": _CI.get("altezza_rete_m", 1.5), "passo_paletti": 2.5,
                 "punti": [[round(x, 3), round(y, 3), round(z + hmuro, 3)] for (x, y), z in zip(seg_pts, zb)]})
-    linee_r = unary_union(_DB_REC).intersection(area.buffer(-0.5))
+    # nessuna recinzione dentro la sede stradale (le recinzioni DBGT a volte attraversano il marciapiede)
+    linee_r = unary_union(_DB_REC).intersection(area.buffer(-0.5)).difference(sedime.union(marciapiedi).buffer(-0.3))
     from shapely.ops import linemerge as _lm
     linee_r = _lm(linee_r) if linee_r.geom_type == "MultiLineString" else linee_r
     coperti = [linee_r.buffer(1.2), _fronte_lotto]

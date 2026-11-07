@@ -788,6 +788,9 @@ def sul_marciapiede(x, y, dal_cordolo=0.4):
     return q.x + nx * dal_cordolo, q.y + ny * dal_cordolo
 def cartello(nome, x, y, tipo, h=None, pannello=None, verso=None):
     x, y = sul_marciapiede(x, y)
+    if any(o.get("testa") == "segnale" and math.dist(o["xy"], (x, y)) < 0.8 for o in oggetti):
+        if tipo == "attraversamento_pedonale": return            # c'è già un cartello lì: niente doppioni
+        x, y = sul_marciapiede(x + 1.0, y)                       # cartelli rilevati vicini: si affiancano
     sp = dict(SEGNALI[tipo]); (nx, ny), (tx, ty) = _verso_strada(x, y)
     if sp.pop("parallelo", False): rot = math.degrees(math.atan2(ty, tx))            # targa parallela alla strada
     else: rot = math.degrees(math.atan2(ty * (verso or 1), tx * (verso or 1)))         # piastra di fronte al traffico
