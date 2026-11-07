@@ -751,7 +751,18 @@ SEGNALI = {
     "frecce_direzione": {"forma": "freccia", "d": [1.0, 0.25], "bordo": "SEGN_BIANCO", "campo": "SEGN_BLU", "simbolo": None},
     "nome_via": {"forma": "rettangolo", "d": [0.7, 0.25], "bordo": "SEGN_BLU", "campo": "SEGN_BIANCO", "simbolo": None, "parallelo": True},
 }
+def sul_marciapiede(x, y, dal_cordolo=0.4):
+    """porta un punto di arredo sul marciapiede: se cade in carreggiata (o troppo vicino al cordolo) lo sposta
+    sul bordo strada più vicino, a `dal_cordolo` metri verso l'esterno."""
+    p_ = Point(x, y)
+    if not S.carreggiata.buffer(dal_cordolo - 0.05).contains(p_): return x, y
+    bd = S.carreggiata.boundary; q = bd.interpolate(bd.project(p_))
+    q2 = bd.interpolate(bd.project(p_) + 0.5); tx, ty = q2.x - q.x, q2.y - q.y; Lt = math.hypot(tx, ty) or 1.0
+    nx, ny = -ty / Lt, tx / Lt
+    if S.carreggiata.contains(Point(q.x + nx * 0.2, q.y + ny * 0.2)): nx, ny = -nx, -ny
+    return q.x + nx * dal_cordolo, q.y + ny * dal_cordolo
 def cartello(nome, x, y, tipo, h=None, pannello=None, verso=None):
+    x, y = sul_marciapiede(x, y)
     sp = dict(SEGNALI[tipo]); (nx, ny), (tx, ty) = _verso_strada(x, y)
     if sp.pop("parallelo", False): rot = math.degrees(math.atan2(ty, tx))            # targa parallela alla strada
     else: rot = math.degrees(math.atan2(ty * (verso or 1), tx * (verso or 1)))         # piastra di fronte al traffico
@@ -767,8 +778,7 @@ for k_, sv in enumerate(L.get("segnaletica_verticale", [])):
 if SG and SG.get("cartelli_attraversamento", True):
     for tr, (ux, uy) in strisce_fatte:     # un cartello su ciascun marciapiede, ai due capi delle strisce
         for q in (tr.coords[0], tr.coords[-1]):
-            px, py = q[0] - ux * 1.4, q[1] - uy * 1.4
-            (nx, ny), _ = _verso_strada(px, py); px, py = px - nx * 0.5, py - ny * 0.5
+            px, py = q[0] - ux * 1.4, q[1] - uy * 1.4      # 1,4 m prima delle strisce, poi sul marciapiede
             cartello("A02 – attraversamento pedonale", px, py, "attraversamento_pedonale")
 
 # ---------------------------------------------------------------- materiali (+ texture a scacchiera per P02)
