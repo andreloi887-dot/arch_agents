@@ -832,18 +832,26 @@
         "lat": 39.252857,
         "lng": 9.115565
       },
-      "piani_ft": 1,
+      "piani_ft": 2,
       "quote": {
         "gronda": {
-          "m": 3.5,
+          "m": 6.3,
           "fonte": "stima-piani",
           "confidenza": "bassa",
-          "metodo": "1 piano"
+          "metodo": "2 piani × 3,0 m + 0,3 m (verifica foto Street View 2026-04, sessione 2026-11-07, SV-09)"
+        },
+        "colmo": {
+          "m": 7.5,
+          "fonte": "stima-piani",
+          "confidenza": "bassa"
         }
       },
       "copertura": {
-        "forma": "piana",
-        "manto": "C04"
+        "forma": "a padiglione",
+        "pendenza_pct": 25,
+        "manto": "C03",
+        "sporto_cm": 40,
+        "elementi": []
       },
       "facciate": [
         {
@@ -1040,20 +1048,16 @@
           "fonte": "stima-piani",
           "confidenza": "bassa",
           "metodo": "2 piani"
-        },
-        "colmo": {
-          "m": 8.3,
-          "fonte": "stima-piani",
-          "confidenza": "bassa"
         }
       },
       "copertura": {
-        "forma": "a padiglione",
-        "pendenza_pct": 30,
-        "manto": "C03",
+        "forma": "piana",
+        "manto": "C04",
         "elementi": [
+          "parapetto",
           "fotovoltaico C21"
         ],
+        "nota": "SV-07 mostra volumi bianchi a tetto piano (verifica foto Street View 2026-04, sessione 2026-11-07)",
         "fotovoltaico": "C21"
       },
       "facciate": [

@@ -39073,7 +39073,9 @@
 "confidenza_altezza": "bassa",
 "copertura": "piana",
 "manto": null,
-"lod": 1
+"lod": 1,
+"colmo": null,
+"pendenza_pct": null
 },
 {
 "id": "E10",
@@ -39122,7 +39124,9 @@
 "confidenza_altezza": "media",
 "copertura": "a padiglione",
 "manto": "C03",
-"lod": 2
+"lod": 2,
+"colmo": 10.8,
+"pendenza_pct": 30
 },
 {
 "id": "CTX06",
@@ -39151,7 +39155,9 @@
 "confidenza_altezza": "bassa",
 "copertura": "piana",
 "manto": null,
-"lod": 1
+"lod": 1,
+"colmo": null,
+"pendenza_pct": null
 },
 {
 "id": "E08",
@@ -39228,7 +39234,9 @@
 "confidenza_altezza": "media",
 "copertura": "a padiglione su pi\u00f9 corpi, bassa pendenza",
 "manto": "C04",
-"lod": 2
+"lod": 2,
+"colmo": 8.0,
+"pendenza_pct": 20
 },
 {
 "id": "E11",
@@ -39301,7 +39309,9 @@
 "confidenza_altezza": "bassa",
 "copertura": "piana",
 "manto": "C04",
-"lod": 2
+"lod": 2,
+"colmo": null,
+"pendenza_pct": null
 },
 {
 "id": "E09",
@@ -39362,7 +39372,9 @@
 "confidenza_altezza": "media",
 "copertura": "a padiglione su pi\u00f9 corpi + torretta a 3 piani",
 "manto": "C03",
-"lod": 2
+"lod": 2,
+"colmo": 10.5,
+"pendenza_pct": 30
 },
 {
 "id": "E07",
@@ -39461,9 +39473,11 @@
 "z_base": 2.538,
 "altezza": 6.5,
 "confidenza_altezza": "bassa",
-"copertura": "a padiglione",
-"manto": "C03",
-"lod": 2
+"copertura": "piana",
+"manto": "C04",
+"lod": 2,
+"colmo": null,
+"pendenza_pct": null
 },
 {
 "id": "E06",
@@ -39500,7 +39514,9 @@
 "confidenza_altezza": "media",
 "copertura": "piana",
 "manto": "C04",
-"lod": 2
+"lod": 2,
+"colmo": null,
+"pendenza_pct": null
 },
 {
 "id": "E05",
@@ -39593,7 +39609,9 @@
 "confidenza_altezza": "media",
 "copertura": "piana",
 "manto": "C04",
-"lod": 2
+"lod": 2,
+"colmo": null,
+"pendenza_pct": null
 },
 {
 "id": "E02",
@@ -39638,7 +39656,9 @@
 "confidenza_altezza": "media",
 "copertura": "a padiglione",
 "manto": "C03",
-"lod": 2
+"lod": 2,
+"colmo": 8.3,
+"pendenza_pct": 30
 },
 {
 "id": "E03",
@@ -39699,7 +39719,9 @@
 "confidenza_altezza": "media",
 "copertura": "a padiglione su pi\u00f9 corpi",
 "manto": "C03",
-"lod": 2
+"lod": 2,
+"colmo": 8.3,
+"pendenza_pct": 30
 },
 {
 "id": "CTX16",
@@ -39748,7 +39770,9 @@
 "confidenza_altezza": "bassa",
 "copertura": "piana",
 "manto": null,
-"lod": 1
+"lod": 1,
+"colmo": null,
+"pendenza_pct": null
 },
 {
 "id": "E01",
@@ -39777,7 +39801,9 @@
 "confidenza_altezza": "media",
 "copertura": "a capanna",
 "manto": "C03",
-"lod": 2
+"lod": 2,
+"colmo": 10.8,
+"pendenza_pct": 35
 },
 {
 "id": "E04",
@@ -39806,11 +39832,13 @@
 ]
 ],
 "z_base": 7.84,
-"altezza": 3.5,
+"altezza": 6.3,
 "confidenza_altezza": "bassa",
-"copertura": "piana",
-"manto": "C04",
-"lod": 2
+"copertura": "a padiglione",
+"manto": "C03",
+"lod": 2,
+"colmo": 7.5,
+"pendenza_pct": 25
 },
 {
 "id": "CTX19",
@@ -39863,7 +39891,9 @@
 "confidenza_altezza": "bassa",
 "copertura": "piana",
 "manto": null,
-"lod": 1
+"lod": 1,
+"colmo": null,
+"pendenza_pct": null
 },
 {
 "id": "CTX21",
@@ -39916,7 +39946,9 @@
 "confidenza_altezza": "bassa",
 "copertura": "piana",
 "manto": null,
-"lod": 1
+"lod": 1,
+"colmo": null,
+"pendenza_pct": null
 },
 {
 "id": "CTX24",
@@ -39965,7 +39997,9 @@
 "confidenza_altezza": "bassa",
 "copertura": "piana",
 "manto": null,
-"lod": 1
+"lod": 1,
+"colmo": null,
+"pendenza_pct": null
 }
 ],
 "vegetazione": [

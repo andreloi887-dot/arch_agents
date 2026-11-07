@@ -280,12 +280,41 @@ module RilievoUrbano
         x.material = x.normal.z > 0.9 ? m_cop : m_fac
         x.back_material = nil
       end
+      tetto_a_falde(g, e['tetto'], m_cop, zb + e['altezza'].to_f, m_fac) if e['tetto']
       g
     rescue ArgumentError => err
       puts "Edificio #{e['nome']} saltato: #{err.message}"
       @saltati << e['nome']
       g.erase! if g && g.valid?
       nil
+    end
+
+    # Copertura a falde (triangoli da contesto.py): sostituisce la faccia piana in sommità. Il bordo dei
+    # triangoli coincide con l'impronta alla quota di gronda, quindi chiude il solido.
+    def self.tetto_a_falde(g, t, m_cop, zg, m_fac = nil)
+      ents = g.entities
+      top = ents.grep(Sketchup::Face).select { |x| x.normal.z > 0.9 && (x.bounds.min.z.to_m - zg).abs < 0.01 }
+      ents.erase_entities(top) unless top.empty?
+      v = t['vertici'].map { |x, y, z| Geom::Point3d.new(x.to_f.m, y.to_f.m, z.to_f.m) }
+      sub = ents.add_group
+      sub.name = 'copertura'
+      t['triangoli'].each do |a, b, c|
+        f = sub.entities.add_face(v[a], v[b], v[c]) rescue nil
+        next unless f
+        f.reverse! if f.normal.z < 0
+        f.material = m_cop
+      end
+      (t['timpani'] || []).each do |a, b, c|   # muri verticali sotto la falda, col materiale di facciata
+        f = sub.entities.add_face(v[a], v[b], v[c]) rescue nil
+        if f
+          f.material = m_fac
+          f.back_material = m_fac   # orientamento non garantito: stesso materiale sui due lati
+        end
+      end
+      sub.entities.grep(Sketchup::Edge).each do |ed|
+        fs = ed.faces
+        ed.soft = ed.smooth = true if fs.size == 2 && fs[0].normal.angle_between(fs[1].normal) < 20.degrees
+      end
     end
 
     # (e) Arredo: parallelepipedo (con testa per lampioni e disco per cartelli), ruotato di rot_deg attorno a Z.

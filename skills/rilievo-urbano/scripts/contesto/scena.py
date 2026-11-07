@@ -299,7 +299,8 @@ for i, f in enumerate(FABB):
     scena["edifici"].append({"id": e["id"] if e else f"CTX{i:02d}", "nome": nome, "materiale": mat,
         "impronta": [[round(x, 3), round(y, 3)] for x, y in list(p.exterior.coords)[:-1]],
         "z_base": round(zb, 3), "altezza": h, "confidenza_altezza": conf,
-        "copertura": cop.get("forma"), "manto": cop.get("manto"), "lod": 1 if not e else 2})
+        "copertura": cop.get("forma"), "manto": cop.get("manto"), "lod": 1 if not e else 2,
+        "colmo": ((e or {}).get("quote", {}).get("colmo") or {}).get("m"), "pendenza_pct": cop.get("pendenza_pct")})
 
 # --- arredo e vegetazione, posizionati rispetto al fronte del lotto (descrittivi, non misurati)
 _fpts = []

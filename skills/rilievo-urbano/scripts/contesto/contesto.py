@@ -229,15 +229,96 @@ for r in sc["recinzioni"]:
 
 # ---------------------------------------------------------------- edifici (LOD1: estrusione dell'impronta)
 PIATT = L.get("edifici", {}).get("piattaforma_m", {})   # gronde misurate dal marciapiede: tolgo la piattaforma (nel DTM)
+def tetto(imp, zg, forma, pend_pct, h_colmo):
+    """Copertura a falde sopra l'impronta, alla quota di gronda zg. Regola generale, valida per piante
+    qualsiasi: la quota cresce con la distanza dal bordo (padiglione = distanza da tutti i lati, come il
+    tetto da scheletro rettilineo; capanna = distanza dai due lati lunghi del rettangolo minimo), con la
+    pendenza della scheda, e si ferma al colmo (oltre resta un piano orizzontale). None per tetti piani."""
+    f = (forma or "").lower()
+    if not f or f.startswith("pian") or not ("padiglione" in f or "capanna" in f or "falda" in f): return None
+    k = (pend_pct or 30) / 100.0
+    P = Polygon(imp).buffer(0)
+    if P.area < 4: return None
+    capanna = "capanna" in f
+    if capanna:
+        mr = list(P.minimum_rotated_rectangle.exterior.coords)[:4]
+        e1 = (mr[1][0] - mr[0][0], mr[1][1] - mr[0][1]); e2 = (mr[2][0] - mr[1][0], mr[2][1] - mr[1][1])
+        lung, corto = (e1, e2) if math.hypot(*e1) >= math.hypot(*e2) else (e2, e1)
+        Lc = math.hypot(*corto); n = (corto[0] / Lc, corto[1] / Lc)
+        cx, cy = P.minimum_rotated_rectangle.centroid.coords[0]
+        def dist(x, y): return max(0.0, Lc / 2 - abs((x - cx) * n[0] + (y - cy) * n[1]))
+        dmax = Lc / 2
+    else:
+        bd = P.exterior
+        def dist(x, y): return bd.distance(Point(x, y)) if P.contains(Point(x, y)) else 0.0
+        dmax = max(0.5, max(P.buffer(-0.01).exterior.distance(p) for p in [P.representative_point(), P.centroid] if P.contains(p)))
+    hcap = (h_colmo if h_colmo else 1e9)
+    # vertici: bordo + anelli interni ogni 0,5 m (spigoli delle falde) + punti sparsi
+    pts = []
+    rings = [P.exterior.coords]
+    if not capanna:
+        d = 0.5
+        while d < dmax:
+            g = P.buffer(-d, join_style=2, mitre_limit=10)
+            if g.is_empty: break
+            for q in getattr(g, "geoms", [g]): rings.append(q.exterior.coords)
+            d += 0.5
+    V, seg, idx = [], [], {}
+    def add(p):
+        p = (round(p[0], 3), round(p[1], 3))
+        if p not in idx: idx[p] = len(V); V.append(p)
+        return idx[p]
+    for r in rings:
+        cs = list(r)[:-1]
+        ids = [add(p) for p in cs]
+        if r is rings[0]: seg += [[ids[i], ids[(i + 1) % len(ids)]] for i in range(len(ids))]
+    if capanna:   # linea di colmo come vincolo
+        x0, y0 = cx - lung[0], cy - lung[1]; x1, y1 = cx + lung[0], cy + lung[1]
+        ln = LineString([(x0, y0), (x1, y1)]).intersection(P)
+        for q in getattr(ln, "geoms", [ln]):
+            if q.length > 0.2:
+                cc = list(q.coords); a_ = add(cc[0]); b_ = add(cc[-1]); seg.append([a_, b_])
+    try:
+        t = triangle.triangulate({"vertices": np.array(V), "segments": np.array(seg)}, "pq20a2.0")
+    except Exception:
+        return None
+    vs, tris = t["vertices"], t["triangles"]
+    out_v = [[R(x), R(y), R(zg + min(k * dist(x, y), hcap))] for x, y in vs]
+    out_t = []
+    for a_, b_, c_ in tris:
+        pa, pb, pc = vs[a_], vs[b_], vs[c_]
+        if (pb[0]-pa[0])*(pc[1]-pa[1]) - (pb[1]-pa[1])*(pc[0]-pa[0]) < 0: b_, c_ = c_, b_
+        out_t.append([int(a_), int(b_), int(c_)])
+    # timpani: sui lati di bordo dove la falda sta sopra la gronda (capanna, tetti tagliati) il muro sale
+    # fino alla falda. Regola valida per qualsiasi pianta: lati usati da un solo triangolo.
+    from collections import Counter
+    cnt = Counter(tuple(sorted(e_)) for t_ in out_t for e_ in ((t_[0], t_[1]), (t_[1], t_[2]), (t_[2], t_[0])))
+    timpani = []
+    for (i, j), c in cnt.items():
+        if c != 1: continue
+        zi, zj = out_v[i][2] - zg, out_v[j][2] - zg
+        if max(zi, zj) < 0.02: continue
+        a0 = len(out_v); out_v.append([out_v[i][0], out_v[i][1], R(zg)])
+        b0 = len(out_v); out_v.append([out_v[j][0], out_v[j][1], R(zg)])
+        if zi >= 0.02: timpani.append([a0, b0, i])
+        if zj >= 0.02: timpani.append([b0, j, i] if zi >= 0.02 else [a0, b0, j])
+    return {"vertici": out_v, "triangoli": out_t, "timpani": timpani}
+
 edifici = []
 for e in sc["edifici"]:
     imp = e["impronta"]
     zs = [S.trend(x, y) for x, y in imp]
     zb = min(zs) - 0.05
-    h = e["altezza"] - PIATT.get(e["id"], 0.0) + (max(zs) - min(zs)) * 0.5
-    edifici.append({"nome": e["nome"], "tag": "10_Edifici", "impronta": [[R(x), R(y)] for x, y in imp],
-                    "z_base": R(zb), "altezza": R(h), "materiale": e["materiale"],
-                    "materiale_copertura": e.get("manto") or e["materiale"], "lod": e["lod"]})
+    piat = PIATT.get(e["id"], 0.0)
+    h = e["altezza"] - piat + (max(zs) - min(zs)) * 0.5
+    ed = {"nome": e["nome"], "tag": "10_Edifici", "impronta": [[R(x), R(y)] for x, y in imp],
+          "z_base": R(zb), "altezza": R(h), "materiale": e["materiale"],
+          "materiale_copertura": e.get("manto") or e["materiale"], "lod": e["lod"]}
+    colmo = e.get("colmo")
+    tt = tetto(imp, zb + h, e.get("copertura"), e.get("pendenza_pct"),
+               (colmo - e["altezza"]) if colmo else None)
+    if tt: ed["tetto"] = tt
+    edifici.append(ed)
 
 # ---------------------------------------------------------------- arredo e vegetazione
 oggetti = []
