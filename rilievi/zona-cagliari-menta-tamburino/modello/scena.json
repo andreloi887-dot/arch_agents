@@ -5,8 +5,8 @@
 },
 "unita": "m",
 "fonti": [
-"Catasto AdE WMS (CC BY 4.0), non allineato: sfasamento \u2264 1\u20132 m vicino all'incrocio",
-"Regione Autonoma della Sardegna \u2013 DTM 1 m da LiDAR (raster__DTM_1M_MOSAICO_ALTIMETRIA), WCS geoserverraster \u2013 quota incrocio 39.27 m slm",
+"Catasto AdE WMS (CC BY 4.0), non allineato: sfasamento \u2264 1\u20132 m vicino all'origine",
+"Regione Autonoma della Sardegna \u2013 DTM 1 m da LiDAR (raster__DTM_1M_MOSAICO_ALTIMETRIA), WCS geoserverraster \u2013 quota origine 39.27 m slm",
 "Altezze e rialzi da osservazioni Street View (scheda rev. 2), confidenza media/bassa"
 ],
 "dtm": {
@@ -39292,7 +39292,7 @@
 "z_base": 1.643,
 "altezza": 6.5,
 "confidenza_altezza": "media",
-"copertura": "a padiglione su pi\u00c3\u00b9 corpi, bassa pendenza",
+"copertura": "a padiglione su pi\u00f9 corpi, bassa pendenza",
 "manto": "C04",
 "lod": 2
 },
@@ -39426,7 +39426,7 @@
 "z_base": 0.3,
 "altezza": 6.8,
 "confidenza_altezza": "media",
-"copertura": "a padiglione su pi\u00c3\u00b9 corpi + torretta a 3 piani",
+"copertura": "a padiglione su pi\u00f9 corpi + torretta a 3 piani",
 "manto": "C03",
 "lod": 2
 },
@@ -39759,7 +39759,7 @@
 "z_base": 6.924,
 "altezza": 6.5,
 "confidenza_altezza": "media",
-"copertura": "a padiglione su pi\u00c3\u00b9 corpi",
+"copertura": "a padiglione su pi\u00f9 corpi",
 "manto": "C03",
 "lod": 2
 },

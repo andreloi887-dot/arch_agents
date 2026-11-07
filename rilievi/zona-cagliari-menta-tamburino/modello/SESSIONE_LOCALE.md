@@ -45,7 +45,7 @@ della Menta (Cagliari) e verificarlo.
    Attendi la comparsa di modello\uscita_sketchup\esito_pipeline.json (al massimo 10 minuti) e leggi
    esito_pipeline.json e pipeline.log.
 3. Se ci sono errori: analizzali, correggi gli script (costruisci_contesto.rb, pipeline_contesto.rb) o i
-   dati (contesto.py → contesto.json con python), chiudi SketchUp e rilancia. Al massimo 3 tentativi.
+   dati (lotto.json, poi `python skills/rilievo-urbano/scripts/contesto/contesto.py <cartella modello>` → contesto.json), chiudi SketchUp e rilancia. Al massimo 3 tentativi.
 4. Guarda le viste esportate (uscita_sketchup\vista_*.png ed export_verifica\SV-*.png) e descrivi cosa
    vedi: facce rovesciate, buchi, muri, terreno del lotto, posizione di lampione, palma e rete.
 5. Verifica: se GOOGLE_MAPS_API_KEY è impostata, scarica le riprese con

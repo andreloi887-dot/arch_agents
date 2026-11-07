@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""scena.json → contesto.json per scripts/sketchup/costruisci_contesto.rb (schema concordato con
+"""Motore generico, fase 2. Uso: python contesto.py <cartella o file lotto.json>
+scena.json → contesto.json per scripts/sketchup/costruisci_contesto.rb (schema concordato con
 sketchup-expert). Superfici 2.5D triangolate con Delaunay vincolata (libreria `triangle`, opzioni pq30Y:
 nessun vertice aggiunto sui bordi, così le superfici adiacenti condividono gli stessi vertici), fasce
 verticali dove due superfici confinanti hanno quote diverse (cordoli, salti), muri come sweep di sezioni,
@@ -13,16 +14,18 @@ from shapely.geometry import Polygon, LineString, Point, MultiPolygon
 from shapely.ops import unary_union, polygonize
 from PIL import Image
 
-import scena as S          # riusa geometrie e funzioni di quota della scena
+import scena as S          # riusa geometrie e funzioni di quota della scena (legge lo stesso lotto.json)
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+HERE = S.HERE
+L, LT, ST, MF = S.L, S.LT, S.ST, S.MF
+RID = MF["id"]
 sc = json.load(open(os.path.join(HERE, "scena.json")))
-scheda = json.load(open(os.path.join(S.Z, "scheda.json")))
+scheda = S.scheda
 R = lambda v: round(float(v), 3)
-random.seed(4258)
+random.seed(L.get("seme_casuale", 0))
 
 # ---------------------------------------------------------------- muri: fasce di ingombro (per escluderle)
-SP = 0.25
+SP = MF["spessore"]
 def striscia(m, w):
     out = [tuple(p) for p in m["punti"]]
     inn = [(p[0] + n[0]*w, p[1] + n[1]*w) for p, n in zip(m["punti"], m["normali_interno"])]
@@ -51,9 +54,9 @@ marc = sp(marc.difference(carr))
 lotto = pulisci(sp(lotto.difference(carr).difference(marc)))
 fondo = sp(area.difference(unary_union([carr, marc, lotto, strisce])))
 
-# quota del lotto: sul bordo verso il muro R06 = sommità del muro; poi scarpata fino al DTM entro 2,5 m
+# quota del lotto: sul bordo verso il muro del fronte = sommità del muro; poi scarpata fino al DTM entro 2,5 m
 from shapely.geometry import LineString as _LS
-_r06 = [m for m in sc["muri"] if m["id"] == "R06"]
+_r06 = [m for m in sc["muri"] if m["id"] == RID]
 _lines = [(_LS([(p[0], p[1]) for p in m["punti"]]), m) for m in _r06]
 def _top_at(x, y):
     best = None
@@ -70,14 +73,15 @@ def _top_at(x, y):
 def z_lotto2(x, y):
     zi = S.trend(x, y)
     d, zt = _top_at(x, y)
-    if d >= 2.5 + SP: return zi
-    w = max(0.0, (d - SP) / 2.5); w = w * w * (3 - 2 * w)          # smoothstep
+    if d >= S.SCARPATA + SP: return zi
+    w = max(0.0, (d - SP) / S.SCARPATA); w = w * w * (3 - 2 * w)          # smoothstep
     return zt + (max(zi, zt) - zt) * w if zi > zt else zt + (zi - zt) * w
 _vicino_strada = S.sedime.union(S.raccordo).buffer(0.3)   # avanzi a ridosso della strada: quota del marciapiede
-REG = [("P01", carr, "C16", lambda x, y: S.trend(x, y)),
-       ("P02", marc, "C17", lambda x, y: S.z_marc(x, y)),
-       ("P03", lotto, "C24", lambda x, y: z_lotto2(x, y) + (random.uniform(-0.04, 0.04) if _top_at(x, y)[0] > SP + 0.3 else 0.0)),
-       ("FONDO", fondo, "C25", lambda x, y: S.z_marc(x, y) if _vicino_strada.contains(Point(x, y)) else S.trend(x, y))]
+_RUM = LT.get("rumore_superficie_m", 0.0)
+REG = [("P01", carr, ST["materiale_carreggiata"], lambda x, y: S.trend(x, y)),
+       ("P02", marc, ST["materiale_marciapiede"], lambda x, y: S.z_marc(x, y)),
+       ("P03", lotto, LT["materiale"], lambda x, y: z_lotto2(x, y) + (random.uniform(-_RUM, _RUM) if _top_at(x, y)[0] > SP + 0.3 else 0.0)),
+       ("FONDO", fondo, LT["materiale_fasce"], lambda x, y: S.z_marc(x, y) if _vicino_strada.contains(Point(x, y)) else S.trend(x, y))]
 MAXA = {"P01": 3.0, "P02": 1.5, "P03": 1.0, "FONDO": 6.0}
 
 def parts(g):
@@ -168,10 +172,10 @@ def fascia_tris(lista, base):
     return V, T
 
 out_sup = []
-NOMI = {"P01": "P01 – carreggiate", "P02": "P02 – marciapiedi e cordoli", "P03": "P03 – lotto incolto part. 4258",
+NOMI = {"P01": "P01 – carreggiate", "P02": "P02 – marciapiedi e cordoli", "P03": LT["nome"],
         "FONDO": "Terreno – lotti di fondo (DTM)"}
 TAG = {"P01": "40_Pavimentazioni", "P02": "40_Pavimentazioni", "P03": "60_Terreno", "FONDO": "60_Terreno"}
-MAT2 = {"P01": "C19", "P02": "C19", "P03": "C25", "FONDO": "C25"}
+MAT2 = {"P01": ST["materiale_cordolo"], "P02": ST["materiale_cordolo"], "P03": LT["materiale_fasce"], "FONDO": LT["materiale_fasce"]}
 for nome in ("P01", "P02", "P03", "FONDO"):
     s = superfici.get(nome)
     if not s: continue
@@ -182,7 +186,7 @@ for nome in ("P01", "P02", "P03", "FONDO"):
 
 # ---------------------------------------------------------------- muri (sweep di sezioni a 4 punti)
 def zin(m, x, y):
-    return z_lotto2(x, y) if m["id"] == "R06" else S.trend(x, y)
+    return z_lotto2(x, y) if m["id"] == RID else S.trend(x, y)
 muri = []
 for m in sc["muri"]:
     st = []
@@ -191,7 +195,7 @@ for m in sc["muri"]:
         st.append([[R(p[0]), R(p[1]), R(zb - 0.05)], [R(p[0]), R(p[1]), R(zt)],
                    [R(ix), R(iy), R(zt)], [R(ix), R(iy), R(min(zt, zin(m, ix, iy)) - 0.05)]])
     # tratti ≤ 8 m (getti): la verifica legge l'ingombro verticale di ogni contenitore
-    if m["id"] == "R06" or len(st) <= 9:
+    if m["id"] == RID or len(st) <= 9:
         muri.append({"nome": m["nome"], "tag": "20_Recinzioni", "materiale": m["materiale"], "stazioni": st, "smooth_deg": 20})
     else:
         i0, k = 0, 0
@@ -224,7 +228,7 @@ for r in sc["recinzioni"]:
         i0 = i1
 
 # ---------------------------------------------------------------- edifici (LOD1: estrusione dell'impronta)
-PIATT = {"E08": 2.5, "E09": 1.0}   # gronde in scheda misurate dal marciapiede: tolgo la piattaforma (nel DTM)
+PIATT = L.get("edifici", {}).get("piattaforma_m", {})   # gronde misurate dal marciapiede: tolgo la piattaforma (nel DTM)
 edifici = []
 for e in sc["edifici"]:
     imp = e["impronta"]
@@ -245,11 +249,12 @@ for a in sc["arredo"]:
                     "rot_deg": a.get("rot_deg", 0.0),
                     "testa": "lampione" if a["tipo"] == "lampione" else ("disco" if "cartello" in a["tipo"] else None)})
 vegetazione = []
-for v in sc["vegetazione"]:
-    if v["id"] != "V02": continue   # arbusti: meglio in Lumion (consiglio sketchup-expert)
-    x, y = v["xy"]
-    vegetazione.append({"nome": "V02 – palma Phoenix giovane", "tag": "50_Vegetazione", "xy": [R(x), R(y)],
-                        "z": R(z_lotto2(x, y)), "h": v["h"], "chioma": v["chioma"], "materiale": "C27"})
+for v in L.get("vegetazione", []):
+    if not v.get("nel_contesto", True) or "xy_lista" in v: continue   # macchie di arbusti: meglio nel render
+    x, y = [vv for vv in sc["vegetazione"] if vv["id"] == v["id"]][0]["xy"]
+    vegetazione.append({"nome": v.get("nome", f"{v['id']} – {v['tipo']}"), "tag": "50_Vegetazione", "xy": [R(x), R(y)],
+                        "z": R(z_lotto2(x, y) if v.get("su_lotto") else S.trend(x, y)), "h": v["h"], "chioma": v["chioma"],
+                        "materiale": v.get("materiale", "C27")})
 
 # ---------------------------------------------------------------- materiali (+ texture a scacchiera per P02)
 pal = {p["id"]: p for p in scheda["palette"]}
@@ -261,20 +266,24 @@ for s in out_sup: usati |= set(s["materiali"])
 for m in muri: usati.add(m["materiale"])
 for e in edifici: usati |= {e["materiale"], e["materiale_copertura"]}
 for o in oggetti: usati.add(o["materiale"])
-usati |= {"C18", "C27"}
+TX = ST.get("texture_marciapiede")
+if TX: usati.add(TX["alternato"])
+for v in vegetazione: usati.add(v["materiale"])
 os.makedirs(os.path.join(HERE, "texture"), exist_ok=True)
 def hexrgb(h): return tuple(int(h[i:i+2], 16) for i in (1, 3, 5))
-tex = Image.new("RGB", (160, 160)); px = tex.load()
-for i in range(160):
-    for j in range(160):
-        c = pal["C17"]["hex"] if ((i // 80) + (j // 80)) % 2 == 0 else pal["C18"]["hex"]
-        px[i, j] = (90, 90, 90) if (i % 80 in (0, 79) or j % 80 in (0, 79)) and False else hexrgb(c)
-tex.save(os.path.join(HERE, "texture/C17_marmette_scacchiera.png"))
+if TX:   # texture a scacchiera del marciapiede
+    TXF = f"texture/{TX['materiale']}_marmette_scacchiera.png"
+    tex = Image.new("RGB", (160, 160)); px = tex.load()
+    for i in range(160):
+        for j in range(160):
+            c = pal[TX["materiale"]]["hex"] if ((i // 80) + (j // 80)) % 2 == 0 else pal[TX["alternato"]]["hex"]
+            px[i, j] = hexrgb(c)
+    tex.save(os.path.join(HERE, TXF))
 materiali = {}
 for cid in sorted(usati):
     m = {"hex": pal[cid]["hex"]}
-    if cid == "C17":
-        m = {"hex": pal[cid]["hex"], "texture": "texture/C17_marmette_scacchiera.png", "modulo_mm": [800, 800]}
+    if TX and cid == TX["materiale"]:
+        m = {"hex": pal[cid]["hex"], "texture": TXF, "modulo_mm": TX.get("modulo_mm", [800, 800])}
     materiali[nome_mat(cid)] = m
 for tipo, (pid, rid) in MAT_REC.items():
     if any(r["materiale_palo"] == f"{pid}_paletti_{tipo}" for r in recinzioni):
@@ -290,7 +299,8 @@ for v in vegetazione: v["materiale"] = rinomina(v["materiale"])
 # ---------------------------------------------------------------- punti di controllo della proiezione
 ll_of = S.ll_of
 controllo = [{"nome": n, "x": x, "y": y, "lat": round(ll_of(x, y)[0], 9), "lng": round(ll_of(x, y)[1], 9)}
-             for n, (x, y) in {"punta P03": tuple(sc["controllo"]["tip_lotto"]), "NE": (60.0, 60.0), "SO": (-60.0, -60.0)}.items()]
+             for n, (x, y) in {f"punta {LT['id']}": tuple(sc["controllo"]["tip_lotto"]),
+                                **{k: tuple(v) for k, v in L.get("punti_controllo", {}).items()}}.items()]
 
 # nomi univoci: tratti numerati in modo progressivo per elemento
 import re as _re

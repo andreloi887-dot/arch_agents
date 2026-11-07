@@ -69,9 +69,12 @@ confrontare.
   alla gronda mentre la verifica confronta col colmo.
 
 ## Rigenerare i dati
+I valori di questo lotto sono in `lotto.json`; gli script sono il motore generico in
+`skills/rilievo-urbano/scripts/contesto/` (vedi il suo README). Dalla cartella del repository:
 ```
-python3 terreno_tendenza.py <Copernicus.tif>   # facoltativo
-python3 scena.py && python3 contesto.py         # scena.json → contesto.json
+python skills/rilievo-urbano/scripts/contesto/terreno_tendenza.py rilievi/zona-cagliari-menta-tamburino/modello <Copernicus.tif>   # facoltativo
+python skills/rilievo-urbano/scripts/contesto/contesto.py rilievi/zona-cagliari-menta-tamburino/modello   # scena.json + contesto.json
+cd rilievi/zona-cagliari-menta-tamburino/modello
 cd anteprima && CONTESTO=1 node render.js && node aerea.js
 ```
 Servono numpy, shapely, triangle, pyproj, tifffile, imagecodecs e Pillow.

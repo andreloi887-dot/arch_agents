@@ -1,0 +1,83 @@
+{
+ "_nota": "Parametri del lotto per il motore generico skills/rilievo-urbano/scripts/contesto/. Percorsi relativi a questa cartella; le uscite (scena.json, contesto.json, texture/) vengono scritte qui.",
+ "nome": "Via della Menta / Via Tamburino Sardo, Cagliari",
+ "origine": {"lat": 39.25240, "lng": 9.11527, "descrizione": "incrocio"},
+ "semilato_m": 75.0,
+ "seme_casuale": 4258,
+ "dati": {
+  "terreno_tendenza": "terreno_tendenza.json",
+  "dtm_json": "dtm_lidar_1m.json",
+  "dtm_tif": "dtm_lidar_1m.tif",
+  "crs_dtm": "EPSG:7791",
+  "scheda": "../scheda.json",
+  "particelle": "../geometria/catasto_strade_particelle.geojson",
+  "fabbricati": "../geometria/catasto_fabbricati.geojson",
+  "manifest": ["../_rif_google/manifest_riprese.json", "manifest_riprese.json"]
+ },
+ "strade": {
+  "particelle_aggiunte_al_sedime": [51, 62],
+  "_nota_aggiunte": "strisce di Via Moravia: a catasto sono particelle",
+  "marciapiede_m": 1.5,
+  "rialzo_marciapiede_m": 0.10,
+  "pendenza_marciapiede": 0.015,
+  "raccordo_angoli_m": 2.0,
+  "raccordo_lotto_m": 4.0,
+  "materiale_carreggiata": "C16",
+  "materiale_marciapiede": "C17",
+  "materiale_cordolo": "C19",
+  "texture_marciapiede": {"materiale": "C17", "alternato": "C18", "modulo_mm": [800, 800]}
+ },
+ "lotto": {
+  "id": "P03",
+  "indice_particella": 67,
+  "particella": "4258",
+  "nome": "P03 – lotto incolto part. 4258",
+  "raggio_angoli_m": 1.0,
+  "materiale": "C24",
+  "materiale_fasce": "C25",
+  "materiale_scena": "PRATO_SECCO",
+  "nota": "superficie dal DTM LiDAR 1 m; erbe spontanee alte ~1 m (aprile)",
+  "rumore_superficie_m": 0.04,
+  "muro_fronte": {
+   "id": "R06", "nome": "R06 – muro di sostegno P03", "materiale": "C15", "spessore": 0.25,
+   "campionamento_interno_m": 1.6, "altezza_minima_m": 0.20, "altezza_massima_m": 1.30,
+   "scarpata_m": 2.5,
+   "vicino_punta": {"raggio_m": 6.0, "altezza_minima_m": 1.0}
+  },
+  "recinzione_fronte": {
+   "tipo": "rete", "nome": "R06 – rete elettrosaldata su paletti", "materiale": "C20", "altezza": 1.6,
+   "passo_paletti": 2.0, "x_min_da_punta": 1.0, "y_min": 24.0,
+   "cancello": {"tipo": "tubolare zincato a 2 ante", "larghezza": 3.0, "y_centro": 26.0, "confidenza": "bassa"}
+  },
+  "fronte_arredo": {"x_min_da_punta": 0.5}
+ },
+ "muri_contorno": [
+  {"id": "R01", "edificio": "E09", "altezza_muro": 1.6, "sopra": ["ringhiera", 1.0, "C06"]},
+  {"id": "R02", "edificio": "E08", "altezza_muro": 2.5, "sopra": ["doghe", 1.2, "C05"]},
+  {"id": "R03", "edificio": "E06", "altezza_muro": 1.2, "sopra": ["ringhiera", 0.8, "C06"]},
+  {"id": "R04", "edificio": "E05", "altezza_muro": 0.6, "sopra": ["doghe", 1.3, "C05"]},
+  {"id": "R05", "edificio": "E03", "verso": "NS"},
+  {"id": "R11", "edificio": "E03", "verso": "EO"},
+  {"id": "R07", "edificio": "E02"},
+  {"id": "R08", "edificio": "E01"},
+  {"id": "R09", "edificio": "E11"},
+  {"id": "R10", "edificio": "E10"}
+ ],
+ "edifici": {
+  "altezza_generica_m": 6.5, "materiale_generico": "C04",
+  "piattaforma_m": {"E08": 2.5, "E09": 1.0},
+  "_nota_piattaforma": "gronde in scheda misurate dal marciapiede: si toglie la piattaforma (già nel DTM)"
+ },
+ "arredo": [
+  {"id": "A01", "tipo": "lampione", "lungo_fronte_m": 2.0, "offset": 0.6, "h": 8.0, "materiale": "C20", "nota": "sul marciapiede all'angolo, lato Via della Menta"},
+  {"id": "A02", "tipo": "cartello divieto di sosta", "fronte_y": 15.5, "offset": 0.8, "h": 2.4, "materiale": "C20"},
+  {"id": "R06", "tipo": "blocco cls con scritta (pilastro recinzione)", "fronte_y": 33.0, "offset": -0.15, "h": 1.5, "materiale": "C15", "dim": [1.2, 0.3], "orienta_fronte": 1.0},
+  {"id": "A02", "tipo": "pilastrino cls con targa Via della Menta", "da_punta": [0.4, 0.3], "h": 1.3, "materiale": "C15"}
+ ],
+ "vegetazione": [
+  {"id": "V02", "tipo": "palma Phoenix giovane (senza fusto)", "nome": "V02 – palma Phoenix giovane", "fronte_y": 17.5, "offset": -1.0, "h": 2.6, "chioma": 4.0, "su_lotto": true, "confidenza": "bassa", "materiale": "C27", "nel_contesto": true},
+  {"id": "V-P03", "tipo": "arbusti ruderali", "xy_lista": [[-10, 22], [-18, 33], [-6, 30], [-12, 42], [0, 45]], "h": 1.2, "chioma": 2.0, "su_lotto": true, "nel_contesto": false}
+ ],
+ "punti_controllo": {"NE": [60.0, 60.0], "SO": [-60.0, -60.0]},
+ "fonti_extra": ["Altezze e rialzi da osservazioni Street View (scheda rev. 2), confidenza media/bassa"]
+}

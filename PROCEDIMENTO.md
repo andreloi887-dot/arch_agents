@@ -86,17 +86,19 @@ Andrea deve intervenire il meno possibile.
 | ComfyUI (`skills/comfy-desktop-arch-render/`) | Nei video cambia i dettagli tra un fotogramma e l'altro e non rispetta fedelmente il progetto. Al massimo ritocco di immagini fisse |
 
 ## Da preparare una volta sola
-- [ ] Installare Blender (versione LTS) con Bonsai, Unreal Engine 5 (Epic Games Launcher, account di
-      Andrea; licenza da verificare in base al fatturato dello studio) e FFmpeg.
-- [ ] In Blender: *Preferences › System › Cycles Render Devices › OptiX* (gli script lo impostano comunque).
+- [x] Installare Blender con Bonsai (5.2 + 0.9.0), Unreal Engine 5 (5.8; licenza da verificare in base al
+      fatturato dello studio) e FFmpeg.
+- [x] In Blender: *Preferences › System › Cycles Render Devices › OptiX*, con la Quadro spuntata.
 - [ ] Libreria materiali di studio: pavimenti, legni, intonaci, metalli, tessuti, con la corrispondenza
       materiale Edificius → materiale PBR.
-- [ ] Generalizzare il motore del contesto. Oggi `rilievi/zona-cagliari-menta-tamburino/modello/scena.py`
-      e `contesto.py` contengono valori del singolo lotto: particella, strisce di Via Moravia, altezza del muro R06.
+- [x] Generalizzare il motore del contesto (2026-11-07): gli script sono in `skills/rilievo-urbano/scripts/contesto/`,
+      i valori del singolo lotto in `lotto.json` nella cartella del modello. Su Via della Menta dà geometria identica.
+- [ ] Preparare i dati di un lotto nuovo in automatico: DTM, catasto e scheda (oggi si scaricano a mano).
 - [ ] Scrivere gli agenti e le skill per l'assemblaggio in Blender e per i video in Unreal.
 - [ ] Prova completa su un progetto vero.
 
 ## Stato
 - Fase 2 provata su Via della Menta / Via Tamburino Sardo (Cagliari). La pipeline funziona in SketchUp
-  2025, ma lo script è ancora specifico per quel lotto.
+  2025; il motore è generico e legge `lotto.json`, ma non è ancora stato provato su un secondo lotto.
+- Installati: Blender 5.2 + Bonsai 0.9.0, Unreal Engine 5.8, FFmpeg.
 - Fasi 3–6 ancora da costruire.
