@@ -191,7 +191,7 @@ module RilievoUrbano
       ents.add_faces_from_mesh(mesh, Geom::PolygonMesh::NO_SMOOTH_OR_HIDE)
       ents.grep(Sketchup::Face).each do |f|
         f.material = mat
-        f.back_material = nil
+        f.back_material = mat   # il verso della sezione dipende dalla normale del muro: stesso materiale sui due lati
         posiziona(f, mat)
       end
       ammorbidisci(ents, w['smooth_deg'] || 20)
@@ -281,6 +281,8 @@ module RilievoUrbano
         x.back_material = nil
       end
       tetto_a_falde(g, e['tetto'], m_cop, zb + e['altezza'].to_f, m_fac) if e['tetto']
+      mesh(g, e['fotovoltaico'], mat!(model, 'FV'), 'fotovoltaico') if e['fotovoltaico']
+      (e['elementi'] || []).each { |x| scatola(model, g, x) }
       g
     rescue ArgumentError => err
       puts "Edificio #{e['nome']} saltato: #{err.message}"
@@ -293,8 +295,10 @@ module RilievoUrbano
     # triangoli coincide con l'impronta alla quota di gronda, quindi chiude il solido.
     def self.tetto_a_falde(g, t, m_cop, zg, m_fac = nil)
       ents = g.entities
-      top = ents.grep(Sketchup::Face).select { |x| x.normal.z > 0.9 && (x.bounds.min.z.to_m - zg).abs < 0.01 }
-      ents.erase_entities(top) unless top.empty?
+      unless t['sporto']   # con lo sporto la falda copre dall'alto: la faccia piana resta a chiudere il solido
+        top = ents.grep(Sketchup::Face).select { |x| x.normal.z > 0.9 && (x.bounds.min.z.to_m - zg).abs < 0.01 }
+        ents.erase_entities(top) unless top.empty?
+      end
       v = t['vertici'].map { |x, y, z| Geom::Point3d.new(x.to_f.m, y.to_f.m, z.to_f.m) }
       sub = ents.add_group
       sub.name = 'copertura'
@@ -303,6 +307,7 @@ module RilievoUrbano
         next unless f
         f.reverse! if f.normal.z < 0
         f.material = m_cop
+        f.back_material = m_cop
       end
       (t['timpani'] || []).each do |a, b, c|   # muri verticali sotto la falda, col materiale di facciata
         f = sub.entities.add_face(v[a], v[b], v[c]) rescue nil
@@ -315,6 +320,72 @@ module RilievoUrbano
         fs = ed.faces
         ed.soft = ed.smooth = true if fs.size == 2 && fs[0].normal.angle_between(fs[1].normal) < 20.degrees
       end
+    end
+
+    # Dettagli di facciata e copertura (finestre, balconi, ringhiere, parapetti, pannelli): scatole orientate.
+    def self.scatola(model, g, x)
+      l, d, h = x['dim'].map(&:to_f)
+      return if l < 0.01 || d < 0.005 || h < 0.005
+      sub = g.entities.add_group
+      box(sub.entities, 0, 0, 0, l, d, h, mat!(model, x['materiale']))
+      c = x['c']
+      sub.transformation = Geom::Transformation.translation(Geom::Vector3d.new(c[0].to_f.m, c[1].to_f.m, c[2].to_f.m)) *
+                           Geom::Transformation.rotation(ORIGIN, Z_AXIS, x['rot_deg'].to_f.degrees)
+    rescue ArgumentError
+      nil
+    end
+
+    def self.mesh(g, t, mat, nome)
+      v = t['vertici'].map { |x, y, z| Geom::Point3d.new(x.to_f.m, y.to_f.m, z.to_f.m) }
+      sub = g.entities.add_group
+      sub.name = nome
+      t['triangoli'].each do |a, b, c|
+        f = sub.entities.add_face(v[a], v[b], v[c]) rescue nil
+        next unless f
+        f.reverse! if f.normal.z < 0
+        f.material = mat
+      end
+    end
+
+    def self.palma_ciuffo(ents, mat, r, h)
+      9.times do |k|
+        a = k * 2 * Math::PI / 9
+        base = Geom::Point3d.new(0, 0, 0.3.m)
+        tip = Geom::Point3d.new((r * Math.cos(a)).m, (r * Math.sin(a)).m, (h * 0.55).m)
+        mid = Geom::Point3d.new((r * 0.5 * Math.cos(a)).m, (r * 0.5 * Math.sin(a)).m, h.m)
+        side = Geom::Vector3d.new(-Math.sin(a), Math.cos(a), 0)
+        side.length = 0.25.m
+        [[base, mid.offset(side), mid.offset(side.reverse)], [mid.offset(side), tip, mid.offset(side.reverse)]].each do |tri|
+          f = ents.add_face(tri)
+          f.material = mat
+          f.back_material = mat
+        end
+      end
+    end
+
+    # Albero generico: fusto e chioma a ottaedro schiacciato (sostituibile con un modello di libreria).
+    def self.albero(model, parent, v)
+      g = parent.add_group
+      g.name = v['nome']
+      h = v['h'].to_f; r = v['chioma'].to_f / 2.0
+      hf = [h * 0.35, 0.8].max
+      box(g.entities, 0, 0, 0, 0.25, 0.25, hf + 0.3, mat!(model, 'FUSTO'))
+      m = mat!(model, 'CHIOMA')
+      zc = hf + (h - hf) / 2.0
+      top = Geom::Point3d.new(0, 0, h.m); bot = Geom::Point3d.new(0, 0, hf.m)
+      ring = (0...8).map { |k| a = k * Math::PI / 4; Geom::Point3d.new((r * Math.cos(a)).m, (r * Math.sin(a)).m, zc.m) }
+      sub = g.entities.add_group.entities
+      8.times do |k|
+        a = ring[k]; b = ring[(k + 1) % 8]
+        [[a, b, top], [b, a, bot]].each do |tri|
+          f = sub.add_face(tri) rescue nil
+          next unless f
+          f.material = m
+          f.back_material = m
+        end
+      end
+      g.transformation = Geom::Transformation.translation(Geom::Vector3d.new(v['xy'][0].to_f.m, v['xy'][1].to_f.m, v['z'].to_f.m))
+      g
     end
 
     # (e) Arredo: parallelepipedo (con testa per lampioni e disco per cartelli), ruotato di rot_deg attorno a Z.
@@ -348,11 +419,21 @@ module RilievoUrbano
 
     # (f) Palma giovane senza fusto: ciuffo di fronde (triangoli) – sostituibile con un modello Lumion.
     def self.palma(model, parent, v)
+      return albero(model, parent, v) if v['forma'] == 'albero'
       mat = mat!(model, v['materiale'])
       g = parent.add_group
       g.name = v['nome']
       r = v['chioma'].to_f / 2.0
       h = v['h'].to_f
+      if v['forma'] == 'palma_alta'   # fusto fino a 3/4 dell'altezza, ciuffo in cima
+        fusto = h * 0.75
+        box(g.entities, 0, 0, 0, 0.45, 0.45, fusto, mat!(model, 'FUSTO'))
+        fr = g.entities.add_group
+        palma_ciuffo(fr.entities, mat, r, h - fusto + 1.0)
+        fr.transformation = Geom::Transformation.translation(Geom::Vector3d.new(0, 0, (fusto - 1.0).m))
+        g.transformation = Geom::Transformation.translation(Geom::Vector3d.new(v['xy'][0].to_f.m, v['xy'][1].to_f.m, v['z'].to_f.m))
+        return g
+      end
       9.times do |k|
         a = k * 2 * Math::PI / 9
         base = Geom::Point3d.new(0, 0, 0.3.m)
@@ -408,6 +489,12 @@ module RilievoUrbano
         (dati['edifici'] || []).each { |e| (g = edificio(model, root.entities, e)) && g.layer = tag(model, e['tag']) }
         (dati['oggetti'] || []).each { |o| oggetto(model, root.entities, o).layer = tag(model, o['tag']) }
         (dati['vegetazione'] || []).each { |v| palma(model, root.entities, v).layer = tag(model, v['tag']) }
+        unless (dati['dettagli'] || []).empty?
+          gd = root.entities.add_group
+          gd.name = 'Dettagli – segnaletica, siepi, canneti'
+          dati['dettagli'].each { |x| scatola(model, gd, x) }
+          gd.layer = tag(model, '30_Arredo')
+        end
         model.definitions.purge_unused # definizioni dei gruppi di un'esecuzione precedente
         model.commit_operation
         puts format('Contesto generato da %s in %.1f s', path, Time.now - t0)

@@ -726,6 +726,9 @@
           "aggetti": "balconi a sbalzo con parapetto pieno intonacato C13 al 1° piano (2 assi)",
           "riprese": [
             "SV-10"
+          ],
+          "balconi_piani": [
+            1
           ]
         }
       ],
@@ -802,6 +805,9 @@
           "riprese": [
             "SV-09",
             "SV-16"
+          ],
+          "balconi_piani": [
+            1
           ]
         }
       ],
@@ -1048,17 +1054,23 @@
           "fonte": "stima-piani",
           "confidenza": "bassa",
           "metodo": "2 piani"
+        },
+        "colmo": {
+          "m": 8.3,
+          "fonte": "stima-piani",
+          "confidenza": "bassa"
         }
       },
       "copertura": {
-        "forma": "piana",
-        "manto": "C04",
+        "forma": "a padiglione",
+        "pendenza_pct": 30,
+        "manto": "C03",
         "elementi": [
-          "parapetto",
-          "fotovoltaico C21"
+          "fotovoltaico C21",
+          "terrazzi"
         ],
-        "nota": "SV-07 mostra volumi bianchi a tetto piano (verifica foto Street View 2026-04, sessione 2026-11-07)",
-        "fotovoltaico": "C21"
+        "fotovoltaico": "C21",
+        "nota": "coppi visibili dalla ripresa mirata da Via Moravia (verifica foto Street View mirate (_rif_google/edifici), sessione 2026-11-07); SV-07 inquadrava il volume vicino"
       },
       "facciate": [
         {
@@ -1242,7 +1254,12 @@
             "SV-13",
             "SV-15",
             "SV-17"
-          ]
+          ],
+          "balconi_piani": [
+            1,
+            2
+          ],
+          "balcone_frazione": 0.8
         }
       ],
       "note": "elemento più visibile dall'incrocio: priorità di modellazione"
@@ -1323,6 +1340,9 @@
           ],
           "materiali_accento": [
             "C22"
+          ],
+          "balconi_piani": [
+            2
           ]
         }
       ],
@@ -1360,11 +1380,21 @@
           "fonte": "stima-riferimento",
           "confidenza": "bassa",
           "metodo": "oltre il muro R09 h 2,5 m"
+        },
+        "colmo": {
+          "m": 8.0,
+          "fonte": "stima-piani",
+          "confidenza": "media",
+          "metodo": "2 piani + falde a capanna (verifica foto Street View mirate (_rif_google/edifici), sessione 2026-11-07)"
         }
       },
       "copertura": {
-        "forma": "piana",
-        "manto": "C04"
+        "forma": "a capanna",
+        "pendenza_pct": 35,
+        "manto": "C03",
+        "sporto_cm": 30,
+        "elementi": [],
+        "nota": "falde a capanna con fasce rosse in facciata (verifica foto Street View mirate (_rif_google/edifici), sessione 2026-11-07)"
       },
       "facciate": [
         {
@@ -1565,7 +1595,8 @@
         "fonte": "stima-riferimento",
         "confidenza": "media"
       },
-      "dettagli": "pilastrini in cls ogni ~3 m; base degradata con distacchi; rete metallica sopra in un tratto"
+      "dettagli": "pilastrini in cls ogni ~3 m; base degradata con distacchi; rete metallica sopra in un tratto",
+      "note": "Fronte di E04 su Via della Menta (SV-09), non di E03 (verifica foto Street View mirate (_rif_google/edifici), sessione 2026-11-07). Fronte N di E03 su Via della Menta (SV-09: la casa dietro è E03)."
     },
     {
       "id": "R06",
@@ -1694,7 +1725,26 @@
         "fonte": "stima-riferimento",
         "confidenza": "bassa"
       },
-      "dettagli": "piante ricadenti (capperi) sul paramento"
+      "dettagli": "piante ricadenti (capperi) sul paramento",
+      "note": "Su Via Moravia: muro intonacato bianco con ringhiera, giardino rialzato (SV-19)."
+    },
+    {
+      "id": "R12",
+      "tipo": "muro in cls curvo sull'angolo Via della Menta / Via Moravia",
+      "lod": "LOD2",
+      "materiali": [
+        "C15"
+      ],
+      "h": {
+        "m": 2.0,
+        "fonte": "stima-riferimento",
+        "confidenza": "media"
+      },
+      "riprese": [
+        "SV-16",
+        "SV-19"
+      ],
+      "note": "graffiti; segue la curva del marciapiede (verifica foto Street View mirate (_rif_google/edifici), sessione 2026-11-07)"
     }
   ],
   "arredo": [

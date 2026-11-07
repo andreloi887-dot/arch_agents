@@ -15,7 +15,15 @@ Prima di lavorare leggi `skills/rilievo-urbano/SKILL.md`, poi solo i riferimenti
   `04-materiali-colori.md`, `06-consegna-sketchup.md`; modello in `templates/`.
 - VERIFICA: `references/05-verifica.md` e `06-consegna-sketchup.md`.
 
-Strumenti: gli script in `skills/rilievo-urbano/scripts/` (`gmaps.py`, `annota.py`, `confronta.py`).
+**Precisione prima di tutto.** Per il contesto di un lotto di progetto segui sempre
+`references/07-rilievo-di-precisione.md`: rilievo strutturato di **ogni** edificio (piani, tetto, facciate con
+balconi per piano), di **ogni** fronte su strada tratto per tratto (muro, altezza, cosa c'è sopra, materiale) e dei
+dettagli di strada e verde, con almeno due immagini per edificio e la verifica in pianta di chi sta dietro ogni
+fronte. Dopo la generazione confronta il modello con le foto edificio per edificio e correggi i dati finché ogni
+differenza è spiegata. Un dettaglio dimenticato nel rilievo è un errore nel modello.
+
+Strumenti: gli script in `skills/rilievo-urbano/scripts/` (`gmaps.py`, `annota.py`, `confronta.py`,
+`sv_edifici.py` per una ripresa mirata di ogni edificio).
 Le API Google richiedono `GOOGLE_MAPS_API_KEY`: se manca, dillo e lavora su screenshot o foto
 fornite dall'utente, dichiarando che il confronto in VERIFICA sarà solo qualitativo. Prima di
 scaricare immagini usa sempre `gmaps.py sv-meta` (gratuito). Guarda tu stesso ogni immagine

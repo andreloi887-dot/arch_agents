@@ -78,7 +78,7 @@ def z_lotto2(x, y):
     return zt + (max(zi, zt) - zt) * w if zi > zt else zt + (zi - zt) * w
 _vicino_strada = S.sedime.union(S.raccordo).buffer(0.3)   # avanzi a ridosso della strada: quota del marciapiede
 _RUM = LT.get("rumore_superficie_m", 0.0)
-REG = [("P01", carr, ST["materiale_carreggiata"], lambda x, y: S.trend(x, y)),
+REG = [("P01", carr, ST["materiale_carreggiata"], lambda x, y: S.z_strada(x, y)),
        ("P02", marc, ST["materiale_marciapiede"], lambda x, y: S.z_marc(x, y)),
        ("P03", lotto, LT["materiale"], lambda x, y: z_lotto2(x, y) + (random.uniform(-_RUM, _RUM) if _top_at(x, y)[0] > SP + 0.3 else 0.0)),
        ("FONDO", fondo, LT["materiale_fasce"], lambda x, y: S.z_marc(x, y) if _vicino_strada.contains(Point(x, y)) else S.trend(x, y))]
@@ -229,7 +229,7 @@ for r in sc["recinzioni"]:
 
 # ---------------------------------------------------------------- edifici (LOD1: estrusione dell'impronta)
 PIATT = L.get("edifici", {}).get("piattaforma_m", {})   # gronde misurate dal marciapiede: tolgo la piattaforma (nel DTM)
-def tetto(imp, zg, forma, pend_pct, h_colmo):
+def tetto(imp, zg, forma, pend_pct, h_colmo, sporto=0.0):
     """Copertura a falde sopra l'impronta, alla quota di gronda zg. Regola generale, valida per piante
     qualsiasi: la quota cresce con la distanza dal bordo (padiglione = distanza da tutti i lati, come il
     tetto da scheletro rettilineo; capanna = distanza dai due lati lunghi del rettangolo minimo), con la
@@ -240,6 +240,9 @@ def tetto(imp, zg, forma, pend_pct, h_colmo):
     P = Polygon(imp).buffer(0)
     if P.area < 4: return None
     capanna = "capanna" in f
+    if sporto and not capanna:   # sporto di gronda: la falda continua oltre il muro e scende di k·sporto
+        P = P.buffer(sporto, join_style=2, mitre_limit=3)
+        zg = zg - k * sporto
     if capanna:
         mr = list(P.minimum_rotated_rectangle.exterior.coords)[:4]
         e1 = (mr[1][0] - mr[0][0], mr[1][1] - mr[0][1]); e2 = (mr[2][0] - mr[1][0], mr[2][1] - mr[1][1])
@@ -274,10 +277,12 @@ def tetto(imp, zg, forma, pend_pct, h_colmo):
         if r is rings[0]: seg += [[ids[i], ids[(i + 1) % len(ids)]] for i in range(len(ids))]
     if capanna:   # linea di colmo come vincolo
         x0, y0 = cx - lung[0], cy - lung[1]; x1, y1 = cx + lung[0], cy + lung[1]
-        ln = LineString([(x0, y0), (x1, y1)]).intersection(P)
+        # colmo come punti (non come vincolo): un vincolo che tocca il bordo manda in errore `triangle`
+        ln = LineString([(x0, y0), (x1, y1)]).intersection(P.buffer(-0.05))
         for q in getattr(ln, "geoms", [ln]):
-            if q.length > 0.2:
-                cc = list(q.coords); a_ = add(cc[0]); b_ = add(cc[-1]); seg.append([a_, b_])
+            if q.geom_type == "LineString" and q.length > 0.2:
+                nn = max(2, int(q.length / 0.5))
+                for kk in range(nn + 1): add(q.interpolate(kk * q.length / nn).coords[0])
     try:
         t = triangle.triangulate({"vertices": np.array(V), "segments": np.array(seg)}, "pq20a2.0")
     except Exception:
@@ -302,7 +307,120 @@ def tetto(imp, zg, forma, pend_pct, h_colmo):
         b0 = len(out_v); out_v.append([out_v[j][0], out_v[j][1], R(zg)])
         if zi >= 0.02: timpani.append([a0, b0, i])
         if zj >= 0.02: timpani.append([b0, j, i] if zi >= 0.02 else [a0, b0, j])
-    return {"vertici": out_v, "triangoli": out_t, "timpani": timpani}
+    return {"vertici": out_v, "triangoli": out_t, "timpani": timpani, "sporto": bool(sporto and not capanna)}
+
+# ---------------------------------------------------------------- dettagli: finestre, balconi, parapetti, fotovoltaico
+ORI = {"N": 90, "NE": 45, "E": 0, "SE": -45, "S": -90, "SO": -135, "O": 180, "NO": 135}
+def lati(imp):
+    """lati dell'impronta con normale esterna e angolo della normale (gradi, 0 = Est, 90 = Nord)."""
+    P = Polygon(imp).buffer(0); cs = list(P.exterior.coords)
+    if not P.exterior.is_ccw: cs = cs[::-1]
+    out = []
+    for a, b in zip(cs, cs[1:]):
+        L_ = math.dist(a, b)
+        if L_ < 0.5: continue
+        nx, ny = (b[1] - a[1]) / L_, -(b[0] - a[0]) / L_
+        out.append({"a": a, "b": b, "L": L_, "n": (nx, ny), "ang": math.degrees(math.atan2(ny, nx))})
+    return out
+def _dang(a, b): return abs((a - b + 180) % 360 - 180)
+def box(cx, cy, z, l, d, h, rot, mat, nome=None):
+    return {"c": [R(cx), R(cy), R(z)], "dim": [R(l), R(d), R(h)], "rot_deg": round(rot, 2), "materiale": mat}
+def dettagli(e, zb, h):
+    """finestre e balconi dalle facciate della scheda (orientamento, assi, dimensioni, aggetti); per gli edifici
+    senza scheda, una finestra ogni ~3,2 m di facciata per piano. Parapetto sui tetti piani."""
+    out = []
+    piani = e.get("piani") or max(1, round(e["altezza"] / 3.0))
+    hp = max(2.6, e["altezza"] / piani)
+    z0 = zb + 0.35                      # piano terra poco sopra il terreno più basso
+    LS = lati(e["impronta"])
+    fac = e.get("facciate") or []
+    spec = []                           # (lato, assi, l, h, balcone_piani)
+    if fac:
+        for f in fac:
+            oris = [ORI[o] for o in str(f.get("orientamento") or "").replace(" ", "").split("/") if o in ORI]
+            if not oris: continue
+            cand = [s for s in LS if min(_dang(s["ang"], o) for o in oris) <= 50 and s["L"] >= 2.0]
+            if not cand: continue
+            ap = f.get("aperture") or {}
+            tipo = (ap.get("tipo") or [{}])[0]
+            wl, wh = tipo.get("l_m", 1.0), tipo.get("h_m", 1.3)
+            assi_tot = ap.get("assi") or max(1, int(sum(s["L"] for s in cand) / 3.2))
+            agg = (f.get("aggetti") or "").lower()
+            bal = None
+            if f.get("balconi_piani") is not None:      # rilievo strutturato: piani con balcone su questo fronte
+                bal = list(f["balconi_piani"])
+            elif "balcon" in agg or "terrazz" in agg:
+                import re as _re2
+                m = _re2.search(r"(\d)\s*\S?\s*piano", agg)
+                bal = [int(m.group(1))] if m else list(range(1, piani))
+            Ltot = sum(s["L"] for s in cand)
+            for s in cand:
+                spec.append((s, max(1, round(assi_tot * s["L"] / Ltot)), wl, wh, bal, f.get("balcone_frazione", 0.6)))
+        visti = {id(x[0]) for x in spec}
+        for s in LS:   # gli altri lati: aperture generiche, meno fitte (fronti non rilevati)
+            if id(s) not in visti and s["L"] >= 3.0: spec.append((s, max(1, int(s["L"] / 4.0)), 1.0, 1.2, None, 0.6))
+    else:
+        for s in LS:
+            if s["L"] >= 3.0: spec.append((s, max(1, int(s["L"] / 3.2)), 1.0, 1.25, None, 0.6))
+    for s, assi, wl, wh, bal, frz in spec:
+        (ax, ay), (bx, by) = s["a"], s["b"]; nx, ny = s["n"]
+        rot = math.degrees(math.atan2(by - ay, bx - ax))
+        assi = min(assi, max(1, int(s["L"] / (wl + 0.6))))
+        for k in range(piani):
+            zf = z0 + k * hp
+            for i in range(assi):
+                t = (i + 0.5) / assi
+                cx, cy = ax + (bx - ax) * t + nx * 0.03, ay + (by - ay) * t + ny * 0.03
+                if k == 0 and fac and i == assi // 2 and s is spec[0][0]:
+                    out.append(box(cx, cy, zf - 0.3, 1.0, 0.06, 2.3, rot, "PORTONCINO")); continue
+                out.append(box(cx, cy, zf + 0.9, wl, 0.06, wh, rot, "VETRO"))
+            if bal and k in bal and s["L"] >= 3.0:
+                lb = s["L"] * frz if frz != 0.6 else min(s["L"] * 0.6, max(2.5, assi * 2.2)); dp = 1.2
+                mx_, my_ = (ax + bx) / 2 + nx * dp / 2, (ay + by) / 2 + ny * dp / 2
+                out.append(box(mx_, my_, zf - 0.15, lb, dp, 0.15, rot, e["materiale"]))
+                ex, ey = (ax + bx) / 2 + nx * (dp - 0.03), (ay + by) / 2 + ny * (dp - 0.03)
+                out.append(box(ex, ey, zf, lb, 0.04, 1.0, rot, "RINGHIERA"))
+                ux, uy = (bx - ax) / s["L"], (by - ay) / s["L"]
+                for sg in (-1, 1):
+                    sx, sy = mx_ + ux * sg * lb / 2, my_ + uy * sg * lb / 2
+                    out.append(box(sx, sy, zf, 0.04, dp, 1.0, rot, "RINGHIERA"))
+    if not e.get("_falde"):   # tetto piano: parapetto lungo tutto il perimetro
+        for s in LS:
+            (ax, ay), (bx, by) = s["a"], s["b"]; nx, ny = s["n"]
+            rot = math.degrees(math.atan2(by - ay, bx - ax))
+            out.append(box((ax + bx) / 2 - nx * 0.1, (ay + by) / 2 - ny * 0.1, zb + h, s["L"], 0.2, 0.6, rot, e["materiale"]))
+    return out
+def fotovoltaico(e, zb, h, tt):
+    """pannelli: sulle falde rivolte a sud (sottoinsieme dei triangoli del tetto alzato di 7 cm, lontano dal bordo);
+    sui tetti piani, file di pannelli inclinati verso sud."""
+    P = Polygon(e["impronta"]).buffer(0)
+    if tt:
+        V = tt["vertici"]; dentro = P.buffer(-0.8)
+        vs, ts, idx = [], [], {}
+        for a_, b_, c_ in tt["triangoli"]:
+            pa, pb, pc = V[a_], V[b_], V[c_]
+            ux, uy, uz = pb[0]-pa[0], pb[1]-pa[1], pb[2]-pa[2]; vx, vy, vz = pc[0]-pa[0], pc[1]-pa[1], pc[2]-pa[2]
+            nx, ny, nz = uy*vz-uz*vy, uz*vx-ux*vz, ux*vy-uy*vx; nn = math.sqrt(nx*nx+ny*ny+nz*nz) or 1
+            if nz / nn > 0.995 or ny / nn > -0.08: continue           # piano o non rivolto a sud
+            if not dentro.contains(Point((pa[0]+pb[0]+pc[0])/3, (pa[1]+pb[1]+pc[1])/3)): continue
+            ids = []
+            for q in (pa, pb, pc):
+                kq = (q[0], q[1])
+                if kq not in idx: idx[kq] = len(vs); vs.append([q[0], q[1], R(q[2] + 0.07)])
+                ids.append(idx[kq])
+            ts.append(ids)
+        return {"vertici": vs, "triangoli": ts} if ts else None
+    out = []; dentro = P.buffer(-1.2)
+    if dentro.is_empty: return None
+    x0, y0, x1, y1 = dentro.bounds; y = y0 + 0.6
+    while y < y1 - 0.5:
+        riga = dentro.intersection(LineString([(x0 - 1, y), (x1 + 1, y)]))
+        for q in getattr(riga, "geoms", [riga]):
+            if q.geom_type == "LineString" and q.length > 1.0:
+                (qa, _), (qb, _) = q.coords[0], q.coords[-1]
+                out.append(box((qa + qb) / 2, y, zb + h + 0.25, abs(qb - qa), 1.0, 0.05, 0, "FV"))
+        y += 2.0
+    return {"pannelli": out} if out else None
 
 edifici = []
 for e in sc["edifici"]:
@@ -315,10 +433,35 @@ for e in sc["edifici"]:
           "z_base": R(zb), "altezza": R(h), "materiale": e["materiale"],
           "materiale_copertura": e.get("manto") or e["materiale"], "lod": e["lod"]}
     colmo = e.get("colmo")
+    f_ = (e.get("copertura") or "").lower()
+    if not ("padiglione" in f_ or "capanna" in f_ or "falda" in f_):   # tetto piano: la gronda di scheda è la cima del parapetto
+        h = max(2.5, h - 0.6); ed["altezza"] = R(h)
     tt = tetto(imp, zb + h, e.get("copertura"), e.get("pendenza_pct"),
-               (colmo - e["altezza"]) if colmo else None)
+               (colmo - e["altezza"]) if colmo else None, (e.get("sporto_cm") or 0) / 100.0)
     if tt: ed["tetto"] = tt
+    e["_falde"] = bool(tt)
+    ed["elementi"] = dettagli(e, zb, h)
+    if e.get("fotovoltaico"):
+        fv = fotovoltaico(e, zb, h, tt)
+        if fv and "pannelli" in fv: ed["elementi"] += fv["pannelli"]
+        elif fv: ed["fotovoltaico"] = fv
     edifici.append(ed)
+    for v in e.get("volumi", []):   # volumi alti (torrette) sopra il tetto, con la loro copertura
+        Pq = Polygon(imp); c = Pq.centroid if v.get("posizione", "centro") == "centro" else Point(*v["posizione"])
+        mr = list(Pq.minimum_rotated_rectangle.exterior.coords)
+        ang = math.atan2(mr[1][1] - mr[0][1], mr[1][0] - mr[0][0]); lx, ly = v.get("lati_m", [4.0, 4.0])
+        ca, sa = math.cos(ang), math.sin(ang)
+        sq = [(c.x + ca*dx - sa*dy, c.y + sa*dx + ca*dy) for dx, dy in [(-lx/2, -ly/2), (lx/2, -ly/2), (lx/2, ly/2), (-lx/2, ly/2)]]
+        hv = v.get("altezza_extra", 3.0) + ((colmo - e["altezza"]) if colmo else 0)
+        ev = {"nome": f"{e['nome']} – {v.get('nome', 'volume alto')}", "tag": "10_Edifici",
+              "impronta": [[R(x), R(y)] for x, y in sq], "z_base": R(zb + h), "altezza": R(hv), "materiale": e["materiale"],
+              "materiale_copertura": e.get("manto") or e["materiale"], "lod": 2}
+        tv = tetto(sq, zb + h + hv, v.get("copertura", e.get("copertura")), v.get("pendenza_pct", e.get("pendenza_pct")), None,
+                   (e.get("sporto_cm") or 0) / 100.0)
+        if tv: ev["tetto"] = tv
+        ev["elementi"] = [x for x in dettagli({**e, "impronta": sq, "altezza": hv, "piani": max(1, round(hv / 3)),
+                                               "facciate": [], "_falde": bool(tv)}, zb + h, hv)]
+        edifici.append(ev)
 
 # ---------------------------------------------------------------- arredo e vegetazione
 oggetti = []
@@ -330,12 +473,98 @@ for a in sc["arredo"]:
                     "rot_deg": a.get("rot_deg", 0.0),
                     "testa": "lampione" if a["tipo"] == "lampione" else ("disco" if "cartello" in a["tipo"] else None)})
 vegetazione = []
+dettagli = []   # scatole libere (segnaletica, siepi, canneti): stesso formato degli elementi degli edifici
 for v in L.get("vegetazione", []):
-    if not v.get("nel_contesto", True) or "xy_lista" in v: continue   # macchie di arbusti: meglio nel render
-    x, y = [vv for vv in sc["vegetazione"] if vv["id"] == v["id"]][0]["xy"]
-    vegetazione.append({"nome": v.get("nome", f"{v['id']} – {v['tipo']}"), "tag": "50_Vegetazione", "xy": [R(x), R(y)],
-                        "z": R(z_lotto2(x, y) if v.get("su_lotto") else S.trend(x, y)), "h": v["h"], "chioma": v["chioma"],
-                        "materiale": v.get("materiale", "C27")})
+    if not v.get("nel_contesto", True): continue
+    vs_ = [vv for vv in sc["vegetazione"] if vv["id"] == v["id"]][0]
+    forma = v.get("forma", "palma")
+    if forma == "siepe":   # siepi sulla sommità dei muri indicati
+        for m in sc["muri"]:
+            if m["id"] not in v.get("su_muri", []): continue
+            for (a_, b_, za, zb_) in zip(m["punti"], m["punti"][1:], m["z_sommita"], m["z_sommita"][1:]):
+                L_ = math.dist(a_, b_)
+                if L_ < 0.2: continue
+                dettagli.append(box((a_[0]+b_[0])/2, (a_[1]+b_[1])/2, min(za, zb_), L_ + 0.1, 0.45, v.get("h", 0.6),
+                                    math.degrees(math.atan2(b_[1]-a_[1], b_[0]-a_[0])), "SIEPE"))
+        continue
+    if forma == "canneto":  # fascia di canne lungo il lato interno del muro indicato
+        for m in sc["muri"]:
+            if m["id"] != v.get("dietro_muro"): continue
+            for p_, n_, (a_, b_) in zip(m["punti"], m["normali_interno"], zip(m["punti"], m["punti"][1:])):
+                cx, cy = (a_[0]+b_[0])/2 + n_[0]*1.0, (a_[1]+b_[1])/2 + n_[1]*1.0
+                dettagli.append(box(cx, cy, S.trend(cx, cy), math.dist(a_, b_) + 0.2, 1.4, v.get("h", 3.5),
+                                    math.degrees(math.atan2(b_[1]-a_[1], b_[0]-a_[0])), "CANNETO"))
+        continue
+    punti = vs_.get("xy_lista") if vs_.get("xy_lista") else ([vs_["xy"]] if "xy" in vs_ else [])
+    for k_, (x, y) in enumerate(punti):
+        vegetazione.append({"nome": v.get("nome", f"{v['id']} – {v['tipo']}") + (f" {k_+1}" if len(punti) > 1 else ""),
+                            "tag": "50_Vegetazione", "xy": [R(x), R(y)], "forma": forma,
+                            "z": R(z_lotto2(x, y) if v.get("su_lotto") else S.trend(x, y)), "h": v["h"],
+                            "chioma": v.get("chioma", 3.0), "fusto": v.get("fusto", 0.0),
+                            "materiale": v.get("materiale", "C27")})
+
+# ---------------------------------------------------------------- lampioni lungo i marciapiedi (passo di scheda, sfalsati)
+LP = L.get("lampioni")
+if LP:
+    bd = S.carreggiata.boundary; cnt_ = 0
+    for k_, ln in enumerate(getattr(bd, "geoms", [bd])):
+        if ln.length < LP.get("passo_m", 27) * 0.6: continue
+        s_ = (LP.get("passo_m", 27) / 2.0) * (k_ % 2) + 3.0
+        while s_ < ln.length - 2.0:
+            q = ln.interpolate(s_); q2 = ln.interpolate(min(ln.length, s_ + 0.5))
+            dx, dy = q2.x - q.x, q2.y - q.y; Ln = math.hypot(dx, dy) or 1.0
+            nx, ny = -dy / Ln, dx / Ln
+            if S.carreggiata.contains(Point(q.x + nx * 0.3, q.y + ny * 0.3)): nx, ny = -nx, -ny   # verso il marciapiede
+            x, y = q.x + nx * 0.5, q.y + ny * 0.5
+            if S.marciapiedi.buffer(0.1).contains(Point(x, y)) and S.area.buffer(-3).contains(Point(x, y)):
+                cnt_ += 1
+                oggetti.append({"nome": f"A01 – lampione {cnt_}", "tag": "30_Arredo", "xy": [R(x), R(y)],
+                                "z": R(S.z_marc(x, y) - 0.05), "dim": [0.12, 0.12, R(LP.get("h", 8.0) + 0.05)],
+                                "materiale": LP.get("materiale", "C20"),
+                                "rot_deg": round(math.degrees(math.atan2(ny, nx)), 1), "testa": "lampione"})
+            s_ += LP.get("passo_m", 27)
+
+# ---------------------------------------------------------------- segnaletica orizzontale: mezzeria e strisce pedonali
+SG = L.get("segnaletica_stradale")
+if SG:
+    assi_n = {}
+    for f in json.load(open(S.P_(S.DB["assi"]), encoding="utf-8"))["features"] if S.DB.get("assi") else []:
+        for l in f["geometry"]["coordinates"]:
+            assi_n.setdefault(f["properties"].get("nome") or "?", []).append(LineString([S.loc(q[0], q[1]) for q in l]))
+    tutti = [ln for v_ in assi_n.values() for ln in v_]
+    nodi = [Point(c) for ln in tutti for c in (ln.coords[0], ln.coords[-1])]
+    incroci = [p for p in nodi if sum(1 for q in nodi if q.distance(p) < 1.0) >= 3]
+    def zs(x, y): return S.z_strada(x, y) + 0.012
+    if SG.get("mezzeria", True):
+        for ln in tutti:
+            ln = ln.intersection(carr.buffer(-1.0))
+            for part in getattr(ln, "geoms", [ln]):
+                if part.is_empty or part.geom_type != "LineString": continue
+                s_ = 0.0
+                while s_ + 3.0 < part.length:
+                    a_, b_ = part.interpolate(s_), part.interpolate(s_ + 3.0)
+                    m_ = Point((a_.x+b_.x)/2, (a_.y+b_.y)/2)
+                    if all(m_.distance(i_) > 9 for i_ in incroci):
+                        dettagli.append(box(m_.x, m_.y, zs(m_.x, m_.y), 3.0, 0.12, 0.01,
+                                            math.degrees(math.atan2(b_.y-a_.y, b_.x-a_.x)), "SEGNALETICA"))
+                    s_ += 6.0
+    for sp in SG.get("strisce_pedonali", []):
+        for ln in assi_n.get(sp["strada"], []):
+            for estremo, verso in ((ln.coords[0], 1), (ln.coords[-1], -1)):
+                if not any(Point(estremo).distance(i_) < 1.0 for i_ in incroci): continue
+                d0 = SG.get("distanza_incrocio_m", 6.0); s0 = d0 if verso == 1 else ln.length - d0
+                if not (0 < s0 < ln.length): continue
+                c_ = ln.interpolate(s0); c2 = ln.interpolate(min(ln.length, s0 + 0.5) if verso == 1 else max(0, s0 - 0.5))
+                ux, uy = c2.x - c_.x, c2.y - c_.y; Lu = math.hypot(ux, uy) or 1.0; ux, uy = ux/Lu, uy/Lu
+                trasv = LineString([(c_.x - uy*12, c_.y + ux*12), (c_.x + uy*12, c_.y - ux*12)]).intersection(carr)
+                for tr in getattr(trasv, "geoms", [trasv]):
+                    if tr.is_empty or tr.geom_type != "LineString" or not tr.buffer(0.5).intersects(c_.buffer(0.5)): continue
+                    s_ = 0.4
+                    while s_ < tr.length - 0.4:
+                        p_ = tr.interpolate(s_)
+                        dettagli.append(box(p_.x, p_.y, zs(p_.x, p_.y), 2.5, 0.5, 0.01,
+                                            math.degrees(math.atan2(uy, ux)), "SEGNALETICA"))
+                        s_ += 1.0
 
 # ---------------------------------------------------------------- materiali (+ texture a scacchiera per P02)
 pal = {p["id"]: p for p in scheda["palette"]}
@@ -347,6 +576,7 @@ for s in out_sup: usati |= set(s["materiali"])
 for m in muri: usati.add(m["materiale"])
 for e in edifici: usati |= {e["materiale"], e["materiale_copertura"]}
 for o in oggetti: usati.add(o["materiale"])
+for e in edifici: usati |= {x["materiale"] for x in e.get("elementi", []) if x["materiale"] in pal}
 TX = ST.get("texture_marciapiede")
 if TX: usati.add(TX["alternato"])
 for v in vegetazione: usati.add(v["materiale"])
@@ -370,11 +600,17 @@ for tipo, (pid, rid) in MAT_REC.items():
     if any(r["materiale_palo"] == f"{pid}_paletti_{tipo}" for r in recinzioni):
         materiali[f"{pid}_paletti_{tipo}"] = {"hex": pal[pid]["hex"]}
         materiali[rid] = {"hex": pal[pid]["hex"], "alpha": {"rete": 0.25, "ringhiera": 0.45, "doghe": 0.85}[tipo]}
+materiali.update({"SEGNALETICA": {"hex": "#E8E8E4"}, "SIEPE": {"hex": "#4F6B34"}, "CANNETO": {"hex": "#8A8A4E", "alpha": 0.85},
+                  "CHIOMA": {"hex": "#556B35"}, "FUSTO": {"hex": "#6B5A48"},
+                  "VETRO": {"hex": "#2E3A42"}, "PORTONCINO": {"hex": "#5A4636"},
+                  "RINGHIERA": {"hex": "#3C3F41", "alpha": 0.55}, "FV": {"hex": "#1C2A44"}})
 def rinomina(c): return nome_mat(c) if c in pal else c
 for s in out_sup: s["materiali"] = [rinomina(c) for c in s["materiali"]]
 for m in muri: m["materiale"] = rinomina(m["materiale"])
 for e in edifici: e["materiale"], e["materiale_copertura"] = rinomina(e["materiale"]), rinomina(e["materiale_copertura"])
 for o in oggetti: o["materiale"] = rinomina(o["materiale"])
+for e in edifici:
+    for x in e.get("elementi", []): x["materiale"] = rinomina(x["materiale"])
 for v in vegetazione: v["materiale"] = rinomina(v["materiale"])
 
 # ---------------------------------------------------------------- punti di controllo della proiezione
@@ -394,7 +630,7 @@ for lst in (muri, recinzioni):
         it["nome"] = f"{base} tratto {_cnt[base]}"
 ctx = {"origine": sc["origine"], "applica_allineamento_catasto": False, "controllo": controllo,
        "fonti": sc["fonti"], "materiali": materiali, "superfici": out_sup, "muri": muri, "recinzioni": recinzioni,
-       "edifici": edifici, "oggetti": oggetti, "vegetazione": vegetazione}
+       "edifici": edifici, "oggetti": oggetti, "vegetazione": vegetazione, "dettagli": dettagli}
 json.dump(ctx, open(os.path.join(HERE, "contesto.json"), "w"), separators=(",", ":"))
 nt = sum(len(s["triangoli"]) for s in out_sup)
 print(f"superfici {len(out_sup)} ({nt} triangoli), fasce {sum(len(v) for v in fasce.values())}, muri {len(muri)}, "

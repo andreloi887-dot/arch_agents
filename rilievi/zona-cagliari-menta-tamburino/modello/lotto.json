@@ -1,7 +1,11 @@
 {
  "_nota": "Parametri del lotto per il motore generico skills/rilievo-urbano/scripts/contesto/. Percorsi relativi a questa cartella; le uscite (scena.json, contesto.json, texture/) vengono scritte qui.",
  "nome": "Via della Menta / Via Tamburino Sardo, Cagliari",
- "origine": {"lat": 39.25240, "lng": 9.11527, "descrizione": "incrocio"},
+ "origine": {
+  "lat": 39.2524,
+  "lng": 9.11527,
+  "descrizione": "incrocio"
+ },
  "semilato_m": 75.0,
  "seme_casuale": 4258,
  "dati": {
@@ -12,24 +16,54 @@
   "scheda": "../scheda.json",
   "particelle": "../geometria/catasto_strade_particelle.geojson",
   "fabbricati": "../geometria/catasto_fabbricati.geojson",
-  "manifest": ["../_rif_google/manifest_riprese.json", "manifest_riprese.json"]
+  "manifest": [
+   "../_rif_google/manifest_riprese.json",
+   "manifest_riprese.json"
+  ],
+  "dbgt": {
+   "strade": "../geometria/dbgt_area_stradale.geojson",
+   "assi": "../geometria/dbgt_elemento_stradale.geojson",
+   "recinzioni": "../geometria/dbgt_elemento_divisorio.geojson",
+   "muri_sostegno": "../geometria/dbgt_muro_sostegno_arc.geojson",
+   "edifici": "../geometria/dbgt_edificio_ingombro_suolo.geojson"
+  }
  },
  "strade": {
-  "punti_aggiunti_al_sedime": [[39.2526253, 9.1156101], [39.2527168, 9.1159725]],
+  "punti_aggiunti_al_sedime": [
+   [
+    39.2526253,
+    9.1156101
+   ],
+   [
+    39.2527168,
+    9.1159725
+   ]
+  ],
   "_nota_aggiunte": "strisce di Via Moravia: a catasto sono particelle (un punto [lat, lng] dentro ciascuna)",
   "marciapiede_m": 1.5,
-  "rialzo_marciapiede_m": 0.10,
+  "rialzo_marciapiede_m": 0.1,
   "pendenza_marciapiede": 0.015,
   "raccordo_angoli_m": 2.0,
   "raccordo_lotto_m": 4.0,
   "materiale_carreggiata": "C16",
   "materiale_marciapiede": "C17",
   "materiale_cordolo": "C19",
-  "texture_marciapiede": {"materiale": "C17", "alternato": "C18", "modulo_mm": [800, 800]}
+  "texture_marciapiede": {
+   "materiale": "C17",
+   "alternato": "C18",
+   "modulo_mm": [
+    800,
+    800
+   ]
+  },
+  "eccesso_muro_max_m": 0.3
  },
  "lotto": {
   "id": "P03",
-  "punto": [39.2528006, 9.1152612],
+  "punto": [
+   39.2528006,
+   9.1152612
+  ],
   "punti_aggiunti_al_lotto": [],
   "_nota_area": "part. 4258: visura 966 m², mappa ~900 m². Il triangolo sulla punta verso l'incrocio NON fa parte del lotto (Andrea, 2026-11-07)",
   "particella": "4258",
@@ -41,56 +75,519 @@
   "nota": "superficie dal DTM LiDAR 1 m; erbe spontanee alte ~1 m (aprile)",
   "rumore_superficie_m": 0.04,
   "muro_fronte": {
-   "id": "R06", "nome": "R06 – muro di sostegno P03", "materiale": "C15", "spessore": 0.25,
-   "campionamento_interno_m": 1.6, "altezza_minima_m": 0.20, "altezza_massima_m": 1.30,
+   "id": "R06",
+   "nome": "R06 – muro di sostegno P03",
+   "materiale": "C15",
+   "spessore": 0.25,
+   "campionamento_interno_m": 1.6,
+   "altezza_minima_m": 0.2,
+   "altezza_massima_m": 1.3,
    "scarpata_m": 2.5,
-   "vicino_punta": {"raggio_m": 6.0, "altezza_minima_m": 1.0}
+   "vicino_punta": {
+    "raggio_m": 6.0,
+    "altezza_minima_m": 1.0
+   }
   },
   "recinzione_fronte": {
-   "tipo": "rete", "nome": "R06 – rete elettrosaldata su paletti", "materiale": "C20", "altezza": 1.6,
-   "passo_paletti": 2.0, "x_min_da_punta": 1.0, "y_min": 24.0,
-   "cancello": {"tipo": "tubolare zincato a 2 ante", "larghezza": 3.0, "y_centro": 26.0, "confidenza": "bassa"}
+   "tipo": "rete",
+   "nome": "R06 – rete elettrosaldata su paletti",
+   "materiale": "C20",
+   "altezza": 1.6,
+   "passo_paletti": 2.0,
+   "x_min_da_punta": 1.0,
+   "y_min": 24.0,
+   "cancello": {
+    "tipo": "tubolare zincato a 2 ante",
+    "larghezza": 3.0,
+    "y_centro": 26.0,
+    "confidenza": "bassa"
+   }
   },
-  "fronte_arredo": {"x_min_da_punta": 0.5}
+  "fronte_arredo": {
+   "x_min_da_punta": 0.5
+  }
  },
  "muri_contorno": [
-  {"id": "R01", "edificio": "E09", "altezza_muro": 1.6, "sopra": ["ringhiera", 1.0, "C06"]},
-  {"id": "R02", "edificio": "E08", "altezza_muro": 2.5, "sopra": ["doghe", 1.2, "C05"]},
-  {"id": "R03", "edificio": "E06", "altezza_muro": 1.2, "sopra": ["ringhiera", 0.8, "C06"]},
-  {"id": "R04", "edificio": "E05", "altezza_muro": 0.6, "sopra": ["doghe", 1.3, "C05"]},
-  {"id": "R05", "edificio": "E03", "verso": "NS"},
-  {"id": "R11", "edificio": "E03", "verso": "EO"},
-  {"id": "R07", "edificio": "E02"},
-  {"id": "R08", "edificio": "E01"},
-  {"id": "R09", "edificio": "E11"},
-  {"id": "R10", "edificio": "E10"}
+  {
+   "id": "R12",
+   "edificio": "E03",
+   "altezza_muro": 2.0,
+   "presso": [
+    39.2525892,
+    9.1154322
+   ],
+   "raggio_m": 9.0,
+   "_nota": "muro curvo in cls sull'angolo Menta/Moravia (SV-16): vale solo entro 9 m dall'angolo"
+  },
+  {
+   "id": "R05",
+   "edificio": "E03",
+   "verso": "NS",
+   "altezza_muro": 2.5
+  },
+  {
+   "id": "R01",
+   "edificio": "E09",
+   "altezza_muro": 1.6,
+   "sopra": [
+    "ringhiera",
+    1.0,
+    "C06"
+   ]
+  },
+  {
+   "id": "R02",
+   "edificio": "E08",
+   "altezza_muro": 2.0,
+   "sopra": [
+    "doghe",
+    1.2,
+    "C05"
+   ]
+  },
+  {
+   "id": "R03",
+   "edificio": "E06",
+   "altezza_muro": 1.2,
+   "sopra": [
+    "ringhiera",
+    0.8,
+    "C06"
+   ]
+  },
+  {
+   "id": "R04",
+   "edificio": "E05",
+   "altezza_muro": 0.6,
+   "sopra": [
+    "doghe",
+    1.3,
+    "C05"
+   ]
+  },
+  {
+   "id": "R11",
+   "edificio": "E03",
+   "verso": "EO",
+   "altezza_muro": 1.5,
+   "sopra": [
+    "ringhiera",
+    0.9,
+    "C06"
+   ]
+  },
+  {
+   "id": "R07",
+   "edificio": "E02"
+  },
+  {
+   "id": "R08",
+   "edificio": "E01"
+  },
+  {
+   "id": "R09",
+   "edificio": "E11"
+  },
+  {
+   "id": "R10",
+   "edificio": "E10"
+  }
  ],
  "edifici": {
-  "altezza_generica_m": 6.5, "materiale_generico": "C04",
-  "piattaforma_m": {"E08": 2.5, "E09": 1.0},
+  "altezza_generica_m": 6.5,
+  "materiale_generico": "C04",
+  "piattaforma_m": {
+   "E08": 2.5,
+   "E09": 1.0
+  },
   "per_edificio": {
-   "_nota": "edifici di sfondo osservati in Google Earth 3D (immagini 21/06/2023), sessione 2026-11-07: solo descrizione, confidenza bassa",
-   "CTX19": {"altezza": 9.5, "colmo": 11.0, "copertura": "a padiglione", "pendenza_pct": 30, "manto": "C03", "materiale": "C04", "nota": "palazzina rosa, 3 piani"},
-   "CTX24": {"altezza": 9.5, "colmo": 11.0, "copertura": "a padiglione", "pendenza_pct": 30, "manto": "C03", "nota": "3 piani"},
-   "CTX02": {"altezza": 6.5, "colmo": 8.0, "copertura": "a padiglione", "pendenza_pct": 30, "manto": "C03", "nota": "2 piani"},
-   "CTX21": {"altezza": 6.8, "copertura": "piana", "nota": "2 piani, tetto piano con fotovoltaico"}
+   "_nota": "edifici di sfondo da Google Earth 3D (21/06/2023) e da riprese Street View mirate (_rif_google/edifici, 2026-04), sessione 2026-11-07: solo descrizione",
+   "CTX19": {
+    "altezza": 9.5,
+    "colmo": 11.0,
+    "copertura": "a padiglione",
+    "pendenza_pct": 30,
+    "manto": "C03",
+    "materiale": "C04",
+    "nota": "Croce Medica, palazzina rosa 3 piani",
+    "piani": 3,
+    "facciate": [
+     {
+      "orientamento": "SO",
+      "aperture": {
+       "assi": 3,
+       "tipo": [
+        {
+         "l_m": 1.2,
+         "h_m": 1.4
+        }
+       ]
+      },
+      "balconi_piani": [
+       1,
+       2
+      ],
+      "balcone_frazione": 0.85
+     }
+    ],
+    "fronte_strada": {
+     "tipo": "muretto intonacato rosa con pilastri in mattoni + ringhiera",
+     "muro_h": 0.8,
+     "materiale": "C04",
+     "sopra": [
+      "ringhiera",
+      0.9,
+      "C06"
+     ]
+    }
+   },
+   "CTX24": {
+    "altezza": 9.5,
+    "colmo": 11.0,
+    "copertura": "a padiglione",
+    "pendenza_pct": 30,
+    "manto": "C03",
+    "nota": "3 piani",
+    "fronte_strada": {
+     "tipo": "muro intonacato con aperture ad arco e grigliato in cotto, coppo in sommità",
+     "muro_h": 2.0,
+     "materiale": "C04"
+    }
+   },
+   "CTX02": {
+    "altezza": 6.5,
+    "colmo": 8.0,
+    "copertura": "a padiglione",
+    "pendenza_pct": 30,
+    "manto": "C03",
+    "nota": "2 piani",
+    "piani": 2,
+    "fronte_strada": {
+     "tipo": "muretto in cls a vista + ringhiera in ferro",
+     "muro_h": 1.0,
+     "materiale": "C15",
+     "sopra": [
+      "ringhiera",
+      1.0,
+      "C06"
+     ]
+    }
+   },
+   "CTX21": {
+    "altezza": 6.8,
+    "copertura": "piana",
+    "fotovoltaico": true,
+    "nota": "2 piani, tetto piano con fotovoltaico"
+   },
+   "E08": {
+    "fotovoltaico": true
+   },
+   "E09": {
+    "fotovoltaico": true,
+    "volumi": [
+     {
+      "nome": "torretta",
+      "lati_m": [
+       4.0,
+       4.0
+      ],
+      "altezza_extra": 3.0,
+      "copertura": "a padiglione"
+     }
+    ]
+   },
+   "CTX16": {
+    "piani": 2,
+    "altezza": 7.0,
+    "colmo": 8.2,
+    "copertura": "a padiglione",
+    "pendenza_pct": 30,
+    "manto": "C03",
+    "nota": "villa con torrette d'angolo tonde",
+    "facciate": [
+     {
+      "orientamento": "SE",
+      "aperture": {
+       "assi": 3,
+       "tipo": [
+        {
+         "l_m": 1.0,
+         "h_m": 1.3
+        }
+       ]
+      },
+      "balconi_piani": [
+       1
+      ],
+      "balcone_frazione": 0.45
+     }
+    ],
+    "fronte_strada": {
+     "tipo": "muro intonacato + rete con telo verde",
+     "muro_h": 1.6,
+     "materiale": "C04",
+     "sopra": [
+      "rete",
+      0.6,
+      "C20"
+     ]
+    }
+   },
+   "DB30": {
+    "piani": 3,
+    "altezza": 8.5,
+    "colmo": 9.8,
+    "copertura": "a padiglione",
+    "pendenza_pct": 30,
+    "manto": "C03",
+    "nota": "casa rosa con loggia all'ultimo piano",
+    "facciate": [
+     {
+      "orientamento": "SE",
+      "aperture": {
+       "assi": 3,
+       "tipo": [
+        {
+         "l_m": 1.0,
+         "h_m": 1.3
+        }
+       ]
+      },
+      "balconi_piani": [
+       2
+      ],
+      "balcone_frazione": 0.5
+     }
+    ],
+    "fronte_strada": {
+     "tipo": "muretto rivestito + recinzione metallica grigia",
+     "muro_h": 0.6,
+     "materiale": "C04",
+     "sopra": [
+      "doghe",
+      1.0,
+      "C06"
+     ]
+    }
+   },
+   "DB31": {
+    "altezza": 2.6,
+    "copertura": "piana",
+    "nota": "volume accessorio bianco"
+   },
+   "E07": {
+    "fronte_strada": {
+     "tipo": "muretto rivestito in pietra chiara + pannelli metallici grigi",
+     "muro_h": 1.2,
+     "materiale": "C09",
+     "sopra": [
+      "doghe",
+      1.0,
+      "C06"
+     ]
+    }
+   }
   },
   "_nota_piattaforma": "gronde in scheda misurate dal marciapiede: si toglie la piattaforma (già nel DTM)"
  },
  "confini_interni": {
   "_nota": "muri di confine tra i giardini, sui lati delle particelle lontani dalla strada (Google Earth: muri intonacati 1,5-2 m)",
-  "altezza": 1.8, "spessore": 0.2, "materiale": "C04", "distanza_min_strada_m": 1.5, "lunghezza_min_m": 2.0
+  "altezza": 1.8,
+  "spessore": 0.2,
+  "materiale": "C04",
+  "distanza_min_strada_m": 1.5,
+  "lunghezza_min_m": 2.0
+ },
+ "lampioni": {
+  "passo_m": 27,
+  "h": 8.0,
+  "materiale": "C20",
+  "_nota": "scheda A01: su entrambe le strade, a ~0,5 m dal cordolo, passo 25-30 m"
+ },
+ "segnaletica_stradale": {
+  "mezzeria": true,
+  "distanza_incrocio_m": 6.0,
+  "strisce_pedonali": [
+   {
+    "strada": "VIA TAMBURINO SARDO"
+   },
+   {
+    "strada": "VIA DELLA MENTA"
+   }
+  ]
  },
  "arredo": [
-  {"id": "A01", "tipo": "lampione", "lungo_fronte_m": 2.0, "offset": 0.6, "h": 8.0, "materiale": "C20", "nota": "sul marciapiede all'angolo, lato Via della Menta"},
-  {"id": "A02", "tipo": "cartello divieto di sosta", "fronte_y": 15.5, "offset": 0.8, "h": 2.4, "materiale": "C20"},
-  {"id": "R06", "tipo": "blocco cls con scritta (pilastro recinzione)", "fronte_y": 33.0, "offset": -0.15, "h": 1.5, "materiale": "C15", "dim": [1.2, 0.3], "orienta_fronte": 1.0},
-  {"id": "A02", "tipo": "pilastrino cls con targa Via della Menta", "da_punta": [0.4, 0.3], "h": 1.3, "materiale": "C15"}
+  {
+   "id": "A03",
+   "tipo": "palina fermata bus",
+   "vicino_a": "E09",
+   "offset": 0.4,
+   "h": 2.8,
+   "materiale": "C20"
+  },
+  {
+   "id": "A04",
+   "tipo": "armadio stradale",
+   "vicino_a": "E06",
+   "offset": 1.1,
+   "h": 1.3,
+   "materiale": "C06",
+   "dim": [
+    0.8,
+    0.35
+   ]
+  },
+  {
+   "id": "A01",
+   "tipo": "lampione",
+   "lungo_fronte_m": 2.0,
+   "offset": 0.6,
+   "h": 8.0,
+   "materiale": "C20",
+   "nota": "sul marciapiede all'angolo, lato Via della Menta"
+  },
+  {
+   "id": "A02",
+   "tipo": "cartello divieto di sosta",
+   "fronte_y": 15.5,
+   "offset": 0.8,
+   "h": 2.4,
+   "materiale": "C20"
+  },
+  {
+   "id": "R06",
+   "tipo": "blocco cls con scritta (pilastro recinzione)",
+   "fronte_y": 33.0,
+   "offset": -0.15,
+   "h": 1.5,
+   "materiale": "C15",
+   "dim": [
+    1.2,
+    0.3
+   ],
+   "orienta_fronte": 1.0
+  },
+  {
+   "id": "A02",
+   "tipo": "pilastrino cls con targa Via della Menta",
+   "da_punta": [
+    0.4,
+    0.3
+   ],
+   "h": 1.3,
+   "materiale": "C15"
+  }
  ],
  "vegetazione": [
-  {"id": "V02", "tipo": "palma Phoenix giovane (senza fusto)", "nome": "V02 – palma Phoenix giovane", "fronte_y": 17.5, "offset": -1.0, "h": 2.6, "chioma": 4.0, "su_lotto": true, "confidenza": "bassa", "materiale": "C27", "nel_contesto": true},
-  {"id": "V-P03", "tipo": "arbusti ruderali", "xy_lista": [[-10, 22], [-18, 33], [-6, 30], [-12, 42], [0, 45]], "h": 1.2, "chioma": 2.0, "su_lotto": true, "nel_contesto": false}
+  {
+   "id": "V02",
+   "tipo": "palma Phoenix giovane (senza fusto)",
+   "nome": "V02 – palma Phoenix giovane",
+   "fronte_y": 17.5,
+   "offset": -1.0,
+   "h": 2.6,
+   "chioma": 4.0,
+   "su_lotto": true,
+   "confidenza": "bassa",
+   "materiale": "C27",
+   "nel_contesto": true
+  },
+  {
+   "id": "V01",
+   "tipo": "palme a ventaglio (Washingtonia)",
+   "nome": "V01 – Washingtonia",
+   "forma": "palma_alta",
+   "giardino_di": "E09",
+   "n": 2,
+   "h": 7.0,
+   "chioma": 3.0,
+   "materiale": "C27"
+  },
+  {
+   "id": "V02b",
+   "tipo": "palma da dattero adulta (Phoenix canariensis)",
+   "nome": "V02 – Phoenix adulta",
+   "forma": "palma_alta",
+   "giardino_di": "E03",
+   "n": 1,
+   "h": 4.5,
+   "chioma": 5.0,
+   "materiale": "C27"
+  },
+  {
+   "id": "V03",
+   "tipo": "canneto (Arundo donax)",
+   "forma": "canneto",
+   "dietro_muro": "R07",
+   "h": 3.5
+  },
+  {
+   "id": "V04",
+   "tipo": "olivi e agrumi nei giardini",
+   "nome": "V04 – albero da giardino",
+   "forma": "albero",
+   "giardino_di": [
+    "E03",
+    "E10",
+    "E09"
+   ],
+   "n": 2,
+   "h": 4.0,
+   "chioma": 3.5
+  },
+  {
+   "id": "V05",
+   "tipo": "siepi e rampicanti sui muri",
+   "forma": "siepe",
+   "su_muri": [
+    "R01",
+    "R03",
+    "R04"
+   ],
+   "h": 0.35
+  },
+  {
+   "id": "V-P03",
+   "tipo": "arbusti ruderali",
+   "xy_lista": [
+    [
+     -10,
+     22
+    ],
+    [
+     -18,
+     33
+    ],
+    [
+     -6,
+     30
+    ],
+    [
+     -12,
+     42
+    ],
+    [
+     0,
+     45
+    ]
+   ],
+   "h": 1.2,
+   "chioma": 2.0,
+   "su_lotto": true,
+   "nel_contesto": false
+  }
  ],
- "punti_controllo": {"NE": [60.0, 60.0], "SO": [-60.0, -60.0]},
- "fonti_extra": ["Altezze e rialzi da osservazioni Street View (scheda rev. 2), confidenza media/bassa"]
+ "punti_controllo": {
+  "NE": [
+   60.0,
+   60.0
+  ],
+  "SO": [
+   -60.0,
+   -60.0
+  ]
+ },
+ "fonti_extra": [
+  "Altezze e rialzi da osservazioni Street View (scheda rev. 2), confidenza media/bassa"
+ ]
 }
