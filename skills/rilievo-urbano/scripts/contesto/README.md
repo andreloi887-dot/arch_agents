@@ -19,7 +19,9 @@ python skills/rilievo-urbano/scripts/contesto/contesto.py rilievi/zona-<nome>/mo
 `--origine` è il punto (0,0) del modello, da usare anche come punto base in Edificius; `--lotto` è un punto qualsiasi dentro la
 particella del progetto. Già così esce un contesto completo, con terreno, strade, marciapiedi, edifici LOD1 e muro sul fronte.
 Poi l'agente rilievo-urbano completa la scheda: altezze, materiali, muri di cinta, arredo, e le particelle che in realtà sono
-strada (`strade.particelle_aggiunte_al_sedime`).
+strada (`strade.punti_aggiunti_al_sedime`) o che a catasto sono staccate dal lotto ma ne fanno parte
+(`lotto.punti_aggiunti_al_lotto`). Le particelle si indicano con un punto [lat, lng] al loro interno, non con il numero
+d'ordine, che cambia se si riscarica il catasto.
 
 Per rigenerare un lotto esistente:
 ```
@@ -32,7 +34,7 @@ L'esempio completo è `rilievi/zona-cagliari-menta-tamburino/modello/lotto.json`
 - `origine` (lat, lng), `semilato_m` dell'area quadrata modellata, `seme_casuale`.
 - `dati`: percorsi di DTM, tendenza, scheda, geojson del catasto (particelle e fabbricati) e manifest delle riprese.
 - `strade`: larghezza e rialzo del marciapiede, particelle catastali che in realtà sono strada, materiali.
-- `lotto`: indice della particella del progetto, materiali, muro sul fronte strada (altezze minima e massima, scarpata),
+- `lotto`: `punto` dentro la particella del progetto, eventuali particelle da unire, materiali, muro sul fronte strada (altezze minima e massima, scarpata),
   recinzione sul fronte (tratto in cui c'è), regola per l'arredo.
 - `muri_contorno`: muri di cinta degli edifici vicini (id della scheda, edificio, altezza, eventuale ringhiera o doghe sopra).
 - `edifici`: altezza e materiale degli edifici non descritti in scheda, piattaforme da togliere.

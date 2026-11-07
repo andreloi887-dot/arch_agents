@@ -15,8 +15,8 @@
   "manifest": ["../_rif_google/manifest_riprese.json", "manifest_riprese.json"]
  },
  "strade": {
-  "particelle_aggiunte_al_sedime": [51, 62],
-  "_nota_aggiunte": "strisce di Via Moravia: a catasto sono particelle",
+  "punti_aggiunti_al_sedime": [[39.2526253, 9.1156101], [39.2527168, 9.1159725]],
+  "_nota_aggiunte": "strisce di Via Moravia: a catasto sono particelle (un punto [lat, lng] dentro ciascuna)",
   "marciapiede_m": 1.5,
   "rialzo_marciapiede_m": 0.10,
   "pendenza_marciapiede": 0.015,
@@ -29,7 +29,9 @@
  },
  "lotto": {
   "id": "P03",
-  "indice_particella": 67,
+  "punto": [39.2528006, 9.1152612],
+  "punti_aggiunti_al_lotto": [[39.2525282, 9.1152784]],
+  "_nota_aggiunte": "triangolo sulla punta verso l'incrocio: a catasto è separato da una linea ma fa parte della 4258 (Andrea, 2026-11-07). Visura 966 m², mappa ~925 m²",
   "particella": "4258",
   "nome": "P03 – lotto incolto part. 4258",
   "raggio_angoli_m": 1.0,

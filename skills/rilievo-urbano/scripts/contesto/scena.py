@@ -72,14 +72,25 @@ area = Polygon([(-EXT, -EXT), (EXT, -EXT), (EXT, EXT), (-EXT, EXT)])
 def poly(f): return Polygon([loc(*q) for q in f["geometry"]["coordinates"][0]]).buffer(0)
 particelle = [(i, poly(f)) for i, f in enumerate(PART) if f["properties"]["tipo"] == "particella"]
 strade = [poly(f) for f in PART if f["properties"]["tipo"] == "strada"]
-IL = LT["indice_particella"]
+def trova_particella(latlng):
+    """indice della particella che contiene il punto [lat, lng]: più robusto dell'indice, che cambia
+    se si rivettorializza il catasto."""
+    pt = Point(*loc(latlng[1], latlng[0]))
+    for i, g in particelle:
+        if g.contains(pt): return i
+    sys.exit(f"nessuna particella contiene il punto {latlng}")
+def indici(punti, indici_vecchi):
+    return [trova_particella(q) for q in punti] if punti else list(indici_vecchi)
+IL = trova_particella(LT["punto"]) if "punto" in LT else LT["indice_particella"]
 _rr = LT.get("raggio_angoli_m", 0.0)
 def _arrotonda(p):
     return p.buffer(-_rr, join_style=1, quad_segs=8).buffer(_rr, join_style=1, quad_segs=8) if _rr > 0 else p
-P03 = _arrotonda(dict(particelle)[IL])       # lotto di progetto (nome storico della variabile)
+_AGL = indici(LT.get("punti_aggiunti_al_lotto"), LT.get("particelle_aggiunte_al_lotto", []))   # particelle che il catasto disegna separate ma fanno parte del lotto
+P03 = _arrotonda(unary_union([dict(particelle)[i] for i in [IL] + _AGL]).buffer(0.3, join_style=2).buffer(-0.3, join_style=2))
+IL_TUTTE = set([IL] + _AGL)                 # lotto di progetto (P03: nome storico della variabile)
 
 # --- sedime stradale: aree 'strada' + particelle che di fatto sono strada
-AGG = ST.get("particelle_aggiunte_al_sedime", [])
+AGG = indici(ST.get("punti_aggiunti_al_sedime"), ST.get("particelle_aggiunte_al_sedime", []))
 sedime = unary_union(strade + [p for i, p in particelle if i in AGG]).buffer(0.3).buffer(-0.3)
 sedime = sedime.intersection(area)
 carreggiata = sedime.buffer(-MARCIAPIEDE, join_style=2).buffer(0.5).buffer(-0.5)
@@ -231,7 +242,7 @@ for k, line in enumerate(fronti(lot)):
 def particella_di(eid):
     e = [x for x in scheda["edifici"] if x["id"] == eid][0]
     c = poly(FABB[e["impronta"]["indice"]]).centroid
-    return [p for i, p in particelle if p.contains(c) and i != IL][0]
+    return [p for i, p in particelle if p.contains(c) and i not in IL_TUTTE][0]
 RW = {r["id"]: r for r in scheda["recinzioni"]}
 def h_of(r):
     v = r.get("h", {}).get("m") if isinstance(r.get("h"), dict) else None
