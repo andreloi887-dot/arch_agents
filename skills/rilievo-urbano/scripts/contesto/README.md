@@ -37,7 +37,11 @@ L'esempio completo è `rilievi/zona-cagliari-menta-tamburino/modello/lotto.json`
 - `lotto`: `punto` dentro la particella del progetto, eventuali particelle da unire, materiali, muro sul fronte strada (altezze minima e massima, scarpata),
   recinzione sul fronte (tratto in cui c'è), regola per l'arredo.
 - `muri_contorno`: muri di cinta degli edifici vicini (id della scheda, edificio, altezza, eventuale ringhiera o doghe sopra).
-- `edifici`: altezza e materiale degli edifici non descritti in scheda, piattaforme da togliere.
+- `edifici`: altezza e materiale degli edifici non descritti in scheda, piattaforme da togliere, e `per_edificio`
+  (per id, anche CTXnn): altezza di gronda, colmo, copertura (`piana`, `a padiglione`, `a capanna`), pendenza, manto.
+  I tetti a falde li genera `contesto.py`, con una regola valida per qualsiasi pianta.
+- `confini_interni`: muri di confine tra i giardini (altezza, spessore, materiale). Vengono ricavati dai lati delle
+  particelle edificate lontani dalla strada; le osservazioni vengono da Google Earth 3D, solo come descrizione.
 - `arredo` e `vegetazione`: posizione con `xy`, `lungo_fronte_m`, `fronte_y` o `da_punta`, più `offset` dal fronte.
 
 Dopo ogni modifica: lancia `contesto.py` e verifica come descritto in `../../references/05-verifica.md`.

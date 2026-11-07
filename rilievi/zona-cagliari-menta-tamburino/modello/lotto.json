@@ -68,7 +68,18 @@
  "edifici": {
   "altezza_generica_m": 6.5, "materiale_generico": "C04",
   "piattaforma_m": {"E08": 2.5, "E09": 1.0},
+  "per_edificio": {
+   "_nota": "edifici di sfondo osservati in Google Earth 3D (immagini 21/06/2023), sessione 2026-11-07: solo descrizione, confidenza bassa",
+   "CTX19": {"altezza": 9.5, "colmo": 11.0, "copertura": "a padiglione", "pendenza_pct": 30, "manto": "C03", "materiale": "C04", "nota": "palazzina rosa, 3 piani"},
+   "CTX24": {"altezza": 9.5, "colmo": 11.0, "copertura": "a padiglione", "pendenza_pct": 30, "manto": "C03", "nota": "3 piani"},
+   "CTX02": {"altezza": 6.5, "colmo": 8.0, "copertura": "a padiglione", "pendenza_pct": 30, "manto": "C03", "nota": "2 piani"},
+   "CTX21": {"altezza": 6.8, "copertura": "piana", "nota": "2 piani, tetto piano con fotovoltaico"}
+  },
   "_nota_piattaforma": "gronde in scheda misurate dal marciapiede: si toglie la piattaforma (già nel DTM)"
+ },
+ "confini_interni": {
+  "_nota": "muri di confine tra i giardini, sui lati delle particelle lontani dalla strada (Google Earth: muri intonacati 1,5-2 m)",
+  "altezza": 1.8, "spessore": 0.2, "materiale": "C04", "distanza_min_strada_m": 1.5, "lunghezza_min_m": 2.0
  },
  "arredo": [
   {"id": "A01", "tipo": "lampione", "lungo_fronte_m": 2.0, "offset": 0.6, "h": 8.0, "materiale": "C20", "nota": "sul marciapiede all'angolo, lato Via della Menta"},

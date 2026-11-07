@@ -296,11 +296,61 @@ for i, f in enumerate(FABB):
     else:
         h, mat, nome, conf, cop = (LE.get("altezza_generica_m", 6.5), LE.get("materiale_generico", "C04"),
                                    f"CTX{i:02d} – contesto (LOD1)", "bassa", {"forma": "piana"})
+    ov = LE.get("per_edificio", {}).get(e["id"] if e else f"CTX{i:02d}")
+    if ov:   # dati per singolo edificio da lotto.json (es. edifici di sfondo osservati in 3D)
+        h = ov.get("altezza", h); mat = ov.get("materiale", mat)
+        cop = {**cop, "forma": ov.get("copertura", cop.get("forma")), "manto": ov.get("manto", cop.get("manto")),
+               "pendenza_pct": ov.get("pendenza_pct", cop.get("pendenza_pct"))}
+        if not e: nome = f"CTX{i:02d} – contesto ({ov.get('nota', 'LOD2')})"
     scena["edifici"].append({"id": e["id"] if e else f"CTX{i:02d}", "nome": nome, "materiale": mat,
         "impronta": [[round(x, 3), round(y, 3)] for x, y in list(p.exterior.coords)[:-1]],
         "z_base": round(zb, 3), "altezza": h, "confidenza_altezza": conf,
         "copertura": cop.get("forma"), "manto": cop.get("manto"), "lod": 1 if not e else 2,
-        "colmo": ((e or {}).get("quote", {}).get("colmo") or {}).get("m"), "pendenza_pct": cop.get("pendenza_pct")})
+        "colmo": (ov or {}).get("colmo") or ((e or {}).get("quote", {}).get("colmo") or {}).get("m"),
+        "pendenza_pct": cop.get("pendenza_pct")})
+
+# --- muri di confine interni: lati delle particelle lontani dalla strada, fuori dagli edifici
+CI = L.get("confini_interni")
+if CI:
+    from shapely import set_precision
+    from shapely.ops import linemerge
+    edif = unary_union([Polygon(e["impronta"]) for e in scena["edifici"]]).buffer(0.3)
+    gia = unary_union([Point(p).buffer(0.01) for m in scena["muri"] for p in m["punti"]] +
+                      [__import__("shapely.geometry", fromlist=["LineString"]).LineString(m["punti"]).buffer(1.0)
+                       for m in scena["muri"] if len(m["punti"]) > 1])
+    # solo particelle edificate (i campi aperti non hanno muri); le linee di particelle diverse a meno di
+    # 1,2 m l'una dall'altra (strisce strette del catasto) diventano una sola: si tiene la prima
+    costruite = [p for i, p in particelle if p.intersects(area) and i not in IL_TUTTE
+                 and any(p.contains(Polygon(e["impronta"]).representative_point()) for e in scena["edifici"])]
+    tenute, occ = [], None
+    for p in costruite:
+        ln = set_precision(p.exterior, 0.25)
+        if occ is not None: ln = ln.difference(occ)
+        if ln.is_empty: continue
+        tenute.append(ln)
+        occ = ln.buffer(1.2) if occ is None else occ.union(ln.buffer(1.2))
+    linee = unary_union(tenute)
+    linee = linee.difference(sedime.buffer(CI.get("distanza_min_strada_m", 1.5))).difference(edif).difference(gia)
+    linee = linee.difference(P03.buffer(0.3)) if CI.get("escludi_lotto", False) else linee
+    linee = linee.intersection(area.buffer(-1.0))
+    linee = linemerge(linee) if not linee.is_empty and linee.geom_type != "LineString" else linee
+    nci = 0
+    for ln in getattr(linee, "geoms", [linee]):
+        if ln.is_empty or ln.geom_type != "LineString" or ln.length < CI.get("lunghezza_min_m", 2.0): continue
+        pts = dens(list(ln.simplify(0.2).coords), 1.0)
+        if len(pts) < 2: continue
+        ns = []
+        for j, (x, y) in enumerate(pts):
+            a_ = pts[max(0, j-1)]; b_ = pts[min(len(pts)-1, j+1)]
+            dx, dy = b_[0]-a_[0], b_[1]-a_[1]; Ln = math.hypot(dx, dy) or 1.0
+            ns.append((round(-dy/Ln, 4), round(dx/Ln, 4)))
+        zb = [round(trend(x, y) - 0.1 * CI["spessore"], 3) for x, y in pts]
+        nci += 1
+        scena["muri"].append({"id": f"CI{nci:02d}", "nome": f"CI{nci:02d} – muro di confine interno", "materiale": CI["materiale"],
+                              "spessore": CI["spessore"], "punti": [[round(x, 3), round(y, 3)] for x, y in pts],
+                              "normali_interno": [list(n) for n in ns], "z_base": zb,
+                              "z_sommita": [round(z + CI["altezza"], 3) for z in zb], "confidenza": "bassa",
+                              "quote": "regola generale (confini catastali)"})
 
 # --- arredo e vegetazione, posizionati rispetto al fronte del lotto (descrittivi, non misurati)
 _fpts = []
