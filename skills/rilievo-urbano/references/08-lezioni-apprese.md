@@ -46,3 +46,11 @@ perché, da leggere prima di lavorare su un lotto nuovo.
 2. Rilievo di precisione (`07-rilievo-di-precisione.md`) con tre viste per edificio.
 3. Rigenerazione, viste dagli stessi punti delle riprese, confronto affiancato edificio per edificio.
 4. Ogni differenza corretta nei dati o in una regola generale, mai con eccezioni nel codice per il singolo lotto.
+
+## Blender
+- **Mai `bpy.ops.wm.read_factory_settings()` (né `read_homefile`) negli script**: riporta le preferenze di fabbrica e
+  Blender rimuove le librerie delle estensioni dalla cartella utente (`extensions/.local/.../site-packages`). Il
+  2026-11-07 ha cancellato in parte ifcopenshell e le dipendenze di Bonsai. Gli script svuotano solo la scena.
+- Riparazione, se succede: chiudere Blender ed estrarre i pacchetti di `extensions/blender_org/bonsai/wheels/*.whl`
+  nella cartella `site-packages` sopra; poi verificare con `import ifcopenshell.api` e
+  `addon_utils.check('bl_ext.blender_org.bonsai')`.

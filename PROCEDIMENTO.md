@@ -106,6 +106,9 @@ Andrea deve intervenire il meno possibile.
 - Fase 2 provata su Via della Menta / Via Tamburino Sardo (Cagliari): contesto LOD3 con quote misurate dal DSM,
   verificato su foto, ortofoto e controlli automatici; SketchUp solo come vista di controllo. Da provare su un
   secondo lotto.
-- Fase 3 (Blender) avviata.
+- Fase 3 (Blender) avviata: `skills/rilievo-urbano/scripts/blender/importa_contesto.py` costruisce l'intero contesto
+  da `contesto.json` in ~11 s (`blender -b -P importa_contesto.py -- <modello> [--render]`), con camere uguali alle
+  riprese Street View e render EEVEE di controllo. Da fare: libreria materiali PBR e modelli (lampioni, cartelli,
+  alberi, palme, cancelli) al posto delle forme semplici, poi l'import dell'IFC di Edificius con Bonsai.
 - Installati: Blender 5.2 + Bonsai 0.9.0, Unreal Engine 5.8, FFmpeg.
 - Fasi 3–6 ancora da costruire.

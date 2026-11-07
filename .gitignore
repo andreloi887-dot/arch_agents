@@ -9,3 +9,4 @@ rilievi/*/modello/uscita_sketchup/
 # tavole DSM originali (scaricabili di nuovo con prepara_lotto.py); restano i ritagli in modello/
 rilievi/*/geometria/dsm_2008/
 rilievi/*/geometria/dsm/
+rilievi/*/modello/uscita_blender/

@@ -65,3 +65,9 @@ Limiti: il DTM LiDAR regionale copre la Sardegna (fuori copertura lo script si f
   attraversamento pedonale, dare precedenza, frecce di direzione, targhe delle vie; piastra orientata sul traffico.
 - Lampioni: palo conico zincato su plinto, sbraccio e armatura verso la carreggiata, passo e lato da `lampioni`.
 - Controlli: nessun muro di sostegno DBGT sulla sede stradale o sul fronte del lotto.
+
+## Blender
+`../blender/importa_contesto.py`: `blender -b -P importa_contesto.py -- <cartella modello> [--render] [--samples 16]`
+→ `uscita_blender/contesto.blend` (+ `viste/` con le camere delle riprese e le viste aeree). Gli oggetti destinati a
+modelli di libreria hanno la proprietà `asset` (lampione_stradale, segnale_*, albero, palma, palma_alta).
+Non usare mai `read_factory_settings` negli script (vedi `references/08-lezioni-apprese.md`).
