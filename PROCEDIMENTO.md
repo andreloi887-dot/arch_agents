@@ -93,7 +93,9 @@ Andrea deve intervenire il meno possibile.
       materiale Edificius → materiale PBR.
 - [x] Generalizzare il motore del contesto (2026-11-07): gli script sono in `skills/rilievo-urbano/scripts/contesto/`,
       i valori del singolo lotto in `lotto.json` nella cartella del modello. Su Via della Menta dà geometria identica.
-- [ ] Preparare i dati di un lotto nuovo in automatico: DTM, catasto e scheda (oggi si scaricano a mano).
+- [x] Dati di un lotto nuovo in automatico (2026-11-07): `prepara_lotto.py` scarica catasto e DTM e scrive `lotto.json`.
+      La scheda (altezze, materiali, arredo) la completa l'agente rilievo-urbano.
+- [ ] Prova del motore su un secondo lotto.
 - [ ] Scrivere gli agenti e le skill per l'assemblaggio in Blender e per i video in Unreal.
 - [ ] Prova completa su un progetto vero.
 
