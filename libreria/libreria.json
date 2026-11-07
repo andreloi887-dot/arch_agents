@@ -1,0 +1,172 @@
+{
+ "fonte": "Poly Haven (polyhaven.com), licenza CC0",
+ "materiali": {
+  "white_stucco": {
+   "colore": "materiali/white_stucco/white_stucco_diff_2k.jpg",
+   "normale": "materiali/white_stucco/white_stucco_nor_gl_2k.jpg",
+   "ruvidita": "materiali/white_stucco/white_stucco_rough_2k.jpg"
+  },
+  "clay_roof_tiles_02": {
+   "colore": "materiali/clay_roof_tiles_02/clay_roof_tiles_02_diff_2k.jpg",
+   "normale": "materiali/clay_roof_tiles_02/clay_roof_tiles_02_nor_gl_2k.jpg",
+   "ruvidita": "materiali/clay_roof_tiles_02/clay_roof_tiles_02_rough_2k.jpg"
+  },
+  "asphalt_02": {
+   "colore": "materiali/asphalt_02/asphalt_02_diff_2k.jpg",
+   "normale": "materiali/asphalt_02/asphalt_02_nor_gl_2k.jpg",
+   "ruvidita": "materiali/asphalt_02/asphalt_02_rough_2k.jpg"
+  },
+  "checkered_pavement_tiles": {
+   "colore": "materiali/checkered_pavement_tiles/checkered_pavement_tiles_diff_2k.jpg",
+   "normale": "materiali/checkered_pavement_tiles/checkered_pavement_tiles_nor_gl_2k.jpg",
+   "ruvidita": "materiali/checkered_pavement_tiles/checkered_pavement_tiles_rough_2k.jpg"
+  },
+  "concrete_block_wall": {
+   "colore": "materiali/concrete_block_wall/concrete_block_wall_diff_2k.jpg",
+   "normale": "materiali/concrete_block_wall/concrete_block_wall_nor_gl_2k.jpg",
+   "ruvidita": "materiali/concrete_block_wall/concrete_block_wall_rough_2k.jpg"
+  },
+  "brushed_concrete": {
+   "colore": "materiali/brushed_concrete/brushed_concrete_diff_2k.jpg",
+   "normale": "materiali/brushed_concrete/brushed_concrete_nor_gl_2k.jpg",
+   "ruvidita": "materiali/brushed_concrete/brushed_concrete_rough_2k.jpg"
+  },
+  "dry_ground_01": {
+   "colore": "materiali/dry_ground_01/dry_ground_01_diff_2k.jpg",
+   "normale": "materiali/dry_ground_01/dry_ground_01_nor_gl_2k.jpg",
+   "ruvidita": "materiali/dry_ground_01/dry_ground_01_rough_2k.jpg"
+  },
+  "rustic_stone_wall": {
+   "colore": "materiali/rustic_stone_wall/rustic_stone_wall_diff_2k.jpg",
+   "normale": "materiali/rustic_stone_wall/rustic_stone_wall_nor_gl_2k.jpg",
+   "ruvidita": "materiali/rustic_stone_wall/rustic_stone_wall_rough_2k.jpg"
+  }
+ },
+ "modelli": {
+  "island_tree_02": {
+   "blend": "modelli/island_tree_02/island_tree_02_1k.blend"
+  },
+  "grass_medium_01": {
+   "blend": "modelli/grass_medium_01/grass_medium_01_1k.blend"
+  }
+ },
+ "assegnazioni": [
+  {
+   "parole": [
+    "tegole",
+    "coppi",
+    "C03"
+   ],
+   "materiale": "clay_roof_tiles_02",
+   "lato_m": 2.0,
+   "modo": "texture",
+   "tinta": 0.4
+  },
+  {
+   "parole": [
+    "asfalto",
+    "C16"
+   ],
+   "materiale": "asphalt_02",
+   "lato_m": 4.0,
+   "modo": "texture",
+   "tinta": 0.3
+  },
+  {
+   "parole": [
+    "marmette",
+    "C17",
+    "C18"
+   ],
+   "materiale": "checkered_pavement_tiles",
+   "lato_m": 1.6,
+   "modo": "texture",
+   "tinta": 0.5
+  },
+  {
+   "parole": [
+    "blocchi",
+    "C10"
+   ],
+   "materiale": "concrete_block_wall",
+   "lato_m": 2.4,
+   "modo": "texture",
+   "tinta": 0.3
+  },
+  {
+   "parole": [
+    "calcestruzzo",
+    "cls",
+    "C15",
+    "C19",
+    "COPERTINA",
+    "PLINTO"
+   ],
+   "materiale": "brushed_concrete",
+   "lato_m": 3.0,
+   "modo": "texture",
+   "tinta": 0.5
+  },
+  {
+   "parole": [
+    "pietra",
+    "rustico",
+    "C09"
+   ],
+   "materiale": "rustic_stone_wall",
+   "lato_m": 2.0,
+   "modo": "texture",
+   "tinta": 0.4
+  },
+  {
+   "parole": [
+    "terra",
+    "C25",
+    "C24",
+    "prato"
+   ],
+   "materiale": "dry_ground_01",
+   "lato_m": 4.0,
+   "modo": "texture",
+   "tinta": 0.5
+  },
+  {
+   "parole": [
+    "intonaco",
+    "C01",
+    "C02",
+    "C04",
+    "C07",
+    "C08",
+    "C11",
+    "C12",
+    "C13",
+    "C14",
+    "C22",
+    "C23"
+   ],
+   "materiale": "white_stucco",
+   "lato_m": 2.0,
+   "modo": "tinta"
+  }
+ ],
+ "sostituzioni": {
+  "albero": {
+   "modello": "island_tree_02",
+   "altezza_rif": "bbox"
+  },
+  "erba_lotto": {
+   "modello": "grass_medium_01",
+   "densita_m2": 0.12,
+   "superficie": "P03",
+   "altezza_m": [
+    0.45,
+    0.8
+   ],
+   "diametro_m": [
+    0.5,
+    0.9
+   ]
+  }
+ }
+}

@@ -23,6 +23,9 @@ def opt(nome, default=None):
     return argv[argv.index(nome) + 1] if nome in argv and argv.index(nome) + 1 < len(argv) else default
 USCITA = os.path.join(MOD, opt("--uscita", "uscita_blender"))
 RENDER = "--render" in argv
+REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", ".."))
+LIB = os.path.abspath(opt("--libreria", os.path.join(REPO, "libreria")))
+LIBJ = json.load(open(os.path.join(LIB, "libreria.json"), encoding="utf-8")) if os.path.exists(os.path.join(LIB, "libreria.json")) and "--senza-libreria" not in argv else None
 SAMPLES = int(opt("--samples", "16"))
 os.makedirs(USCITA, exist_ok=True)
 C = json.load(open(os.path.join(MOD, "contesto.json"), encoding="utf-8"))
@@ -92,9 +95,48 @@ def mat(nome):
             mp.inputs["Scale"].default_value = (s_ / 2, s_ / 2, 1)
             nt.links.new(tc.outputs["Object"], mp.inputs["Vector"]); nt.links.new(mp.outputs["Vector"], tx.inputs["Vector"])
             nt.links.new(tx.outputs["Color"], b.inputs["Base Color"])
+    if LIBJ and not d.get("texture"):
+        asg = next((a for a in LIBJ.get("assegnazioni", []) if any(w.lower() in nome.lower() for w in a["parole"])), None)
+        if asg: pbr(nt, b, asg, rgb)
     m.diffuse_color = (*rgb, d.get("alpha", 1.0))
     MATS[nome] = m
     return m
+
+def pbr(nt, b, asg, rgb):
+    """mappe della libreria: colore (tinto con il colore rilevato), normale, ruvidità; proiezione a cubo, lato reale."""
+    M_ = LIBJ["materiali"].get(asg["materiale"], {})
+    tc = nt.nodes.new("ShaderNodeTexCoord"); mp = nt.nodes.new("ShaderNodeMapping")
+    s_ = 1.0 / asg.get("lato_m", 2.0); mp.inputs["Scale"].default_value = (s_, s_, s_)
+    nt.links.new(tc.outputs["Object"], mp.inputs["Vector"])
+    def img(chiave, colore):
+        if chiave not in M_: return None
+        tx = nt.nodes.new("ShaderNodeTexImage"); tx.image = bpy.data.images.load(os.path.join(LIB, M_[chiave]), check_existing=True)
+        if not colore: tx.image.colorspace_settings.name = "Non-Color"
+        tx.projection = "BOX"; tx.projection_blend = 0.25
+        nt.links.new(mp.outputs["Vector"], tx.inputs["Vector"]); return tx
+    col = img("colore", True)
+    if col:
+        if asg.get("modo") == "tinta":      # grana della texture, colore rilevato: luminanza normalizzata × palette
+            bw = nt.nodes.new("ShaderNodeRGBToBW"); nt.links.new(col.outputs["Color"], bw.inputs["Color"])
+            mul = nt.nodes.new("ShaderNodeMath"); mul.operation = "MULTIPLY"; mul.inputs[1].default_value = 1.8
+            nt.links.new(bw.outputs["Val"], mul.inputs[0])
+            mix = nt.nodes.new("ShaderNodeMix"); mix.data_type = "RGBA"; mix.blend_type = "MULTIPLY"
+            mix.inputs["Factor"].default_value = 1.0
+            mix.inputs[6].default_value = (*rgb, 1.0)
+            cr = nt.nodes.new("ShaderNodeCombineColor")
+            for i in range(3): nt.links.new(mul.outputs[0], cr.inputs[i])
+            nt.links.new(cr.outputs[0], mix.inputs[7]); nt.links.new(mix.outputs[2], b.inputs["Base Color"])
+        else:                               # colore della texture, tinto in parte verso il colore rilevato
+            mix = nt.nodes.new("ShaderNodeMix"); mix.data_type = "RGBA"; mix.blend_type = "COLOR"
+            mix.inputs["Factor"].default_value = asg.get("tinta", 0.3)
+            nt.links.new(col.outputs["Color"], mix.inputs[6]); mix.inputs[7].default_value = (*rgb, 1.0)
+            nt.links.new(mix.outputs[2], b.inputs["Base Color"])
+    ru = img("ruvidita", False)
+    if ru: nt.links.new(ru.outputs["Color"], b.inputs["Roughness"])
+    no = img("normale", False)
+    if no:
+        nm = nt.nodes.new("ShaderNodeNormalMap"); nm.inputs["Strength"].default_value = 0.8
+        nt.links.new(no.outputs["Color"], nm.inputs["Color"]); nt.links.new(nm.outputs["Normal"], b.inputs["Normal"])
 
 # ------------------------------------------------------------------------------------------------ costruzione mesh
 def oggetto_mesh(nome, verts, faces, mats_idx, materiali, collezione, smooth_deg=None, props=None):
@@ -256,7 +298,41 @@ def arredo_generico(o):
     x = {"c": [o["xy"][0], o["xy"][1], o["z"]], "dim": [w, d, h], "rot_deg": o.get("rot_deg", 0), "materiale": o["materiale"]}
     scatole([x], o["nome"], "Arredo", props={"asset": o.get("testa") or "arredo"})
 
+MODELLI = {}
+def modello(nome):
+    """collezione del modello di libreria (append una volta, poi istanze); altezza del modello per la scala."""
+    if nome in MODELLI: return MODELLI[nome]
+    info = LIBJ["modelli"].get(nome) if LIBJ else None
+    if not info: MODELLI[nome] = None; return None
+    with bpy.data.libraries.load(os.path.join(LIB, info["blend"]), link=False) as (src, dst):
+        dst.objects = [o for o in src.objects]
+    cl = bpy.data.collections.new("ASSET_" + nome)
+    zmin, zmax, rmax = 1e9, -1e9, 0.0
+    for o in dst.objects:
+        if o is None: continue
+        cl.objects.link(o)
+        if o.type == "MESH":
+            for c in o.bound_box:
+                w_ = o.matrix_world @ Vector(c); zmin, zmax = min(zmin, w_.z), max(zmax, w_.z); rmax = max(rmax, w_.xy.length)
+    MODELLI[nome] = (cl, max(0.1, zmax - zmin), max(0.1, rmax), zmin)
+    return MODELLI[nome]
+import random as _rnd
+_rnd.seed(7)
+def istanza(nome_mod, nome, xyz, h, collezione, chioma=None):
+    m_ = modello(nome_mod)
+    if not m_: return None
+    cl, hm, rm, zmin = m_
+    e = bpy.data.objects.new(nome, None); e.instance_type = "COLLECTION"; e.instance_collection = cl
+    sz = h / hm; sxy = (chioma / 2 / rm) if chioma else sz
+    e.scale = (sxy, sxy, sz); e.location = (xyz[0], xyz[1], xyz[2] - zmin * sz); e.rotation_euler = (0, 0, _rnd.uniform(0, 6.283))
+    coll(collezione).objects.link(e); return e
+
 def albero(v):
+    if LIBJ and v.get("forma", "albero") == "albero" and "albero" in LIBJ.get("sostituzioni", {}):
+        e = istanza(LIBJ["sostituzioni"]["albero"]["modello"], v["nome"], (v["xy"][0], v["xy"][1], v["z"]), v["h"], "Vegetazione",
+                    v.get("chioma"))
+        if e:
+            e["asset"] = "albero"; e["h"] = v["h"]; return
     h = v["h"]; r = v["chioma"] / 2; forma = v.get("forma", "albero")
     M0 = Matrix.Translation(Vector((v["xy"][0], v["xy"][1], v["z"])))
     parti = []
@@ -264,14 +340,23 @@ def albero(v):
         fusto = h * 0.75 if forma == "palma_alta" else 0.3
         if forma == "palma_alta": parti.append((*cilindro(0.22, 0.18, fusto, 10), 0, M0))
         Vf, Ff = [], []
-        for k in range(11):   # fronde: lamine piegate
-            a = 2 * math.pi * k / 11; c, s_ = math.cos(a), math.sin(a)
-            base = (0, 0, fusto); mid = (r * 0.55 * c, r * 0.55 * s_, fusto + (h - fusto) * 0.35 + 0.6)
-            tip = (r * c, r * s_, fusto + (h - fusto) * 0.05)
-            px, py = -s_ * 0.3, c * 0.3
-            i = len(Vf); Vf += [base, (mid[0] + px, mid[1] + py, mid[2]), (mid[0] - px, mid[1] - py, mid[2]), tip]
-            Ff += [(i, i + 1, i + 2), (i + 1, i + 3, i + 2)]
+        nf = 18
+        for k in range(nf):   # fronde arcuate (6 tratti) con foglioline alternate
+            a = 2 * math.pi * k / nf + (0.17 if k % 2 else 0); c, s_ = math.cos(a), math.sin(a)
+            alza = 0.25 + 0.35 * ((k * 7) % 5) / 4          # inclinazioni diverse: ciuffo pieno
+            pts = []
+            for j in range(7):
+                t = j / 6; rr = r * t; zz = fusto + (h - fusto) * (alza * math.sin(math.pi * t * 0.9) + 0.15 * (1 - t)) + 0.3
+                pts.append((rr * c, rr * s_, zz))
+            px, py = -s_, c
+            for j in range(6):
+                (x0, y0, z0), (x1, y1, z1) = pts[j], pts[j + 1]; w0 = 0.35 * math.sin(math.pi * (j + 0.5) / 6.5) + 0.05
+                i = len(Vf); Vf += [(x0, y0, z0), (x1 + px * w0, y1 + py * w0, z1 - 0.12), (x1, y1, z1), (x1 - px * w0, y1 - py * w0, z1 - 0.12)]
+                Ff += [(i, i + 1, i + 2), (i, i + 2, i + 3)]
         parti.append((Vf, Ff, 1, M0))
+        if forma == "palma_alta":   # anelli del fusto (cicatrici delle foglie)
+            for j in range(int(fusto / 0.35)):
+                parti.append((*cilindro(0.24, 0.20, 0.08, 10, j * 0.35 + 0.1), 0, M0))
         mats_ = ["FUSTO", v.get("materiale", "C27")]
     else:
         hf = max(h * 0.35, 0.8)
@@ -291,6 +376,27 @@ for k in ("VETRO", "FV", "PLINTO", "PALO_LUCE", "ARMATURA", "FUSTO", "CHIOMA", "
 conta = {}
 def fatto(k): conta[k] = conta.get(k, 0) + 1
 for s in C["superfici"]: superficie(s); fatto("superfici")
+def erba_lotto():
+    sst = (LIBJ or {}).get("sostituzioni", {}).get("erba_lotto")
+    if not sst: return
+    s = next((x for x in C["superfici"] if x["nome"].startswith(sst.get("superficie", "P03"))), None)
+    if not s: return
+    V = s["vertici"]; tri = []
+    for t in s["triangoli"]:
+        a, b, c = (Vector(V[i]) for i in t[:3]); ar = (b - a).cross(c - a).length / 2
+        if ar > 1e-4 and abs(((b - a).cross(c - a)).normalized().z) > 0.5: tri.append((a, b, c, ar))
+    tot = sum(t[3] for t in tri); n = int(tot * sst.get("densita_m2", 0.3)); acc = []
+    for t in tri: acc.append((acc[-1] if acc else 0) + t[3])
+    import bisect
+    for k in range(n):
+        a, b, c, _ = tri[bisect.bisect(acc, _rnd.uniform(0, tot))]
+        u, w = _rnd.random(), _rnd.random()
+        if u + w > 1: u, w = 1 - u, 1 - w
+        p_ = a + (b - a) * u + (c - a) * w
+        ha, hb = sst.get("altezza_m", [0.6, 1.1]); da, db = sst.get("diametro_m", [0.8, 1.4])
+        istanza(sst["modello"], f"erba lotto {k}", (p_.x, p_.y, p_.z), _rnd.uniform(ha, hb), "Vegetazione", _rnd.uniform(da, db))
+    log("erba nel lotto:", n, "ciuffi")
+erba_lotto()
 for w in C["muri"]: sweep(w); fatto("muri")
 for r in C["recinzioni"]: recinzione(r); fatto("recinzioni")
 for e in C["edifici"]: edificio(e); fatto("edifici")
