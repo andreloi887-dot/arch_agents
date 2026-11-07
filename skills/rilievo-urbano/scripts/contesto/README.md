@@ -70,4 +70,5 @@ Limiti: il DTM LiDAR regionale copre la Sardegna (fuori copertura lo script si f
 `../blender/importa_contesto.py`: `blender -b -P importa_contesto.py -- <cartella modello> [--render] [--samples 16]`
 → `uscita_blender/contesto.blend` (+ `viste/` con le camere delle riprese e le viste aeree). Gli oggetti destinati a
 modelli di libreria hanno la proprietà `asset` (lampione_stradale, segnale_*, albero, palma, palma_alta).
+Opzioni del sole: `--data AAAA-MM-GG --ora HH:MM --fuso 2`. Erbe del lotto incolto con Geometry Nodes (`libreria.json → sostituzioni.prato_lotto`).
 Non usare mai `read_factory_settings` negli script (vedi `references/08-lezioni-apprese.md`).

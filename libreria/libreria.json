@@ -157,7 +157,7 @@
   },
   "erba_lotto": {
    "modello": "grass_medium_01",
-   "densita_m2": 0.12,
+   "densita_m2": 0.04,
    "superficie": "P03",
    "altezza_m": [
     0.45,
@@ -167,6 +167,31 @@
     0.5,
     0.9
    ]
+  },
+  "prato_lotto": {
+   "superficie": "P03",
+   "densita_m2": 7.0,
+   "altezza_m": 0.8,
+   "ciuffi": [
+    [
+     "ERBA_VERDE",
+     "#5E8A2E"
+    ],
+    [
+     "ERBA_VERDE_CHIARA",
+     "#7FA23C"
+    ],
+    [
+     "ERBA_SECCA",
+     "#B8A55E"
+    ],
+    [
+     "ERBA_FIORITA",
+     "#C9B53A"
+    ]
+   ],
+   "_nota": "SV-08, SV-12, SV-16: erbe spontanee alte ~1 m, verdi e in parte secche (aprile)",
+   "fili": 16
   }
  }
 }

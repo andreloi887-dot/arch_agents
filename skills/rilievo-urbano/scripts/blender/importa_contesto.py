@@ -1,6 +1,9 @@
 """Importatore di contesto.json in Blender (fase 3 della filiera, vedi PROCEDIMENTO.md).
 
   blender -b -P importa_contesto.py -- <cartella modello> [--uscita uscita_blender] [--render] [--samples 16]
+                                      [--data 2026-04-15] [--ora 11:00] [--fuso 2] [--senza-libreria]
+
+Sole: posizione calcolata (NOAA) da origine del lotto, data e ora locali (fuso: +1 inverno, +2 ora legale).
 
 Legge <modello>/contesto.json (prodotto da skills/rilievo-urbano/scripts/contesto/contesto.py) e costruisce, in
 coordinate locali in metri (x = Est, y = Nord, origine = lotto.json → origine):
@@ -376,6 +379,61 @@ for k in ("VETRO", "FV", "PLINTO", "PALO_LUCE", "ARMATURA", "FUSTO", "CHIOMA", "
 conta = {}
 def fatto(k): conta[k] = conta.get(k, 0) + 1
 for s in C["superfici"]: superficie(s); fatto("superfici")
+def ciuffo(nome, colore, n_fili=11, curva=0.25):
+    """ciuffo low-poly alto 1 m: fili triangolari inclinati a raggiera (scalato dalle particelle)."""
+    V, F = [], []
+    for k in range(n_fili):
+        a = 2 * math.pi * k / n_fili + _rnd.uniform(-0.2, 0.2); inc = _rnd.uniform(0.15, 0.55); hh = _rnd.uniform(0.55, 1.0)
+        c, s_ = math.cos(a), math.sin(a); px, py = -s_ * 0.02, c * 0.02
+        i = len(V)
+        V += [(px, py, 0), (-px, -py, 0), (c * inc * 0.5 * hh, s_ * inc * 0.5 * hh, hh * 0.55), (c * inc * hh, s_ * inc * hh, hh)]
+        F += [(i, i + 1, i + 2), (i + 1, i + 3, i + 2)]
+    C["materiali"].setdefault(nome, {"hex": colore})
+    me = bpy.data.meshes.new(nome); me.from_pydata(V, [], F); me.materials.append(mat(nome))
+    ob = bpy.data.objects.new(nome, me); return ob
+def prato_lotto():
+    """erbe spontanee fitte sul lotto incolto: particelle (istanze, leggere da rendere) di ciuffi verdi e secchi."""
+    cfg = (LIBJ or {}).get("sostituzioni", {}).get("prato_lotto")
+    if not cfg: return
+    ob = next((o for o in bpy.data.objects if o.name.startswith(cfg.get("superficie", "P03"))), None)
+    if not ob: return
+    cl = bpy.data.collections.new("ASSET_ciuffi_lotto")
+    for k, (nome, col) in enumerate(cfg.get("ciuffi", [["ERBA_VERDE", "#6F8A3A"], ["ERBA_SECCA", "#B9A86A"], ["ERBA_FIORITA", "#8E9A4A"]])):
+        for j in range(2): cl.objects.link(ciuffo(f"{nome}_{j}", col, n_fili=cfg.get("fili", 11)))
+    area_ = sum(p.area for p in ob.data.polygons if p.normal.z > 0.5)
+    # Geometry Nodes: punti distribuiti sulle facce orizzontali → istanze casuali dei ciuffi (scala e rotazione casuali)
+    ng = bpy.data.node_groups.new("Erbe spontanee", "GeometryNodeTree")
+    ng.interface.new_socket("Geometry", in_out="INPUT", socket_type="NodeSocketGeometry")
+    ng.interface.new_socket("Geometry", in_out="OUTPUT", socket_type="NodeSocketGeometry")
+    N = ng.nodes; Lk = ng.links
+    gi = N.new("NodeGroupInput"); go = N.new("NodeGroupOutput")
+    nrm = N.new("GeometryNodeInputNormal"); sep = N.new("ShaderNodeSeparateXYZ"); cmp_ = N.new("FunctionNodeCompare")
+    cmp_.data_type = "FLOAT"; cmp_.operation = "GREATER_THAN"; cmp_.inputs[1].default_value = 0.5
+    Lk.new(nrm.outputs[0], sep.inputs[0]); Lk.new(sep.outputs[2], cmp_.inputs[0])
+    dist = N.new("GeometryNodeDistributePointsOnFaces"); dist.distribute_method = "RANDOM"
+    dist.inputs["Density"].default_value = cfg.get("densita_m2", 3.0); dist.inputs["Seed"].default_value = 11
+    Lk.new(gi.outputs[0], dist.inputs["Mesh"]); Lk.new(cmp_.outputs[0], dist.inputs["Selection"])
+    ci = N.new("GeometryNodeCollectionInfo"); ci.inputs["Collection"].default_value = cl
+    ci.inputs["Separate Children"].default_value = True; ci.inputs["Reset Children"].default_value = True
+    iop = N.new("GeometryNodeInstanceOnPoints"); iop.inputs["Pick Instance"].default_value = True
+    def casuale(tipo, mn, mx):
+        """Random Value: i socket attivi dipendono dal tipo; si scelgono per tipo, non per posizione."""
+        rv = N.new("FunctionNodeRandomValue"); rv.data_type = tipo
+        st_ = {"INT": "INT", "FLOAT": "VALUE", "FLOAT_VECTOR": "VECTOR"}[tipo]
+        ins = [i for i in rv.inputs if i.type == st_ and i.name in ("Min", "Max") and i.enabled]
+        ins[0].default_value = mn; ins[1].default_value = mx
+        out = next(o for o in rv.outputs if o.type == st_ and o.enabled)
+        return out
+    h0 = cfg.get("altezza_m", 0.85)
+    o_i = casuale("INT", 0, 100); o_s = casuale("FLOAT", h0 * 0.55, h0 * 1.35); o_r = casuale("FLOAT_VECTOR", (0, 0, 0), (0.15, 0.15, 6.283))
+    Lk.new(dist.outputs["Points"], iop.inputs["Points"]); Lk.new(ci.outputs[0], iop.inputs["Instance"])
+    Lk.new(o_i, iop.inputs["Instance Index"]); Lk.new(o_s, iop.inputs["Scale"]); Lk.new(o_r, iop.inputs["Rotation"])
+    jo = N.new("GeometryNodeJoinGeometry"); Lk.new(gi.outputs[0], jo.inputs[0]); Lk.new(iop.outputs[0], jo.inputs[0])
+    Lk.new(jo.outputs[0], go.inputs[0])
+    md = ob.modifiers.new("Erbe spontanee", "NODES"); md.node_group = ng
+    class _St: pass
+    st = _St(); st.count = int(area_ * cfg.get("densita_m2", 3.0))
+    log("prato del lotto:", st.count, "ciuffi a particelle su", round(area_), "m²")
 def erba_lotto():
     sst = (LIBJ or {}).get("sostituzioni", {}).get("erba_lotto")
     if not sst: return
@@ -397,6 +455,7 @@ def erba_lotto():
         istanza(sst["modello"], f"erba lotto {k}", (p_.x, p_.y, p_.z), _rnd.uniform(ha, hb), "Vegetazione", _rnd.uniform(da, db))
     log("erba nel lotto:", n, "ciuffi")
 erba_lotto()
+prato_lotto()
 for w in C["muri"]: sweep(w); fatto("muri")
 for r in C["recinzioni"]: recinzione(r); fatto("recinzioni")
 for e in C["edifici"]: edificio(e); fatto("edifici")
@@ -414,15 +473,48 @@ if C.get("dettagli"):
 log("costruiti:", json.dumps(conta, ensure_ascii=False))
 
 # ------------------------------------------------------------------------------------------------ luce, cielo, camere
-sun = bpy.data.lights.new("Sole", "SUN"); sun.energy = 3.0; sun.angle = math.radians(0.6)
+def posizione_sole(lat, lng, data, ora, fuso_h):
+    """azimut (da Nord, orario) ed elevazione del sole in gradi – algoritmo NOAA, precisione ~0,1°."""
+    import datetime as _dt
+    y, mo, d = (int(x) for x in data.split("-")); hh, mm = (int(x) for x in ora.split(":"))
+    t = _dt.datetime(y, mo, d, hh, mm) - _dt.timedelta(hours=fuso_h)
+    jd = (t - _dt.datetime(2000, 1, 1, 12)).total_seconds() / 86400 + 2451545.0; T = (jd - 2451545.0) / 36525
+    L0 = (280.46646 + T * (36000.76983 + 0.0003032 * T)) % 360; M = 357.52911 + T * (35999.05029 - 0.0001537 * T)
+    e = 0.016708634 - T * (0.000042037 + 0.0000001267 * T); Mr = math.radians(M)
+    C_ = math.sin(Mr) * (1.914602 - T * (0.004817 + 0.000014 * T)) + math.sin(2 * Mr) * (0.019993 - 0.000101 * T) + math.sin(3 * Mr) * 0.000289
+    lam = L0 + C_ - 0.00569 - 0.00478 * math.sin(math.radians(125.04 - 1934.136 * T))
+    eps = 23 + (26 + (21.448 - T * (46.815 + T * (0.00059 - T * 0.001813))) / 60) / 60 + 0.00256 * math.cos(math.radians(125.04 - 1934.136 * T))
+    dec = math.degrees(math.asin(math.sin(math.radians(eps)) * math.sin(math.radians(lam))))
+    yv = math.tan(math.radians(eps / 2)) ** 2
+    eqt = 4 * math.degrees(yv * math.sin(2 * math.radians(L0)) - 2 * e * math.sin(Mr) + 4 * e * yv * math.sin(Mr) * math.cos(2 * math.radians(L0))
+                           - 0.5 * yv * yv * math.sin(4 * math.radians(L0)) - 1.25 * e * e * math.sin(2 * Mr))
+    tst = (t.hour * 60 + t.minute + eqt + 4 * lng) % 1440; ha = tst / 4 - 180
+    la, de, h_ = math.radians(lat), math.radians(dec), math.radians(ha)
+    cz = math.sin(la) * math.sin(de) + math.cos(la) * math.cos(de) * math.cos(h_); zen = math.acos(max(-1, min(1, cz)))
+    az = math.degrees(math.atan2(math.sin(h_), math.cos(h_) * math.sin(la) - math.tan(de) * math.cos(la))) + 180
+    return az % 360, 90 - math.degrees(zen)
+DATA = opt("--data", "2026-04-15"); ORA = opt("--ora", "11:00"); FUSO = float(opt("--fuso", "2"))   # aprile: ora legale UTC+2
+AZ, EL = posizione_sole(C["origine"]["lat"], C["origine"]["lng"], DATA, ORA, FUSO)
+log(f"sole {DATA} {ORA} (UTC+{FUSO:g}): azimut {AZ:.1f}°, elevazione {EL:.1f}°")
+scn["sole"] = {"data": DATA, "ora": ORA, "azimut": AZ, "elevazione": EL}
+sun = bpy.data.lights.new("Sole", "SUN"); sun.energy = 3.8; sun.angle = math.radians(0.53)
 so = bpy.data.objects.new("Sole", sun); coll("Luci").objects.link(so)
-so.rotation_euler = (math.radians(40), 0, math.radians(135))
+# la luce SUN illumina lungo il suo -Z: inclinazione = 90° - elevazione, rotazione = verso opposto all'azimut
+so.rotation_euler = (math.radians(90 - EL), 0, math.radians(180 - AZ))
 w = bpy.data.worlds.new("Cielo"); scn.world = w; w.use_nodes = True
+bg = next(n for n in w.node_tree.nodes if n.type == "BACKGROUND")
 try:
-    sky = w.node_tree.nodes.new("ShaderNodeTexSky"); bg = next(n for n in w.node_tree.nodes if n.type == "BACKGROUND")
-    w.node_tree.links.new(sky.outputs["Color"], bg.inputs["Color"]); bg.inputs["Strength"].default_value = 0.25
+    sky = w.node_tree.nodes.new("ShaderNodeTexSky")
+    for tipo in ("MULTIPLE_SCATTERING", "NISHITA", "HOSEK_WILKIE"):
+        try: sky.sky_type = tipo; break
+        except Exception: pass
+    if hasattr(sky, "sun_elevation"):
+        sky.sun_elevation = math.radians(EL); sky.sun_rotation = math.radians(180 - AZ - 90)
+        sky.sun_disc = False
+    if hasattr(sky, "altitude"): sky.altitude = 40.0
+    w.node_tree.links.new(sky.outputs["Color"], bg.inputs["Color"]); bg.inputs["Strength"].default_value = 0.35
 except Exception:
-    next(n for n in w.node_tree.nodes if n.type == "BACKGROUND").inputs["Color"].default_value = (0.55, 0.7, 0.95, 1)
+    bg.inputs["Color"].default_value = (0.55, 0.7, 0.95, 1)
 
 def camera(nome, eye, target=None, fov=60, heading=None, pitch=0.0, res=(1280, 720)):
     cd = bpy.data.cameras.new(nome); cd.lens_unit = "FOV"; cd.angle = math.radians(fov); cd.clip_end = 2000
@@ -468,10 +560,17 @@ if RENDER:
         except Exception: pass
     try: scn.eevee.taa_render_samples = SAMPLES
     except Exception: pass
-    scn.view_settings.view_transform = "AgX" if "AgX" in [i.identifier for i in scn.view_settings.bl_rna.properties["view_transform"].enum_items] else "Filmic"
-    scn.view_settings.exposure = -0.6           # anteprima di controllo: colori vicini alla palette della scheda
-    try: scn.view_settings.look = "AgX - Medium High Contrast"
+    try: scn.eevee.shadow_pool_size = "1024"     # molte ombre (erbe, ringhiere): pool più grande
     except Exception: pass
+    scn.view_settings.view_transform = "AgX" if "AgX" in [i.identifier for i in scn.view_settings.bl_rna.properties["view_transform"].enum_items] else "Filmic"
+    # anteprima di controllo: trasformazione "Standard" (colori fedeli alla palette), esposizione leggermente ridotta
+    # AgX regge le luci forti del sole di mezzogiorno; "Punchy" restituisce la saturazione delle foto
+    try: scn.view_settings.view_transform = "AgX"
+    except Exception: pass
+    for look in ("AgX - Punchy", "Punchy", "AgX - High Contrast"):
+        try: scn.view_settings.look = look; break
+        except Exception: pass
+    scn.view_settings.exposure = -0.2
     os.makedirs(os.path.join(USCITA, "viste"), exist_ok=True)
     for co, nome in camere:
         scn.camera = co; scn.render.resolution_x, scn.render.resolution_y = co["res"]
