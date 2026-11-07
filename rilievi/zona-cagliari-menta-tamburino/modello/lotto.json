@@ -30,8 +30,8 @@
  "lotto": {
   "id": "P03",
   "punto": [39.2528006, 9.1152612],
-  "punti_aggiunti_al_lotto": [[39.2525282, 9.1152784]],
-  "_nota_aggiunte": "triangolo sulla punta verso l'incrocio: a catasto è separato da una linea ma fa parte della 4258 (Andrea, 2026-11-07). Visura 966 m², mappa ~925 m²",
+  "punti_aggiunti_al_lotto": [],
+  "_nota_area": "part. 4258: visura 966 m², mappa ~900 m². Il triangolo sulla punta verso l'incrocio NON fa parte del lotto (Andrea, 2026-11-07)",
   "particella": "4258",
   "nome": "P03 – lotto incolto part. 4258",
   "raggio_angoli_m": 1.0,
