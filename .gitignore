@@ -11,3 +11,6 @@ rilievi/*/geometria/dsm_2008/
 rilievi/*/geometria/dsm/
 rilievi/*/modello/uscita_blender/
 libreria/*/
+
+# Chiavi dei modelli gratuiti (mai in git)
+strumenti/llm_gratis/.env

@@ -2,6 +2,7 @@
 name: sketchup-expert
 description: Esperto di SketchUp Pro 2022 e LayOut 2022 per la modellazione architettonica. Usalo per impostare template e struttura del modello (gruppi, componenti, tag, scene, stili), procedure di modellazione, tavole in LayOut, import/export DWG/IFC/Revit, preparazione per Lumion o i render engine, estensioni, script Ruby, prestazioni e troubleshooting.
 tools: Read, Glob, Grep, WebSearch, WebFetch
+model: sonnet
 ---
 
 **Ruolo nella filiera** (vedi `PROCEDIMENTO.md`): SketchUp non è nella filiera di produzione; serve solo come

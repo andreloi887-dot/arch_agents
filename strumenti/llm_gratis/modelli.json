@@ -1,0 +1,38 @@
+{
+  "_nota": "Catalogo dei modelli gratuiti per livello. Fonte: awesome-freellm-apis / freellm.net (8 nov 2026), con base URL e ID corretti dove il repo era sbagliato. Gli ID cambiano spesso: verificarli con 'llm_gratis.py --stato'. I candidati sono in ordine di preferenza; se uno fallisce si passa al successivo.",
+  "provider": {
+    "groq":       {"base_url": "https://api.groq.com/openai/v1",                          "chiave": "GROQ_API_KEY",       "chiave_url": "https://console.groq.com/keys",               "carta": "no"},
+    "gemini":     {"base_url": "https://generativelanguage.googleapis.com/v1beta/openai", "chiave": "GEMINI_API_KEY",     "chiave_url": "https://aistudio.google.com/app/apikey",      "carta": "no"},
+    "nvidia":     {"base_url": "https://integrate.api.nvidia.com/v1",                     "chiave": "NVIDIA_API_KEY",     "chiave_url": "https://build.nvidia.com/settings/api-keys",  "carta": "verifica telefono"},
+    "mistral":    {"base_url": "https://api.mistral.ai/v1",                               "chiave": "MISTRAL_API_KEY",    "chiave_url": "https://console.mistral.ai/api-keys",         "carta": "no"},
+    "openrouter": {"base_url": "https://openrouter.ai/api/v1",                            "chiave": "OPENROUTER_API_KEY", "chiave_url": "https://openrouter.ai/keys",                  "carta": "no (50 richieste/giorno)"},
+    "cerebras":   {"base_url": "https://api.cerebras.ai/v1",                              "chiave": "CEREBRAS_API_KEY",   "chiave_url": "https://cloud.cerebras.ai/",                  "carta": "no"}
+  },
+  "livelli": {
+    "semplice": [
+      ["groq", "llama-3.1-8b-instant"],
+      ["gemini", "gemini-flash-lite-latest"],
+      ["cerebras", "llama3.1-8b"],
+      ["mistral", "mistral-small-latest"]
+    ],
+    "medio": [
+      ["groq", "openai/gpt-oss-120b"],
+      ["gemini", "gemini-flash-latest"],
+      ["groq", "llama-3.3-70b-versatile"],
+      ["mistral", "mistral-medium-latest"],
+      ["nvidia", "meta/llama-3.3-70b-instruct"]
+    ],
+    "complesso": [
+      ["nvidia", "z-ai/glm-5.2"],
+      ["nvidia", "moonshotai/kimi-k2.6"],
+      ["gemini", "gemini-pro-latest"],
+      ["openrouter", "nvidia/nemotron-3-ultra-550b-a55b:free"],
+      ["groq", "moonshotai/kimi-k2-instruct-0905"]
+    ],
+    "visione": [
+      ["gemini", "gemini-flash-latest"],
+      ["openrouter", "nvidia/nemotron-3.5-super-vl:free"],
+      ["mistral", "mistral-medium-latest"]
+    ]
+  }
+}

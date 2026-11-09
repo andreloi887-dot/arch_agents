@@ -5,6 +5,12 @@ Agenti e skill per software di architettura.
 **Procedimento di riferimento per i progetti:** [PROCEDIMENTO.md](PROCEDIMENTO.md).
 La filiera è Edificius → contesto in Python → Blender → Unreal Engine 5 → FFmpeg, ed è valida per ogni lotto.
 
+**Scelta del modello AI:** le regole sono in [CLAUDE.md](CLAUDE.md). Claude sceglie da solo il livello del modello in base al compito:
+- modelli gratuiti per i lavori di massa non riservati, con [`strumenti/llm_gratis/`](strumenti/llm_gratis/LEGGIMI.md);
+- Haiku per le ricerche meccaniche;
+- Sonnet per il lavoro standard;
+- Opus per le decisioni difficili.
+
 ## Lumion Pro 12.5
 
 | Percorso | Cosa è |
