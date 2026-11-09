@@ -1,5 +1,5 @@
 {
-  "_nota": "Catalogo dei modelli gratuiti per livello. Fonte: awesome-freellm-apis / freellm.net (8 nov 2026), con base URL e ID corretti dove il repo era sbagliato. Gli ID cambiano spesso: verificarli con 'llm_gratis.py --stato'. I candidati sono in ordine di preferenza; se uno fallisce si passa al successivo. Verifiche del 9 nov 2026: Groq ha ritirato llama-3.1-8b-instant, llama-3.3-70b-versatile e kimi-k2; gemini-pro-latest non ha quota gratuita (429); gemini-flash-latest e gemini-3.8-flash superano i 30 s di risposta nelle sessioni cloud (502), gemini-3.5-flash risponde in 2-12 s.",
+  "_nota": "Catalogo dei modelli gratuiti per livello. Fonte: awesome-freellm-apis / freellm.net (8 nov 2026), con base URL e ID corretti dove il repo era sbagliato. Gli ID cambiano spesso: verificarli con 'llm_gratis.py --stato'. I candidati sono in ordine di preferenza; se uno fallisce si passa al successivo. Verifiche del 9 nov 2026: Groq ha ritirato llama-3.1-8b-instant, llama-3.3-70b-versatile e kimi-k2; gemini-pro-latest non ha quota gratuita (429); gemini-flash-latest e gemini-3.8-flash superano i 30 s di risposta nelle sessioni cloud (502), gemini-3.5-flash risponde in 2-12 s. NVIDIA (9 nov 2026): ritirati z-ai/glm-5.2 e meta/llama-3.3-70b-instruct (410); kimi-k2.6 elencato ma non accessibile (404); mistral-large-4, deepseek-v4.1-flash e glm-5.3-flash superano i 30 s nel cloud; nemotron-3-ultra risponde in 2-3 s ed è il più accurato. La chiave NVIDIA scade 12 mesi dopo la creazione (circa nov 2027).",
   "provider": {
     "groq": {
       "base_url": "https://api.groq.com/openai/v1",
@@ -76,25 +76,21 @@
       ],
       [
         "nvidia",
-        "meta/llama-3.3-70b-instruct"
+        "nvidia/nemotron-3.5-lightning-30b-a3b"
       ]
     ],
     "complesso": [
       [
         "nvidia",
-        "z-ai/glm-5.2"
-      ],
-      [
-        "nvidia",
-        "moonshotai/kimi-k2.6"
-      ],
-      [
-        "openrouter",
-        "nvidia/nemotron-3-ultra-550b-a55b:free"
+        "nvidia/nemotron-3-ultra-550b-a55b"
       ],
       [
         "groq",
         "openai/gpt-oss-120b"
+      ],
+      [
+        "openrouter",
+        "nvidia/nemotron-3-ultra-550b-a55b:free"
       ],
       [
         "gemini",
@@ -105,6 +101,10 @@
       [
         "gemini",
         "gemini-3.5-flash"
+      ],
+      [
+        "nvidia",
+        "nvidia/nemotron-3.5-super-vl-120b-a12b"
       ],
       [
         "openrouter",

@@ -30,8 +30,6 @@ from pathlib import Path
 QUI = Path(__file__).resolve().parent
 CATALOGO = json.loads((QUI / "modelli.json").read_text(encoding="utf-8"))
 TIMEOUT = 120
-# errori per cui ha senso provare il candidato successivo
-RIPROVA = {400, 401, 402, 403, 404, 408, 409, 413, 422, 429, 500, 502, 503, 504}
 
 
 def carica_env():
@@ -110,10 +108,10 @@ def chiedi(livello, testo, sistema=None, immagini=(), provider=None, temperatura
         except urllib.error.HTTPError as e:
             dettaglio = e.read().decode("utf-8", "replace")[:200]
             if CLOUD and key == SEGNAPOSTO and e.code in (400, 401, 403):
-                dettaglio = "nessun segreto valido salvato nell'ambiente cloud per questo provider"
+                dettaglio = "segreto mancante, errato o scaduto nell'ambiente cloud (la chiave NVIDIA dura 12 mesi)"
+            elif e.code == 401:
+                dettaglio = "chiave non valida o scaduta (la chiave NVIDIA dura 12 mesi) – " + dettaglio
             errori.append(f"{prov}/{modello}: HTTP {e.code} {dettaglio}")
-            if e.code not in RIPROVA:
-                break
         except urllib.error.URLError as e:
             motivo = "sito non abilitato nella rete dell'ambiente cloud" if CLOUD and "403" in str(e) else e
             errori.append(f"{prov}/{modello}: {motivo}")

@@ -26,13 +26,17 @@ Serve Python 3.9 o successivo. Non ci sono dipendenze.
    ```
    Il comando mostra quali chiavi funzionano. Per ogni modello del catalogo segna `ok` se esiste ancora presso il provider e `??` se è stato ritirato: in quel caso va corretto `modelli.json`.
 
+**Scadenze.** La chiave NVIDIA vale 12 mesi dalla creazione: quella attuale scade intorno al 9 nov 2027.
+Quando scade, lo script lo segnala con "chiave non valida o scaduta". Va rigenerata su build.nvidia.com e
+salvata di nuovo, nel cloud come segreto dell'ambiente "Agenti" e sul PC in `.env`.
+
 ## Livelli
 
 | Livello | A cosa serve | Primo candidato |
 |---|---|---|
 | `semplice` | tradurre, normalizzare, classificare righe brevi | Groq gpt-oss-20b |
 | `medio` | riassunti, bozze di testo, estrazione strutturata | Groq gpt-oss-120b |
-| `complesso` | testi lunghi e ragionati, quando i volumi non giustificano Claude | NVIDIA GLM-5.2 |
+| `complesso` | testi lunghi e ragionati, quando i volumi non giustificano Claude | NVIDIA Nemotron 3 Ultra |
 | `visione` | descrivere immagini (si attiva da solo con `--immagine`) | Gemini 3.5 Flash |
 
 Se un candidato manca di chiave, ha superato il limite o è stato ritirato, lo script passa al successivo.
