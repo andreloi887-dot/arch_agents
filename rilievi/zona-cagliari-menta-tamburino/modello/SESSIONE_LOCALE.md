@@ -9,8 +9,10 @@
    cd arch_agents
    git checkout claude/determined-carson-ka9dsw
    ```
-3. **Modello base georeferenziato.** È l'unico passo manuale: Add Location richiede l'interfaccia e
-   l'accesso Trimble.
+3. **Modello base georeferenziato.** `base_georef.skp` è già nel repository (dal 2026-11-09): vuoto,
+   georeferenziato su 39.25240, 9.11527 (Cagliari), unità in metri, salvato in formato 2021 perché si
+   apra con SketchUp 2022 e successivi. Il passo sotto serve solo se va rifatto: Add Location richiede
+   l'interfaccia e l'accesso Trimble.
    - Apri SketchUp 2022 e crea un modello nuovo con il modello di base in **metri**.
    - *File › Geo-location › Add Location*, cerca `39.25240, 9.11527`, seleziona un riquadro di circa
      250 × 250 m centrato sull'incrocio e importa (terreno incluso).
@@ -21,7 +23,9 @@
    abbonamento, ma **non è necessario**. Basta annullare e salvare, perché gli script usano solo la
    georeferenziazione e il terreno lo costruiscono dal DTM LiDAR. L'eseguibile è
    `C:\Program Files\SketchUp\SketchUp 2025\SketchUp\SketchUp.exe`. Conviene passare anche il modello
-   base come ultimo argomento della riga di comando, così si apre direttamente.
+   base come ultimo argomento della riga di comando, così si apre direttamente. Se lo salvi con una
+   versione successiva alla 2022, usa *Save As* scegliendo una versione precedente; dagli script,
+   `model.save_copy(percorso, Sketchup::Model::VERSION_2021)`, perché la 2025 non offre `VERSION_2022`.
 4. **Facoltativo, per il confronto con le foto:** imposta la variabile d'ambiente utente
    `GOOGLE_MAPS_API_KEY` sul PC (la stessa chiave della sessione cloud).
 
