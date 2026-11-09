@@ -45,8 +45,15 @@ def carica_env():
             os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
 
 
+# Nelle sessioni cloud di Claude Code le chiavi non sono in variabili: le aggiunge il proxy di rete.
+# Lì si manda un segnaposto, che il proxy sostituisce per i provider con un segreto salvato.
+CLOUD = os.environ.get("CLAUDE_CODE_REMOTE") == "true"
+SEGNAPOSTO = "proxy-injected"
+
+
 def chiave(provider):
-    return os.environ.get(CATALOGO["provider"][provider]["chiave"], "").strip()
+    k = os.environ.get(CATALOGO["provider"][provider]["chiave"], "").strip()
+    return k or (SEGNAPOSTO if CLOUD else "")
 
 
 def http(metodo, url, key, corpo=None):
@@ -89,17 +96,28 @@ def chiedi(livello, testo, sistema=None, immagini=(), provider=None, temperatura
             corpo["max_tokens"] = max_token
         url = CATALOGO["provider"][prov]["base_url"].rstrip("/") + "/chat/completions"
         try:
-            r = http("POST", url, key, corpo)
+            try:
+                r = http("POST", url, key, corpo)
+            except urllib.error.HTTPError as e:
+                if e.code != 503:  # 503 = sovraccarico momentaneo: un secondo tentativo dopo una pausa
+                    raise
+                time.sleep(4)
+                r = http("POST", url, key, corpo)
             msg = r["choices"][0]["message"].get("content") or ""
             if msg.strip():
                 return msg.strip(), f"{prov}/{modello}"
             errori.append(f"{prov}/{modello}: risposta vuota")
         except urllib.error.HTTPError as e:
             dettaglio = e.read().decode("utf-8", "replace")[:200]
+            if CLOUD and key == SEGNAPOSTO and e.code in (400, 401, 403):
+                dettaglio = "nessun segreto valido salvato nell'ambiente cloud per questo provider"
             errori.append(f"{prov}/{modello}: HTTP {e.code} {dettaglio}")
             if e.code not in RIPROVA:
                 break
-        except (urllib.error.URLError, TimeoutError, KeyError, ValueError) as e:
+        except urllib.error.URLError as e:
+            motivo = "sito non abilitato nella rete dell'ambiente cloud" if CLOUD and "403" in str(e) else e
+            errori.append(f"{prov}/{modello}: {motivo}")
+        except (TimeoutError, KeyError, ValueError) as e:
             errori.append(f"{prov}/{modello}: {e}")
     raise RuntimeError("nessun modello gratuito ha risposto:\n  " + "\n  ".join(errori))
 

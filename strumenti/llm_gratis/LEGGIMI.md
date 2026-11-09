@@ -30,13 +30,23 @@ Serve Python 3.9 o successivo. Non ci sono dipendenze.
 
 | Livello | A cosa serve | Primo candidato |
 |---|---|---|
-| `semplice` | tradurre, normalizzare, classificare righe brevi | Groq Llama 3.1 8B |
+| `semplice` | tradurre, normalizzare, classificare righe brevi | Groq gpt-oss-20b |
 | `medio` | riassunti, bozze di testo, estrazione strutturata | Groq gpt-oss-120b |
 | `complesso` | testi lunghi e ragionati, quando i volumi non giustificano Claude | NVIDIA GLM-5.2 |
-| `visione` | descrivere immagini (si attiva da solo con `--immagine`) | Gemini Flash |
+| `visione` | descrivere immagini (si attiva da solo con `--immagine`) | Gemini 3.5 Flash |
 
 Se un candidato manca di chiave, ha superato il limite o è stato ritirato, lo script passa al successivo.
 Su stderr scrive quale modello ha risposto.
+
+## Nelle sessioni cloud di Claude Code
+
+Nel cloud le chiavi non stanno in `.env`: sono segreti di rete dell'ambiente, che il proxy aggiunge alle richieste.
+Lo script se ne accorge da solo (variabile `CLAUDE_CODE_REMOTE`) e manda un segnaposto al posto della chiave.
+Per collegare un nuovo provider basta chiedere a Claude di salvarne la chiave: salvarla abilita anche il sito.
+I provider senza segreto vengono saltati e lo script dice perché.
+
+Nel cloud c'è anche un limite di circa 30 secondi per risposta. I modelli che ragionano a lungo, come
+`gemini-flash-latest` e `gemini-3.8-flash`, lo superano e danno errore 502. Per questo il catalogo usa `gemini-3.5-flash`.
 
 ## Uso
 
