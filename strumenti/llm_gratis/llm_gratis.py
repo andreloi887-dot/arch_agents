@@ -101,7 +101,13 @@ def chiedi(livello, testo, sistema=None, immagini=(), provider=None, temperatura
                     raise
                 time.sleep(4)
                 r = http("POST", url, key, corpo)
-            msg = r["choices"][0]["message"].get("content") or ""
+            scelta = r["choices"][0]
+            msg = scelta["message"].get("content") or ""
+            if scelta.get("finish_reason") == "length":
+                limite = f"--max-token {max_token}" if max_token else "il limite predefinito del modello"
+                print(f"attenzione: risposta di {prov}/{modello} troncata da {limite}; "
+                      "alza --max-token o toglilo (con Gemini il limite conta anche il ragionamento)",
+                      file=sys.stderr)
             if msg.strip():
                 return msg.strip(), f"{prov}/{modello}"
             errori.append(f"{prov}/{modello}: risposta vuota")

@@ -16,7 +16,7 @@ più del risparmio.
 
 | Livello | Modello | Quando | Esempi in questo repo |
 |---|---|---|---|
-| **0 – gratuito esterno** | `strumenti/llm_gratis/` (Groq, Gemini, NVIDIA, Mistral, OpenRouter, Cerebras) | Lavori **di massa, ripetitivi e non riservati**, quando i volumi rendono Claude sprecato. L'uscita la controlla sempre Claude | tradurre o normalizzare centinaia di nomi di materiali, didascalie di foto di rilievo, prime classificazioni di elenchi OSM, bozze di testi descrittivi generici |
+| **0 – gratuito esterno** | `strumenti/llm_gratis/` (Groq, Gemini, NVIDIA, Mistral, OpenRouter, Cerebras) | Solo **traduzioni, normalizzazioni e descrizioni di immagini**, di massa e non riservate, quando i volumi rendono Claude sprecato. **Niente contenuti tecnici.** L'uscita la controlla sempre Claude | tradurre o normalizzare centinaia di nomi di materiali, descrivere foto di rilievo e ortofoto |
 | **1 – Haiku** | subagent con `model: "haiku"` | Ricerche e letture meccaniche con regole chiare, nessuna decisione di progetto | trovare file e chiamate, estrarre valori da JSON/IFC, controllare formati, riassumere un log, rinominare in serie |
 | **2 – Sonnet** | subagent con `model: "sonnet"` | Lavoro standard ben definito | domande alle knowledge base (Lumion, SketchUp, Comfy), script Python e Blender con specifica chiara, editing di testi, sintesi di ricerche web |
 | **3 – Opus** | sessione principale, o subagent con `model: "opus"` | Ragionamento difficile, ambiguità, decisioni che vincolano le fasi successive | architettura del motore di contesto, georeferenziazione e punto base, debug difficili, revisione del codice, verifica di rilievi, scelte di filiera, testi a nome di Andrea verso terzi |
@@ -34,6 +34,10 @@ Regole pratiche:
 - **Livello 0: limiti rigidi.**
   - **Mai** dati di clienti, dati personali, documenti catastali nominativi, email, codice con chiavi o
     password: i piani gratuiti possono usare i dati per l'addestramento.
+  - **Mai** contenuti tecnici: spiegazioni costruttive, materiali, strutture, impianti, normativa, riassunti
+    di testi tecnici. Nella prova del 2026-11-09 il livello medio ha sbagliato due risposte tecniche su due
+    (coppo confuso con la tegola marsigliese; solaio in laterocemento descritto con "malta cementizia" al
+    posto del calcestruzzo armato).
   - **Mai** come unica fonte di una decisione o di un numero che entra nel progetto.
   - Se manca la chiave o tutti i provider sono esauriti, si ripiega su Haiku e lo si dice.
   - Uso e regole del livello per complessità: [strumenti/llm_gratis/LEGGIMI.md](strumenti/llm_gratis/LEGGIMI.md).

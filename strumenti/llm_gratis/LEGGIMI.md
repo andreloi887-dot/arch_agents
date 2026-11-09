@@ -35,8 +35,8 @@ salvata di nuovo, nel cloud come segreto dell'ambiente "Agenti" e sul PC in `.en
 | Livello | A cosa serve | Primo candidato |
 |---|---|---|
 | `semplice` | tradurre, normalizzare, classificare righe brevi | Groq gpt-oss-20b |
-| `medio` | riassunti, bozze di testo, estrazione strutturata | Groq gpt-oss-120b |
-| `complesso` | testi lunghi e ragionati, quando i volumi non giustificano Claude | NVIDIA Nemotron 3 Ultra |
+| `medio` | traduzioni e normalizzazioni più lunghe o con contesto, estrazione strutturata da testi non tecnici | Groq gpt-oss-120b |
+| `complesso` | testi lunghi da tradurre o normalizzare, quando i volumi non giustificano Claude | NVIDIA Nemotron 3 Ultra |
 | `visione` | descrivere immagini (si attiva da solo con `--immagine`) | Gemini 3.5 Flash |
 
 Se un candidato manca di chiave, ha superato il limite o è stato ritirato, lo script passa al successivo.
@@ -71,6 +71,10 @@ python strumenti/llm_gratis/llm_gratis.py --livello semplice --per-riga material
 - **Riservatezza.** I piani gratuiti possono usare i dati per l'addestramento. Quindi niente dati di clienti,
   nominativi catastali, email o codice con chiavi.
 - **Affidabilità.** Questi modelli sbagliano più spesso di Claude. L'uscita va verificata prima che entri nel progetto.
+- **Solo traduzioni, normalizzazioni e descrizioni di immagini.** Niente contenuti tecnici: nella prova del
+  2026-11-09 il livello medio ha sbagliato due risposte tecniche su due (vedi [CLAUDE.md](../../CLAUDE.md)).
+- **Risposte troncate.** Se la risposta raggiunge `--max-token`, lo script lo segnala su stderr. Con Gemini il
+  limite conta anche il ragionamento interno: un valore basso (es. 400) lascia poche parole. Meglio toglierlo.
 - **Catalogo.** Modelli e limiti cambiano ogni settimana. Lancia `--stato` di tanto in tanto e aggiorna
   `modelli.json` guardando il README del repo originale.
 - **Claude Code con modelli gratuiti.** È sconsigliato come motore principale: servono un proxy (LiteLLM o
