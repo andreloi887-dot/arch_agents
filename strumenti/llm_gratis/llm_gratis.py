@@ -7,7 +7,7 @@ Usa solo la libreria standard.
 
 Esempi:
   python llm_gratis.py --livello semplice "Traduci in inglese: intonaco a calce"
-  python llm_gratis.py --livello medio --file appunti.txt --sistema "Riassumi in 5 punti"
+  python llm_gratis.py --livello medio --file didascalie.txt --sistema "Traduci in inglese, una riga per riga"
   python llm_gratis.py --immagine facciata.jpg "Elenca materiali e colori visibili"
   python llm_gratis.py --livello semplice --per-riga materiali.txt \
       --sistema "Normalizza il nome del materiale in italiano tecnico, una riga" > out.jsonl
@@ -36,7 +36,7 @@ def carica_env():
     f = QUI / ".env"
     if not f.exists():
         return
-    for riga in f.read_text(encoding="utf-8").splitlines():
+    for riga in f.read_text(encoding="utf-8-sig").splitlines():  # -sig: Blocco note può aggiungere il BOM
         riga = riga.strip()
         if riga and not riga.startswith("#") and "=" in riga:
             k, v = riga.split("=", 1)
@@ -76,15 +76,26 @@ def contenuto(testo, immagini):
     return parti
 
 
+# Esclusioni valide per tutta l'esecuzione: con --per-riga evitano di ripetere a ogni riga una richiesta
+# che fallirà di sicuro (chiave rifiutata → tutto il provider; modello ritirato → solo quel modello).
+ESCLUSI = set()
+NOTA_NVIDIA = " (la chiave NVIDIA dura 12 mesi)"
+
+
 def chiedi(livello, testo, sistema=None, immagini=(), provider=None, temperatura=0.2, max_token=None):
     """Ritorna (risposta, 'provider/modello'). Solleva RuntimeError se nessun candidato risponde."""
     candidati = CATALOGO["livelli"][livello]
     if provider:
         candidati = [c for c in candidati if c[0] == provider]
+        if not candidati:
+            raise RuntimeError(f"il provider {provider} non ha candidati per il livello {livello}")
     messaggi = ([{"role": "system", "content": sistema}] if sistema else []) + \
                [{"role": "user", "content": contenuto(testo, list(immagini))}]
     errori = []
     for prov, modello in candidati:
+        if prov in ESCLUSI or (prov, modello) in ESCLUSI:
+            errori.append(f"{prov}/{modello}: escluso dopo un errore precedente")
+            continue
         key = chiave(prov)
         if not key:
             errori.append(f"{prov}: manca {CATALOGO['provider'][prov]['chiave']}")
@@ -102,27 +113,36 @@ def chiedi(livello, testo, sistema=None, immagini=(), provider=None, temperatura
                 time.sleep(4)
                 r = http("POST", url, key, corpo)
             scelta = r["choices"][0]
-            msg = scelta["message"].get("content") or ""
-            if scelta.get("finish_reason") == "length":
-                limite = f"--max-token {max_token}" if max_token else "il limite predefinito del modello"
-                print(f"attenzione: risposta di {prov}/{modello} troncata da {limite}; "
-                      "alza --max-token o toglilo (con Gemini il limite conta anche il ragionamento)",
-                      file=sys.stderr)
-            if msg.strip():
-                return msg.strip(), f"{prov}/{modello}"
-            errori.append(f"{prov}/{modello}: risposta vuota")
+            msg = (scelta["message"].get("content") or "").strip()
+            troncata = scelta.get("finish_reason") == "length"
+            limite = f"--max-token {max_token}" if max_token else "il limite predefinito del modello"
+            if msg:
+                if troncata:
+                    print(f"attenzione: risposta di {prov}/{modello} troncata da {limite}; "
+                          "alza --max-token o toglilo (con Gemini il limite conta anche il ragionamento)",
+                          file=sys.stderr)
+                return msg, f"{prov}/{modello}"
+            errori.append(f"{prov}/{modello}: risposta vuota"
+                          + (f" ({limite} esaurito dal ragionamento: alzalo o toglilo)" if troncata else ""))
         except urllib.error.HTTPError as e:
             dettaglio = e.read().decode("utf-8", "replace")[:200]
+            nota = NOTA_NVIDIA if prov == "nvidia" else ""
             if CLOUD and key == SEGNAPOSTO and e.code in (400, 401, 403):
-                dettaglio = "segreto mancante, errato o scaduto nell'ambiente cloud (la chiave NVIDIA dura 12 mesi)"
-            elif e.code == 401:
-                dettaglio = "chiave non valida o scaduta (la chiave NVIDIA dura 12 mesi) – " + dettaglio
+                dettaglio = "segreto mancante, errato o scaduto nell'ambiente cloud" + nota
+                ESCLUSI.add(prov)
+            elif e.code in (401, 403):
+                dettaglio = f"chiave non valida o scaduta{nota} – " + dettaglio
+                ESCLUSI.add(prov)
+            elif e.code in (404, 410):
+                ESCLUSI.add((prov, modello))  # modello ritirato: va corretto modelli.json
             errori.append(f"{prov}/{modello}: HTTP {e.code} {dettaglio}")
         except urllib.error.URLError as e:
             motivo = "sito non abilitato nella rete dell'ambiente cloud" if CLOUD and "403" in str(e) else e
             errori.append(f"{prov}/{modello}: {motivo}")
-        except (TimeoutError, KeyError, ValueError) as e:
-            errori.append(f"{prov}/{modello}: {e}")
+        except OSError as e:  # timeout (in 3.9 socket.timeout non è TimeoutError), connessione chiusa o azzerata
+            errori.append(f"{prov}/{modello}: errore di rete: {e!r}")
+        except (KeyError, IndexError, TypeError, ValueError) as e:  # risposta non nel formato OpenAI
+            errori.append(f"{prov}/{modello}: risposta inattesa: {e!r}")
     raise RuntimeError("nessun modello gratuito ha risposto:\n  " + "\n  ".join(errori))
 
 
@@ -153,7 +173,15 @@ def stato():
             print(f"   {segno} {prov}/{modello}")
 
 
+def leggi(percorso):
+    return Path(percorso).read_text(encoding="utf-8-sig")
+
+
 def main():
+    # Su Windows, con l'uscita rediretta su file (es. "> out.jsonl"), Python usa cp1252 e si ferma al primo
+    # carattere fuori tabella (≈, →, emoji). L'uscita è sempre UTF-8.
+    for flusso in (sys.stdout, sys.stderr):
+        flusso.reconfigure(encoding="utf-8")
     carica_env()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("prompt", nargs="?", help="testo della richiesta (altrimenti --file o stdin)")
@@ -177,26 +205,35 @@ def main():
                temperatura=a.temperatura, max_token=a.max_token)
 
     if a.per_riga:
-        righe = [r for r in Path(a.per_riga).read_text(encoding="utf-8").splitlines() if r.strip()]
-        falliti = 0
+        righe = [r for r in leggi(a.per_riga).splitlines() if r.strip()]
+        falliti = di_fila = 0
         for i, riga in enumerate(righe, 1):
             testo = f"{a.prompt}\n\n{riga}" if a.prompt else riga
             try:
                 risp, chi = chiedi(livello, testo, **opz)
                 print(json.dumps({"ingresso": riga, "uscita": risp, "modello": chi}, ensure_ascii=False), flush=True)
+                di_fila = 0
             except RuntimeError as e:
                 falliti += 1
+                di_fila += 1
                 print(json.dumps({"ingresso": riga, "errore": str(e)}, ensure_ascii=False), flush=True)
             print(f"[{i}/{len(righe)}]", file=sys.stderr)
+            if di_fila >= 3 and i < len(righe):
+                # di solito limiti esauriti su tutti i provider: continuare consuma richieste senza risultati
+                print(f"interrotto: 3 righe fallite di fila, {len(righe) - i} righe non elaborate; "
+                      "rilancia più tardi sulle righe mancanti", file=sys.stderr)
+                return 1
             if a.pausa:
                 time.sleep(a.pausa)
         return 1 if falliti else 0
 
     parti = [a.prompt] if a.prompt else []
     if a.file:
-        parti.append(Path(a.file).read_text(encoding="utf-8"))
+        parti.append(leggi(a.file))
     if not parti and not sys.stdin.isatty():
-        parti.append(sys.stdin.read())
+        da_stdin = sys.stdin.read()
+        if da_stdin.strip():
+            parti.append(da_stdin)
     if not parti:
         ap.error("serve un prompt, --file o testo su stdin")
     try:

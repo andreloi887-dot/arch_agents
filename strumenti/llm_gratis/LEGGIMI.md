@@ -73,6 +73,12 @@ python strumenti/llm_gratis/llm_gratis.py --livello semplice --per-riga material
 - **Affidabilità.** Questi modelli sbagliano più spesso di Claude. L'uscita va verificata prima che entri nel progetto.
 - **Solo traduzioni, normalizzazioni e descrizioni di immagini.** Niente contenuti tecnici: nella prova del
   2026-11-09 il livello medio ha sbagliato due risposte tecniche su due (vedi [CLAUDE.md](../../CLAUDE.md)).
+  Anche le traduzioni di **termini tecnici** sbagliano: "coppo sardo" è diventato "Sardinian cup" (semplice) e
+  "pantile" (complesso, ma il pantile è la tegola a S), "malta" è diventato "Malta". Su glossari tecnici va
+  controllata ogni riga.
+- **Lavori per riga.** Con `--per-riga` lo script si ferma dopo 3 righe fallite di fila (di solito limiti
+  esauriti) e dice quante restano. Un provider con chiave rifiutata, o un modello ritirato (404/410), viene
+  saltato per il resto dell'esecuzione. L'uscita è sempre UTF-8, anche rediretta su file in Windows.
 - **Risposte troncate.** Se la risposta raggiunge `--max-token`, lo script lo segnala su stderr. Con Gemini il
   limite conta anche il ragionamento interno: un valore basso (es. 400) lascia poche parole. Meglio toglierlo.
 - **Catalogo.** Modelli e limiti cambiano ogni settimana. Lancia `--stato` di tanto in tanto e aggiorna
