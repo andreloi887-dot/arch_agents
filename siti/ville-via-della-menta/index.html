@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ville di Via della Menta · Pirri, Cagliari</title>
+<meta name="description" content="Quattro ville indipendenti di nuova costruzione in Via della Menta a Pirri, Cagliari. Ingresso carrabile e giardino privato per ogni villa.">
+<meta property="og:title" content="Ville di Via della Menta · Pirri, Cagliari">
+<meta property="og:description" content="Quattro ville indipendenti di nuova costruzione, ognuna con ingresso e giardino propri.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="it_IT">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232f4a3c'/%3E%3Cpath d='M7 23V13l9-6 9 6v10h-6v-6h-6v6z' fill='%23f3ede1'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="stile.css">
+</head>
+<body>
+
+<div class="bozza" id="bozza" hidden>Bozza di lavoro · contenuti e immagini non definitivi</div>
+
+<header class="testata" id="testata">
+  <a class="marchio" href="#inizio">
+    <span class="marchio-nome">Via della Menta</span>
+    <span class="marchio-luogo">Pirri · Cagliari</span>
+  </a>
+  <button class="menu-apri" id="menu-apri" aria-expanded="false" aria-controls="menu">Menu</button>
+  <nav class="menu" id="menu" aria-label="Sezioni">
+    <a href="#progetto">Il progetto</a>
+    <a href="#ville">Le ville</a>
+    <a href="#luogo">Il luogo</a>
+    <a href="#capitolato" id="voce-capitolato">Capitolato</a>
+    <a class="menu-azione" href="#contatti">Richiedi informazioni</a>
+  </nav>
+</header>
+
+<main id="inizio">
+
+  <section class="copertina" id="copertina">
+    <div class="copertina-immagine" id="copertina-immagine" aria-hidden="true"></div>
+    <div class="copertina-testo">
+      <p class="occhiello" id="copertina-luogo">Pirri · Cagliari</p>
+      <h1>Quattro ville,<br><em>una via tranquilla.</em></h1>
+      <p class="sommario" id="copertina-motto"></p>
+      <div class="azioni">
+        <a class="bottone" href="#ville">Scopri le ville</a>
+        <a class="bottone bottone-chiaro" href="#contatti">Prenota una visita</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="sezione" id="progetto">
+    <div class="colonne">
+      <div>
+        <p class="occhiello">Il progetto</p>
+        <h2>Case indipendenti, pensate una per una</h2>
+      </div>
+      <div class="prosa">
+        <p>All'angolo tra Via della Menta e Via Tamburino Sardo, in una zona residenziale a bassa densità
+        di Pirri, nascono quattro ville di nuova costruzione. Nessuna parte comune da gestire: ogni villa
+        ha il proprio cancello carrabile su Via della Menta, il proprio giardino e la propria quota
+        d'ingresso, direttamente dalla strada.</p>
+        <p>Il terreno sale dolcemente dall'incrocio verso l'interno: il progetto lo asseconda, così ogni
+        casa si apre sul verde senza guardare dentro quella accanto.</p>
+      </div>
+    </div>
+    <dl class="numeri" id="numeri"></dl>
+  </section>
+
+  <section class="sezione sezione-tinta" id="ville">
+    <p class="occhiello">Le ville</p>
+    <h2>Scegli la tua</h2>
+    <p class="sottotitolo">Stato aggiornato per ogni villa. Prezzi e planimetrie complete su richiesta.</p>
+    <div class="griglia-ville" id="griglia-ville"></div>
+  </section>
+
+  <section class="sezione" id="luogo">
+    <div class="colonne colonne-larghe">
+      <div>
+        <p class="occhiello">Il luogo</p>
+        <h2>A Pirri, tra villini e giardini</h2>
+        <div class="prosa">
+          <p>Un quartiere di case basse arretrate nei giardini, muri di cinta e siepi, strade a traffico
+          locale. Il lotto occupa la punta dell'isolato: due fronti su strada, luce da più lati.</p>
+          <p>Il centro di Pirri e i principali collegamenti verso Cagliari e la SS 131 sono a pochi minuti.</p>
+        </div>
+        <a class="collegamento" href="https://www.openstreetmap.org/?mlat=39.2528&amp;mlon=9.1153#map=17/39.2528/9.1153" target="_blank" rel="noopener">Apri la posizione sulla mappa</a>
+      </div>
+      <figure class="planimetria">
+        <svg viewBox="-62 -82 112 96" role="img" aria-label="Planimetria: il lotto delle ville tra Via Tamburino Sardo e Via della Menta">
+          <g class="strade">
+            <path d="M-59,-67 L-1,0 L39,56"/>
+            <path d="M-1,0 L4,-8 L43,-127"/>
+            <path d="M4,-8 L120,-74"/>
+          </g>
+          <path class="lotto" d="M-4.1,-12.0 L-4.8,-12.1 L-5.5,-12.4 L-6.1,-13.0 L-24.0,-38.5 L-10.7,-50.2 L-6.0,-54.3 L5.8,-64.6 L14.4,-55.8 L-1.8,-13.4 L-2.4,-12.6 L-3.2,-12.2Z"/>
+          <text class="lotto-nome" x="-4" y="-40" text-anchor="middle">Le ville</text>
+          <text class="via" transform="translate(-37,-36) rotate(49)" text-anchor="middle">Via Tamburino Sardo</text>
+          <text class="via" transform="translate(27,-52) rotate(-72)" text-anchor="middle">Via della Menta</text>
+          <text class="via" transform="translate(34,-20) rotate(-30)" text-anchor="middle">Via Moravia</text>
+          <g class="nord" transform="translate(-52,2)">
+            <path d="M0,6 L0,-6 M-2.5,-2.5 L0,-6 L2.5,-2.5"/>
+            <text y="-8" text-anchor="middle">N</text>
+          </g>
+          <g class="scala" transform="translate(18,6)">
+            <path d="M0,0 L20,0 M0,-1.2 L0,1.2 M20,-1.2 L20,1.2"/>
+            <text x="10" y="-2.5" text-anchor="middle">20 m</text>
+          </g>
+        </svg>
+        <figcaption>Perimetro del lotto dal progetto. La disposizione delle ville è nella planimetria generale, disponibile su richiesta.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="sezione sezione-tinta" id="capitolato" hidden>
+    <p class="occhiello">Capitolato</p>
+    <h2>Come sono costruite</h2>
+    <div class="capitolato" id="voci-capitolato"></div>
+  </section>
+
+  <section class="sezione sezione-scura" id="contatti">
+    <div class="colonne colonne-larghe">
+      <div>
+        <p class="occhiello">Contatti</p>
+        <h2>Parliamone di persona</h2>
+        <div class="prosa">
+          <p>Scrivici quale villa ti interessa: ti mandiamo planimetrie, capitolato e prezzo, e fissiamo
+          un incontro sul posto.</p>
+        </div>
+        <ul class="recapiti" id="recapiti"></ul>
+      </div>
+      <form class="modulo" id="modulo" novalidate>
+        <div class="campo">
+          <label for="nome">Nome e cognome</label>
+          <input id="nome" name="nome" autocomplete="name" required>
+        </div>
+        <div class="campo-doppio">
+          <div class="campo">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" autocomplete="email" required>
+          </div>
+          <div class="campo">
+            <label for="telefono">Telefono <span class="facoltativo">facoltativo</span></label>
+            <input id="telefono" name="telefono" type="tel" autocomplete="tel">
+          </div>
+        </div>
+        <div class="campo">
+          <label for="interesse">Villa di interesse</label>
+          <select id="interesse" name="interesse"></select>
+        </div>
+        <div class="campo">
+          <label for="messaggio">Messaggio <span class="facoltativo">facoltativo</span></label>
+          <textarea id="messaggio" name="messaggio" rows="4"></textarea>
+        </div>
+        <!-- campo trappola per i moduli automatici: deve restare vuoto -->
+        <input class="trappola" name="sito_web" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <label class="consenso">
+          <input type="checkbox" id="consenso" name="consenso" required>
+          <span>Acconsento al trattamento dei miei dati per ricevere risposta a questa richiesta.
+          <a id="collegamento-privacy" href="#" hidden>Informativa privacy</a></span>
+        </label>
+        <button class="bottone" type="submit">Invia la richiesta</button>
+        <p class="esito" id="esito" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<footer class="piede">
+  <p id="piede-venditore"></p>
+  <p>Immagini, planimetrie e superfici hanno valore illustrativo e non costituiscono elemento contrattuale.
+  Le classi energetiche indicate sono di progetto.</p>
+</footer>
+
+<dialog class="scheda" id="scheda" aria-labelledby="scheda-titolo">
+  <button class="scheda-chiudi" id="scheda-chiudi" aria-label="Chiudi">×</button>
+  <div id="scheda-contenuto"></div>
+</dialog>
+
+<script src="dati.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
