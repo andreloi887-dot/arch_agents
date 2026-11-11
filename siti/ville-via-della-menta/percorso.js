@@ -8,7 +8,8 @@
 (function () {
   "use strict";
   var S = window.SITO;
-  var P = S.percorso || {};
+  var C = window.PERCORSO || {}; // la pagina dice quale percorso mostrare: { dati, ferma }
+  var P = C.dati || {};
   var $ = function (id) { return document.getElementById(id); };
   var sezione = $("percorso"), tela = $("percorso-tela");
   var ctx = tela.getContext("2d");
@@ -26,7 +27,7 @@
   /* ---------- Copertina ferma: niente fotogrammi fuori bozza, o movimento ridotto ---------- */
   if (ridotto || (!N && !S.bozza)) {
     sezione.classList.add("fermo");
-    var fermo = S.progetto.immagine_copertina || (N ? indirizzo(0) : null);
+    var fermo = C.ferma || (N ? indirizzo(0) : null);
     if (fermo) tela.style.backgroundImage = 'url("' + encodeURI(fermo) + '")';
     else tela.classList.add("vuota");
     return;

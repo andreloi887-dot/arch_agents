@@ -28,28 +28,39 @@ window.SITO = {
   },
 
   /*
-   * Percorso guidato dallo scorrimento: la pagina resta ferma e lo scroll fa
-   * avanzare la camera dentro la casa. I fotogrammi si preparano dal video
-   * con prepara_percorso.sh (vedi LEGGIMI.md). Finché fotogrammi è 0 e bozza
-   * è true compare un segnaposto animato.
+   * Percorsi guidati dallo scorrimento: la pagina resta ferma e lo scroll fa
+   * avanzare la camera. Ce n'è uno d'insieme in apertura del sito (qui sotto)
+   * e uno dentro ogni villa, nella sua pagina (ville[].percorso).
+   * I fotogrammi si preparano dal video con prepara_percorso.sh (vedi LEGGIMI.md).
+   * Finché fotogrammi è 0 e bozza è true compare un segnaposto animato;
+   * fuori bozza, senza fotogrammi, resta una copertina ferma.
+   *
+   * Didascalie (tappe): da/a sono punti del percorso tra 0 e 1 in cui la
+   * didascalia è visibile; lato: "sinistra" | "destra". Vanno riposizionate
+   * guardando il video vero.
    */
   percorso: {
-    cartella: null, // es. "immagini/percorso/desktop"
-    cartella_telefono: null, // es. "immagini/percorso/telefono" (facoltativa)
+    cartella: null, // es. "immagini/percorso/insieme/desktop"
+    cartella_telefono: null, // es. "immagini/percorso/insieme/telefono" (facoltativa)
     fotogrammi: 0, // numero di file: 0001.webp … NNNN.webp
     estensione: "webp",
-    schermate: 7, // lunghezza del percorso in altezze di schermo: più alto = più lento
-    fine_titolo: 0.1, // punto del percorso (0–1) in cui il titolo iniziale è sparito
-    // Didascalie lungo il cammino: da/a sono punti del percorso tra 0 e 1.
-    // Vanno riscritte sul percorso di camera vero. lato: "sinistra" | "destra".
+    schermate: 7, // lunghezza in altezze di schermo: più alto = più lento (vale anche per le ville)
+    fine_titolo: 0.1, // punto del percorso in cui il titolo iniziale è sparito
     tappe: [
-      { da: 0.14, a: 0.28, titolo: "L'ingresso", testo: null, lato: "sinistra" },
-      { da: 0.32, a: 0.46, titolo: "La zona giorno", testo: null, lato: "destra" },
-      { da: 0.5, a: 0.64, titolo: "La cucina", testo: null, lato: "sinistra" },
-      { da: 0.68, a: 0.82, titolo: "La zona notte", testo: null, lato: "destra" },
-      { da: 0.86, a: 0.98, titolo: "Il giardino", testo: null, lato: "sinistra" },
+      { da: 0.2, a: 0.42, titolo: "L'arrivo da Via della Menta", testo: null, lato: "sinistra" },
+      { da: 0.5, a: 0.72, titolo: "Quattro ingressi indipendenti", testo: null, lato: "destra" },
+      { da: 0.8, a: 0.98, titolo: "I giardini", testo: null, lato: "sinistra" },
     ],
   },
+
+  // Didascalie d'esempio per i percorsi delle ville che non hanno ancora le proprie.
+  tappe_interni: [
+    { da: 0.14, a: 0.28, titolo: "L'ingresso", testo: null, lato: "sinistra" },
+    { da: 0.32, a: 0.46, titolo: "La zona giorno", testo: null, lato: "destra" },
+    { da: 0.5, a: 0.64, titolo: "La cucina", testo: null, lato: "sinistra" },
+    { da: 0.68, a: 0.82, titolo: "La zona notte", testo: null, lato: "destra" },
+    { da: 0.86, a: 0.98, titolo: "Il giardino", testo: null, lato: "sinistra" },
+  ],
 
   ville: [
     {
@@ -64,10 +75,12 @@ window.SITO = {
       bagni: null,
       posti_auto: null,
       classe_energetica: null, // es. "A4"
-      immagine: null, // render della villa (immagine della scheda nell'elenco)
-      // Galleria della scheda: esterni e viste interne, nell'ordine in cui si sfogliano.
+      immagine: null, // render della villa: scheda nell'elenco e copertina ferma della sua pagina
+      // Galleria nella pagina della villa: esterni e viste interne, nell'ordine in cui compaiono.
       // Esempio: { src: "immagini/villa-1-soggiorno.jpg", didascalia: "Soggiorno" }
       galleria: [],
+      // Percorso dentro la villa. tappe: null usa le didascalie d'esempio (tappe_interni).
+      percorso: { cartella: null, cartella_telefono: null, fotogrammi: 0, estensione: "webp", tappe: null },
       planimetrie: [], // es. ["immagini/villa-1-piano-terra.png", "immagini/villa-1-piano-primo.png"]
       scheda_pdf: null, // es. "documenti/villa-1.pdf"
     },
@@ -85,6 +98,7 @@ window.SITO = {
       classe_energetica: null,
       immagine: null,
       galleria: [],
+      percorso: { cartella: null, cartella_telefono: null, fotogrammi: 0, estensione: "webp", tappe: null },
       planimetrie: [],
       scheda_pdf: null,
     },
@@ -102,6 +116,7 @@ window.SITO = {
       classe_energetica: null,
       immagine: null,
       galleria: [],
+      percorso: { cartella: null, cartella_telefono: null, fotogrammi: 0, estensione: "webp", tappe: null },
       planimetrie: [],
       scheda_pdf: null,
     },
@@ -119,6 +134,7 @@ window.SITO = {
       classe_energetica: null,
       immagine: null,
       galleria: [],
+      percorso: { cartella: null, cartella_telefono: null, fotogrammi: 0, estensione: "webp", tappe: null },
       planimetrie: [],
       scheda_pdf: null,
     },

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ville di Via della Menta · Pirri, Cagliari</title>
+<meta name="description" content="Entra nella villa: percorso tra gli ambienti, render, viste interne e planimetrie. Ville di Via della Menta, Pirri, Cagliari.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232f4a3c'/%3E%3Cpath d='M7 23V13l9-6 9 6v10h-6v-6h-6v6z' fill='%23f3ede1'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="stile.css">
+</head>
+<body>
+
+<div class="bozza" id="bozza" hidden>Bozza di lavoro · contenuti e immagini non definitivi</div>
+
+<header class="testata" id="testata">
+  <a class="marchio" href="index.html">
+    <span class="marchio-nome">Via della Menta</span>
+    <span class="marchio-luogo">Pirri · Cagliari</span>
+  </a>
+  <button class="menu-apri" id="menu-apri" aria-expanded="false" aria-controls="menu">Menu</button>
+  <nav class="menu" id="menu" aria-label="Sezioni">
+    <a href="index.html#ville">Tutte le ville</a>
+    <a href="#interni">Render e interni</a>
+    <a href="#planimetrie">Planimetrie</a>
+    <a class="menu-azione" href="index.html#contatti">Richiedi informazioni</a>
+  </nav>
+</header>
+
+<main>
+
+  <section class="percorso" id="percorso" aria-label="Percorso dentro la villa">
+    <div class="percorso-scena">
+      <canvas class="percorso-tela" id="percorso-tela" aria-hidden="true"></canvas>
+      <div class="percorso-velo" aria-hidden="true"></div>
+      <div class="copertina-testo" id="copertina-testo">
+        <p class="occhiello" id="villa-occhiello"></p>
+        <h1 id="villa-nome"></h1>
+        <p class="villa-stato" id="villa-stato"></p>
+        <p class="sommario" id="villa-sommario"></p>
+        <div class="azioni">
+          <a class="bottone" id="villa-chiedi" href="index.html#contatti">Chiedi informazioni</a>
+          <a class="bottone bottone-chiaro" href="#numeri-villa">Vai ai dati</a>
+        </div>
+        <p class="percorso-invito" id="percorso-invito" hidden>Scorri per entrare in casa</p>
+      </div>
+      <div id="tappe"></div>
+      <p class="percorso-nota" id="percorso-nota" hidden>Segnaposto · qui scorrerà il percorso di camera dentro la villa</p>
+      <a class="percorso-salta" id="percorso-salta" href="#numeri-villa" hidden>Salta il percorso</a>
+      <div class="percorso-barra" aria-hidden="true"><span id="percorso-avanzamento"></span></div>
+    </div>
+  </section>
+
+  <section class="sezione" id="numeri-villa">
+    <div class="colonne">
+      <div>
+        <p class="occhiello">La villa</p>
+        <h2>In numeri</h2>
+        <p class="prosa" id="villa-descrizione"></p>
+      </div>
+      <div id="villa-dati"></div>
+    </div>
+  </section>
+
+  <section class="sezione sezione-tinta" id="interni">
+    <p class="occhiello">Render e interni</p>
+    <h2>Dentro e fuori</h2>
+    <div class="griglia-galleria" id="villa-galleria"></div>
+  </section>
+
+  <section class="sezione" id="planimetrie">
+    <p class="occhiello">Planimetrie</p>
+    <h2>Come è distribuita</h2>
+    <div class="villa-planimetrie" id="villa-planimetrie"></div>
+    <a class="bottone bottone-chiaro" id="villa-pdf" target="_blank" rel="noopener" hidden>Scarica la scheda (PDF)</a>
+  </section>
+
+  <section class="sezione sezione-scura">
+    <p class="occhiello">Il passo successivo</p>
+    <h2 id="villa-invito">Vieni a vederla sul posto</h2>
+    <p class="azioni azioni-larghe"><a class="bottone" id="villa-chiedi-2" href="index.html#contatti">Chiedi informazioni</a></p>
+    <p class="occhiello">Le altre ville</p>
+    <div class="altre-ville" id="altre-ville"></div>
+  </section>
+
+</main>
+
+<footer class="piede">
+  <p id="piede-venditore"></p>
+  <p>Immagini, planimetrie e superfici hanno valore illustrativo e non costituiscono elemento contrattuale.
+  Le classi energetiche indicate sono di progetto.</p>
+</footer>
+
+<script src="dati.js"></script>
+<script src="comune.js"></script>
+<script src="villa.js"></script>
+<script src="percorso.js"></script>
+</body>
+</html>

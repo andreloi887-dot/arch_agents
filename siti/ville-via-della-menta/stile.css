@@ -15,6 +15,7 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; } /* vince sui display dichiarati dalle classi (es. .bottone) */
 html { scroll-behavior: smooth; scroll-padding-top: 4.5rem; }
 body {
   margin: 0;
@@ -162,7 +163,7 @@ p { margin: 0 0 1em; }
 }
 .villa {
   background: var(--carta); border: 1px solid var(--linea); border-radius: 4px; overflow: hidden;
-  display: flex; flex-direction: column; text-align: left; padding: 0; cursor: pointer;
+  display: flex; flex-direction: column; text-align: left; padding: 0; cursor: pointer; text-decoration: none;
   font: inherit; color: inherit; transition: transform 0.25s, box-shadow 0.25s;
 }
 .villa:hover { transform: translateY(-4px); box-shadow: 0 18px 40px -22px rgba(35, 40, 31, 0.5); }
@@ -236,40 +237,38 @@ p { margin: 0 0 1em; }
 .piede { padding: 2.5rem var(--bordo); font-size: 0.8rem; color: var(--grigio); border-top: 1px solid var(--linea); }
 .piede p { max-width: 52rem; margin: 0 0 0.5rem; }
 
-/* Scheda della villa */
-.scheda {
-  width: min(58rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem);
-  border: 0; border-radius: 6px; padding: 0; background: var(--carta); color: var(--inchiostro);
-}
-.scheda[open] { display: flex; overflow: hidden; }
-#scheda-contenuto { overflow-y: auto; width: 100%; }
-.scheda::backdrop { background: rgba(22, 36, 29, 0.6); backdrop-filter: blur(3px); }
-.scheda-chiudi {
-  position: absolute; top: 0.75rem; right: 0.75rem; z-index: 2;
-  width: 2.5rem; height: 2.5rem; border-radius: 50%; border: 1px solid var(--linea);
-  background: var(--carta); font-size: 1.4rem; line-height: 1; cursor: pointer;
-}
-.scheda-figura { aspect-ratio: 16 / 9; background: var(--sabbia); position: relative; }
-.scheda-figura img { width: 100%; height: 100%; object-fit: cover; }
-.galleria { display: flex; height: 100%; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
-.galleria::-webkit-scrollbar { display: none; }
-.galleria figure { position: relative; flex: 0 0 100%; margin: 0; scroll-snap-align: start; }
-.galleria figcaption {
+/* Pagina della villa */
+.villa-stato { margin: 1.25rem 0 0; }
+.villa-stato .stato { position: static; display: inline-block; }
+.villa-stato + .sommario { margin-top: 1rem; }
+.dati-grandi { grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 1.5rem 2rem; font-size: 1rem; }
+.dati-grandi li { border-top-color: var(--inchiostro); padding-top: 0.8rem; }
+.dati-grandi strong { font-family: var(--titoli); font-weight: 500; font-size: 1.7rem; line-height: 1.2; }
+.dati-grandi .vuoto { font-size: 1.05rem; font-family: var(--testo); }
+.griglia-galleria { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1rem; margin-top: 3rem; }
+.griglia-galleria figure { position: relative; margin: 0; grid-column: span 3; aspect-ratio: 3 / 2; overflow: hidden; border-radius: 4px; background: var(--carta); }
+/* una immagine larga ogni tre, per dare ritmo */
+.griglia-galleria figure:nth-child(3n + 1) { grid-column: span 6; aspect-ratio: 21 / 9; }
+.griglia-galleria img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s ease; }
+.griglia-galleria figure:hover img { transform: scale(1.04); }
+.griglia-galleria figcaption {
   position: absolute; left: 0; right: 0; bottom: 0; padding: 2.5rem 1.25rem 0.9rem; color: var(--calce);
   font-size: 0.85rem; letter-spacing: 0.04em; background: linear-gradient(to top, rgba(22, 36, 29, 0.75), transparent);
 }
-.galleria-freccia {
-  position: absolute; top: 50%; transform: translateY(-50%); width: 2.75rem; height: 2.75rem; border-radius: 50%;
-  border: 0; background: rgba(255, 253, 248, 0.9); font-size: 1.5rem; line-height: 1; cursor: pointer; color: var(--inchiostro);
+.villa-planimetrie { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 34rem)); gap: 1.25rem; margin: 3rem 0 2rem; }
+.villa-planimetrie img, .villa-planimetrie .segnaposto { border: 1px solid var(--linea); aspect-ratio: 4 / 3; object-fit: contain; background-color: #fff; border-radius: 4px; }
+#planimetrie .bottone-chiaro:hover { background: var(--mirto); color: var(--calce); border-color: var(--mirto); }
+.azioni-larghe { margin: 2rem 0 4rem; }
+.sezione-scura > .azioni .bottone { background: var(--calce); color: var(--mirto-scuro); border-color: var(--calce); }
+.sezione-scura > .azioni .bottone:hover { background: var(--menta); border-color: var(--menta); }
+.altre-ville { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 1rem; }
+.altra-villa {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem; text-decoration: none;
+  padding: 1.25rem 1.4rem; border: 1px solid rgba(246, 241, 231, 0.25); border-radius: 4px;
+  font-family: var(--titoli); font-size: 1.4rem; transition: background 0.2s, border-color 0.2s;
 }
-.galleria-freccia.precedente { left: 0.75rem; }
-.galleria-freccia.successiva { right: 0.75rem; }
-.scheda-corpo { padding: clamp(1.5rem, 4vw, 2.75rem); display: grid; gap: 1.75rem; }
-.scheda-corpo .dati { grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); }
-.scheda-planimetrie { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; }
-.scheda-planimetrie img, .scheda-planimetrie .segnaposto { border: 1px solid var(--linea); aspect-ratio: 4 / 3; object-fit: contain; background-color: #fff; }
-.scheda-azioni { display: flex; flex-wrap: wrap; gap: 0.75rem; }
-.scheda .bottone-chiaro:hover { background: var(--mirto); color: var(--calce); border-color: var(--mirto); }
+.altra-villa:hover { background: rgba(246, 241, 231, 0.08); border-color: var(--menta); }
+.altra-villa .stato { position: static; font-family: var(--testo); }
 
 /* Schermi stretti */
 @media (max-width: 52rem) {
@@ -290,6 +289,7 @@ p { margin: 0 0 1em; }
   .menu a { padding: 0.8rem 0; width: 100%; }
   .menu .menu-azione { width: auto; padding: 0.7rem 1.2rem; margin-top: 0.5rem; }
   .campo-doppio { grid-template-columns: 1fr; }
+  .griglia-galleria figure, .griglia-galleria figure:nth-child(3n + 1) { grid-column: span 6; aspect-ratio: 3 / 2; }
 }
 
 @media (prefers-reduced-motion: reduce) {
