@@ -53,11 +53,6 @@
   }
   $("copertina-luogo").textContent = S.progetto.luogo;
   $("copertina-motto").textContent = S.progetto.motto;
-  if (!vuoto(S.progetto.immagine_copertina)) {
-    var c = $("copertina-immagine");
-    c.style.backgroundImage = 'url("' + encodeURI(S.progetto.immagine_copertina) + '")';
-    c.classList.add("con-foto");
-  }
 
   /* ---------- Numeri ---------- */
   S.progetto.numeri.forEach(function (n) {
@@ -100,7 +95,32 @@
     dentro.replaceChildren();
 
     var figura = el("div", "scheda-figura");
-    figura.appendChild(immagine(villa.immagine, villa.nome, "Render in arrivo"));
+    var viste = (villa.galleria || []).filter(function (g) { return g && !vuoto(g.src); });
+    if (viste.length) {
+      var nastro = el("div", "galleria");
+      nastro.tabIndex = 0;
+      nastro.setAttribute("aria-label", "Immagini di " + villa.nome);
+      viste.forEach(function (g) {
+        var f = el("figure");
+        f.appendChild(immagine(g.src, g.didascalia || villa.nome));
+        if (!vuoto(g.didascalia)) f.appendChild(el("figcaption", null, g.didascalia));
+        nastro.appendChild(f);
+      });
+      figura.appendChild(nastro);
+      if (viste.length > 1) {
+        [["precedente", "‹", -1], ["successiva", "›", 1]].forEach(function (d) {
+          var f = el("button", "galleria-freccia " + d[0], d[1]);
+          f.type = "button";
+          f.setAttribute("aria-label", "Immagine " + d[0]);
+          f.addEventListener("click", function () {
+            nastro.scrollBy({ left: d[2] * nastro.clientWidth, behavior: "smooth" });
+          });
+          figura.appendChild(f);
+        });
+      }
+    } else {
+      figura.appendChild(immagine(villa.immagine, villa.nome, "Render e interni in arrivo"));
+    }
     figura.appendChild(etichettaStato(villa));
     dentro.appendChild(figura);
 
@@ -233,6 +253,21 @@
       messaggio("Modulo non ancora collegato: compila contatti in dati.js.", "errore");
     }
   });
+
+  /* ---------- Comparsa delle sezioni allo scorrimento ---------- */
+  if ("IntersectionObserver" in window && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    var oss = new IntersectionObserver(function (voci) {
+      voci.forEach(function (v) {
+        if (v.isIntersecting) { v.target.classList.add("visibile"); oss.unobserve(v.target); }
+      });
+    }, { rootMargin: "0px 0px -12% 0px" });
+    document.querySelectorAll(".sezione h2, .sezione .prosa, .numeri div, .villa, .planimetria, .modulo, .capitolato > div")
+      .forEach(function (e, i) {
+        e.classList.add("comparsa");
+        e.style.transitionDelay = (i % 4) * 70 + "ms";
+        oss.observe(e);
+      });
+  }
 
   /* ---------- Menu su schermi stretti ---------- */
   var menu = $("menu"), apri = $("menu-apri");

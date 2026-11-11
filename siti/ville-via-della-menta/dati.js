@@ -27,6 +27,30 @@ window.SITO = {
     ],
   },
 
+  /*
+   * Percorso guidato dallo scorrimento: la pagina resta ferma e lo scroll fa
+   * avanzare la camera dentro la casa. I fotogrammi si preparano dal video
+   * con prepara_percorso.sh (vedi LEGGIMI.md). Finché fotogrammi è 0 e bozza
+   * è true compare un segnaposto animato.
+   */
+  percorso: {
+    cartella: null, // es. "immagini/percorso/desktop"
+    cartella_telefono: null, // es. "immagini/percorso/telefono" (facoltativa)
+    fotogrammi: 0, // numero di file: 0001.webp … NNNN.webp
+    estensione: "webp",
+    schermate: 7, // lunghezza del percorso in altezze di schermo: più alto = più lento
+    fine_titolo: 0.1, // punto del percorso (0–1) in cui il titolo iniziale è sparito
+    // Didascalie lungo il cammino: da/a sono punti del percorso tra 0 e 1.
+    // Vanno riscritte sul percorso di camera vero. lato: "sinistra" | "destra".
+    tappe: [
+      { da: 0.14, a: 0.28, titolo: "L'ingresso", testo: null, lato: "sinistra" },
+      { da: 0.32, a: 0.46, titolo: "La zona giorno", testo: null, lato: "destra" },
+      { da: 0.5, a: 0.64, titolo: "La cucina", testo: null, lato: "sinistra" },
+      { da: 0.68, a: 0.82, titolo: "La zona notte", testo: null, lato: "destra" },
+      { da: 0.86, a: 0.98, titolo: "Il giardino", testo: null, lato: "sinistra" },
+    ],
+  },
+
   ville: [
     {
       id: "villa-1",
@@ -40,7 +64,10 @@ window.SITO = {
       bagni: null,
       posti_auto: null,
       classe_energetica: null, // es. "A4"
-      immagine: null, // render della villa
+      immagine: null, // render della villa (immagine della scheda nell'elenco)
+      // Galleria della scheda: esterni e viste interne, nell'ordine in cui si sfogliano.
+      // Esempio: { src: "immagini/villa-1-soggiorno.jpg", didascalia: "Soggiorno" }
+      galleria: [],
       planimetrie: [], // es. ["immagini/villa-1-piano-terra.png", "immagini/villa-1-piano-primo.png"]
       scheda_pdf: null, // es. "documenti/villa-1.pdf"
     },
@@ -57,6 +84,7 @@ window.SITO = {
       posti_auto: null,
       classe_energetica: null,
       immagine: null,
+      galleria: [],
       planimetrie: [],
       scheda_pdf: null,
     },
@@ -73,6 +101,7 @@ window.SITO = {
       posti_auto: null,
       classe_energetica: null,
       immagine: null,
+      galleria: [],
       planimetrie: [],
       scheda_pdf: null,
     },
@@ -89,6 +118,7 @@ window.SITO = {
       posti_auto: null,
       classe_energetica: null,
       immagine: null,
+      galleria: [],
       planimetrie: [],
       scheda_pdf: null,
     },

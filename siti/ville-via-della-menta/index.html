@@ -33,16 +33,24 @@
 
 <main id="inizio">
 
-  <section class="copertina" id="copertina">
-    <div class="copertina-immagine" id="copertina-immagine" aria-hidden="true"></div>
-    <div class="copertina-testo">
-      <p class="occhiello" id="copertina-luogo">Pirri · Cagliari</p>
-      <h1>Quattro ville,<br><em>una via tranquilla.</em></h1>
-      <p class="sommario" id="copertina-motto"></p>
-      <div class="azioni">
-        <a class="bottone" href="#ville">Scopri le ville</a>
-        <a class="bottone bottone-chiaro" href="#contatti">Prenota una visita</a>
+  <section class="percorso" id="percorso" aria-label="Percorso dentro la casa">
+    <div class="percorso-scena">
+      <canvas class="percorso-tela" id="percorso-tela" aria-hidden="true"></canvas>
+      <div class="percorso-velo" aria-hidden="true"></div>
+      <div class="copertina-testo" id="copertina-testo">
+        <p class="occhiello" id="copertina-luogo">Pirri · Cagliari</p>
+        <h1>Quattro ville,<br><em>una via tranquilla.</em></h1>
+        <p class="sommario" id="copertina-motto"></p>
+        <div class="azioni">
+          <a class="bottone" href="#ville">Scopri le ville</a>
+          <a class="bottone bottone-chiaro" href="#contatti">Prenota una visita</a>
+        </div>
+        <p class="percorso-invito" id="percorso-invito" hidden>Scorri per entrare in casa</p>
       </div>
+      <div id="tappe"></div>
+      <p class="percorso-nota" id="percorso-nota" hidden>Segnaposto · qui scorrerà il percorso di camera dentro la villa</p>
+      <a class="percorso-salta" id="percorso-salta" href="#progetto" hidden>Salta il percorso</a>
+      <div class="percorso-barra" aria-hidden="true"><span id="percorso-avanzamento"></span></div>
     </div>
   </section>
 
@@ -177,5 +185,6 @@
 
 <script src="dati.js"></script>
 <script src="script.js"></script>
+<script src="percorso.js"></script>
 </body>
 </html>
