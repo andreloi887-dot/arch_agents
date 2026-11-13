@@ -41,16 +41,30 @@
   /* ---------- Didascalie ---------- */
   var tappe = (P.tappe || []).map(function (t, i) {
     var d = document.createElement("div");
-    d.className = "tappa" + (t.lato === "destra" ? " destra" : "");
-    var n = document.createElement("p");
-    n.className = "tappa-numero";
-    n.textContent = String(i + 1).padStart(2, "0") + " / " + String(P.tappe.length).padStart(2, "0");
+    var cartello = t.tipo === "cartello"; // pannello a tutto schermo che sale e copre la scena
+    d.className = cartello ? "cartello" : "tappa" + (t.lato === "destra" ? " destra" : "");
+    if (cartello && t.numeri && t.numeri.length) {
+      var dl = document.createElement("dl");
+      t.numeri.forEach(function (x) {
+        var c = document.createElement("div"), dt = document.createElement("dt"), dd = document.createElement("dd");
+        dt.textContent = x.valore == null || x.valore === "" ? "–" : x.valore;
+        dd.textContent = x.etichetta;
+        c.appendChild(dt); c.appendChild(dd); dl.appendChild(c);
+      });
+      d.appendChild(dl);
+    }
+    if (!cartello) {
+      var n = document.createElement("p");
+      n.className = "tappa-numero";
+      n.textContent = String(i + 1).padStart(2, "0") + " / " + String(P.tappe.length).padStart(2, "0");
+      d.appendChild(n);
+    }
     var h = document.createElement("h2");
     h.textContent = t.titolo;
-    d.appendChild(n); d.appendChild(h);
+    d.appendChild(h);
     if (t.testo) { var p = document.createElement("p"); p.textContent = t.testo; d.appendChild(p); }
     $("tappe").appendChild(d);
-    return { da: t.da, a: t.a, nodo: d };
+    return { da: t.da, a: t.a, nodo: d, cartello: cartello };
   });
   var titolo = $("copertina-testo"), barra = $("percorso-avanzamento");
 
@@ -61,8 +75,15 @@
     titolo.style.transform = "translateY(" + (-(1 - o) * 40) + "px)";
     titolo.style.visibility = o === 0 ? "hidden" : "visible"; // i bottoni spariti non devono restare cliccabili
     tappe.forEach(function (t) {
-      var sfuma = Math.min(0.035, (t.a - t.da) / 3);
+      var sfuma = Math.min(t.cartello ? 0.05 : 0.035, (t.a - t.da) / 3);
       var v = limita(Math.min((p - t.da) / sfuma, (t.a - p) / sfuma), 0, 1);
+      if (t.cartello) {
+        // sale dal basso, resta, poi prosegue verso l'alto e scopre la scena successiva
+        var y = p < (t.da + t.a) / 2 ? (1 - v) * 100 : -(1 - v) * 100;
+        t.nodo.style.transform = "translateY(" + y + "%)";
+        t.nodo.style.visibility = v === 0 ? "hidden" : "visible";
+        return;
+      }
       t.nodo.style.opacity = v;
       t.nodo.style.transform = "translateY(" + (p < (t.da + t.a) / 2 ? (1 - v) * 30 : -(1 - v) * 30) + "px)";
     });

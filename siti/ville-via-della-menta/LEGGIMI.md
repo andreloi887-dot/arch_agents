@@ -70,6 +70,10 @@ il sito carica prima un fotogramma ogni 16 e poi infittisce, quindi il percorso 
 con `tappe: null` usano quelle d'esempio (`tappe_interni`). Vanno riposizionate guardando il percorso vero.
 `percorso.schermate` regola la lunghezza: più alto, più lento.
 
+Una tappa con `tipo: "cartello"` è un pannello a tutto schermo che sale e copre la scena, con numeri e titolo
+("Saliamo al piano superiore"). Serve dove la camera non ha un passaggio continuo, come tra un piano e
+l'altro: il percorso si può rendere in due tratti e unire le sequenze, con il cartello sopra il punto di giunzione.
+
 Chi ha impostato "riduci movimento" sul dispositivo vede una copertina ferma.
 
 ## Render e interni

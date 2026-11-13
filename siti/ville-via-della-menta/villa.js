@@ -23,6 +23,15 @@
   var P = Object.assign({}, villa.percorso);
   if (!P.tappe) P.tappe = S.tappe_interni; // didascalie d'esempio finché non si scrivono quelle della villa
   if (!P.schermate) P.schermate = S.percorso.schermate;
+  P.tappe = P.tappe.map(function (t) {
+    if (t.numeri !== "villa") return t;
+    return Object.assign({}, t, { numeri: [
+      { valore: villa.camere, etichetta: "camere" },
+      { valore: villa.bagni, etichetta: "bagni" },
+      { valore: villa.piani, etichetta: "piani" },
+      { valore: villa.posti_auto, etichetta: "posti auto" },
+    ] });
+  });
   window.PERCORSO = { dati: P, ferma: villa.immagine };
 
   /* ---------- Numeri ---------- */

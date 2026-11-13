@@ -54,11 +54,16 @@ window.SITO = {
   },
 
   // Didascalie d'esempio per i percorsi delle ville che non hanno ancora le proprie.
+  // tipo: "cartello" è un pannello a tutto schermo che copre la scena: serve nei
+  // cambi di piano o di ambiente, dove la camera non ha un passaggio continuo.
+  // Con numeri: "villa" mostra camere, bagni, piani e posti auto della villa;
+  // in alternativa numeri: [{ valore: "3", etichetta: "camere" }, …].
   tappe_interni: [
-    { da: 0.14, a: 0.28, titolo: "L'ingresso", testo: null, lato: "sinistra" },
-    { da: 0.32, a: 0.46, titolo: "La zona giorno", testo: null, lato: "destra" },
-    { da: 0.5, a: 0.64, titolo: "La cucina", testo: null, lato: "sinistra" },
-    { da: 0.68, a: 0.82, titolo: "La zona notte", testo: null, lato: "destra" },
+    { da: 0.12, a: 0.22, titolo: "L'ingresso", testo: null, lato: "sinistra" },
+    { da: 0.25, a: 0.36, titolo: "La zona giorno", testo: null, lato: "destra" },
+    { da: 0.39, a: 0.5, titolo: "La cucina", testo: null, lato: "sinistra" },
+    { da: 0.53, a: 0.67, tipo: "cartello", titolo: "Saliamo al piano superiore", testo: null, numeri: "villa" },
+    { da: 0.7, a: 0.82, titolo: "La zona notte", testo: null, lato: "destra" },
     { da: 0.86, a: 0.98, titolo: "Il giardino", testo: null, lato: "sinistra" },
   ],
 
