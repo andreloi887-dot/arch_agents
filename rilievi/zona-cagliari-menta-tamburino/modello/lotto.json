@@ -1059,6 +1059,11 @@
    "R06",
    "erba lotto"
   ],
+  "finiture": {
+   "_nota": "Andrea, 2026-11-15. Soffitti: falde in legno con travi a vista e perlinato, avorio chiaro (sezioni e interasse da confermare). Pavimenti: Marazzi Room Beige 100x100 rettificato (nella foto di riferimento è la versione Strutturato, cod. MP6M), colore letto dalla foto del produttore.",
+   "soffitto": {"colore": "#EFE8D6"},
+   "pavimento": {"colore": "#BFAE95", "formato_m": [1.0, 1.0], "fuga_mm": 2.0}
+  },
   "margine_m": 1.0,
   "_nota_quota": "dz agganciato a Via della Menta (Andrea, 2026-11-07): mediana z_rilievo - z_IFC del terreno Edificius su carreggiata e marciapiede entro 7 m dall'asse DBGT, n 1589, p25/p75 3,67/4,02",
   "marciapiede_nomi": [
