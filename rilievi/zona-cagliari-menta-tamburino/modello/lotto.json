@@ -1043,7 +1043,7 @@
   "distanza_da_palme_m": 3.0
  },
  "progetto_ifc": {
-  "file": "../../../../ifc via della menta per blender.ifc",
+  "file": "../edificius/progetto.ifc",
   "_nota": "Edificius 2026-11-07, IFC4, non georiferito (sito con lat/long di default): allineato con allinea_ifc.py al perimetro catastale e ai bordi strada; quota dalla strada e dal terreno esistente dell'IFC",
   "rotazione_gradi": -2.23,
   "traslazione": [

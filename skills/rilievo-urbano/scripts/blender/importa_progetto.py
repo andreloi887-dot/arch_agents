@@ -219,6 +219,17 @@ for kv in range(NV):
     ob = oggetto(SITO_G[0], W, T, SITO_G[1], SITO_MID[kv], nome=f"Terreno di progetto – villa {kv + 1}", villa=kv)
     bm = bmesh.new(); bm.from_mesh(ob.data); bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.002); bm.to_mesh(ob.data); bm.free()
 log("elementi importati:", n_ok, "+ marciapiedi", n_marc, "| esclusi fuori lotto:", n_fuori, "| ville:", NV)
+# vani (IfcSpace): volumi nascosti in vista e in render, con il nome della stanza; servono a percorsi_interni.py
+n_vani = 0
+for el in f.by_type("IfcSpace"):
+    if not el.Representation: continue
+    try: g = ifcopenshell.geom.create_shape(st, el).geometry
+    except Exception as e: log("salto", el.is_a(), el.Name, str(e)[:120]); continue
+    if not g.verts: continue
+    V, T, mid = triangoli(g); c_ = centro(V); kv = villa_di(c_.x, c_.y)
+    ob = oggetto(el, [MV[kv] @ p for p in V], T, g, None, villa=kv)
+    ob["vano"] = el.LongName or el.Name or "Vano"; ob.hide_render = True; ob.hide_viewport = True; ob.display_type = "WIRE"; n_vani += 1
+log("vani importati (nascosti):", n_vani)
 
 # ------------------------------------------------------------------ 4) vuoti del terreno sotto le ville
 SITO_TOP = [t for L_ in SITO for t in L_]

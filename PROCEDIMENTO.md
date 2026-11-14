@@ -120,5 +120,9 @@ Script in `skills/rilievo-urbano/scripts/blender/` (vedi il README lì), tutti s
   che lo toccano, controlli automatici, anteprime MP4) ed `esporta_usd.py` (`scena.usdc` + `camere.usdc`), provati sul
   solo contesto di Via della Menta in una sessione cloud (Blender come modulo Python, render su CPU). Da fare con
   l'IFC nel repo: prova sulla scena con il progetto, avvicinamento all'ingresso, percorsi negli interni.
+- Interni (2026-11-14): l'IFC è nel repo (`rilievi/<zona>/edificius/progetto.ifc`); `importa_progetto.py` porta nella
+  scena anche i vani (nascosti), `percorsi_camera.py --solo interni` genera la visita stanza per stanza con porte
+  aperte e una luce per stanza. Provato sulla villa A (8 stanze, 86 s). Da fare: ingressi delle ville B, C, D, scale,
+  arredi (l'IFC ha solo i sanitari), materiali PBR degli interni.
 - Installati: Blender 5.2 + Bonsai 0.9.0, Unreal Engine 5.8, FFmpeg.
 - Fasi 3–6 ancora da costruire.
