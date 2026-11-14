@@ -115,6 +115,10 @@ Script in `skills/rilievo-urbano/scripts/blender/` (vedi il README lì), tutti s
 - Fase 3 (Blender) avviata: contesto in ~11 s con libreria PBR Poly Haven, sole NOAA, erbe in Geometry Nodes;
   progetto IFC di Via della Menta inserito (2026-11-07): 4 ville alla quota dei cancelli su Via della Menta,
   muraglioni in c.a., marciapiede di progetto. Da fare: secondo cancello della villa 4, rampette carrabili,
-  materiali PBR del progetto (oggi colori Edificius), percorsi di camera, export USD.
+  materiali PBR del progetto (oggi colori Edificius).
+- Percorsi di camera ed export USD (2026-11-14): `percorsi_camera.py` (drone attorno al lotto, camminate sulle strade
+  che lo toccano, controlli automatici, anteprime MP4) ed `esporta_usd.py` (`scena.usdc` + `camere.usdc`), provati sul
+  solo contesto di Via della Menta in una sessione cloud (Blender come modulo Python, render su CPU). Da fare con
+  l'IFC nel repo: prova sulla scena con il progetto, avvicinamento all'ingresso, percorsi negli interni.
 - Installati: Blender 5.2 + Bonsai 0.9.0, Unreal Engine 5.8, FFmpeg.
 - Fasi 3–6 ancora da costruire.
