@@ -1,7 +1,7 @@
 """Percorsi di camera generati dalle regole (fasi 3 e 4 della filiera, vedi PROCEDIMENTO.md).
 
   blender -b <modello>/uscita_blender/contesto_progetto.blend -P percorsi_camera.py -- <cartella modello>
-          [--render] [--motore EEVEE|WORKBENCH] [--scala 50] [--passo 2] [--samples 8] [--solo drone,strada,interni]
+          [--render] [--motore EEVEE|WORKBENCH|CYCLES] [--scala 50] [--passo 2] [--samples 8] [--solo drone,strada,interni]
           [--villa 1,2] [--fotogrammi 1,200,400]
   python percorsi_camera.py -- <cartella modello> --blend contesto.blend ...     (Blender come modulo: pip install bpy)
 
@@ -26,7 +26,8 @@ sul terreno; i fotogrammi sotto soglia finiscono nel log e in percorsi.json ("av
 Uscite in <modello>/uscita_blender/: scena_percorsi.blend, percorsi.json (punti, durata, avvisi: indipendente dal
 software, serve anche a Sequencer in Unreal); con --render anteprime/<percorso>/f_####.png e anteprime/<percorso>.mp4
 (FFmpeg). Il render riprende dai fotogrammi già fatti. WORKBENCH: animatic veloce senza luce reale, per giudicare
-solo il movimento (utile senza scheda grafica); EEVEE: anteprima con sole e materiali.
+solo il movimento (utile senza scheda grafica); EEVEE: anteprima con sole e materiali; CYCLES: luce e ombre vere
+anche su CPU, per le immagini chiave (--fotogrammi), con --esposizione per gli interni.
 """
 import bpy, json, math, os, shutil, subprocess, sys
 from mathutils import Vector
@@ -370,6 +371,15 @@ if "--render" in argv:
         scn.render.engine = "BLENDER_WORKBENCH"; sh = scn.display.shading
         sh.light = "STUDIO"; sh.color_type = "MATERIAL"; sh.show_shadows = True; sh.show_cavity = True
         scn.view_settings.view_transform = "Standard"; scn.view_settings.look = "None"; scn.view_settings.exposure = 0
+    elif motore == "CYCLES":
+        # luce e ombre vere anche senza scheda grafica (EEVEE su CPU non calcola le ombre): ~1 min a immagine 960×540
+        scn.render.engine = "CYCLES"; scn.cycles.samples = int(opt("--samples", "48")); scn.cycles.use_denoising = True
+        scn.cycles.max_bounces = 6; scn.cycles.diffuse_bounces = 4
+        if "--gpu" not in argv: scn.cycles.device = "CPU"
+        if any(p["tipo"] == "interni" for p in PERCORSI):       # interni: esposizione da interno, cielo a piena forza
+            scn.view_settings.exposure = float(opt("--esposizione", "0.7"))
+            bg = next((n for n in scn.world.node_tree.nodes if n.type == "BACKGROUND"), None) if scn.world and scn.world.node_tree else None
+            if bg: bg.inputs["Strength"].default_value = 1.0
     elif opt("--samples"):
         try: scn.eevee.taa_render_samples = int(opt("--samples"))
         except Exception: pass
