@@ -7,8 +7,9 @@ Dopo importa_progetto.py e prima di percorsi_camera.py. Riscrive contesto_proget
 Valori in <modello>/lotto.json → progetto_ifc → "finiture" (tutti facoltativi; predefiniti in PRED):
   soffitto   le falde (elementi IFC il cui nome comincia con "nomi") viste da sotto diventano perlinato: doghe larghe
              doga_m, colore del legno. Orditura a vista, solo sopra i vani interni: travi lungo colmi, displuvi e
-             compluvi (sezione_displuvio_m); travetti lungo la pendenza (sezione_m [base, altezza], interasse_m) che
-             sulle travi d'incontro arrivano a coppie nello stesso punto; sopra gli infissi il travetto si ferma
+             compluvi (sezione_displuvio_m); travetti lungo la pendenza, sezione_m [base, altezza] e passo identici
+             ovunque (il passo si sceglie in interasse_ricerca_m, vicino a interasse_m, perché sulle travi d'incontro
+             i travetti delle due falde arrivino nello stesso punto); sopra gli infissi il travetto si ferma
              arretro_infisso_m prima, su una trave perpendicolare che scarica sui travetti ai lati
   pavimento  una superficie per vano interno, appoggiata al solaio: piastrelle formato_m con fuga_mm, colore, posate
              parallele ai muri con le fughe continue in tutta la villa; "per_vano"
@@ -34,7 +35,7 @@ scn = bpy.context.scene
 
 PRED = {"esterni": ["Cortile", "Balcone", "Veranda", "Terrazza", "Portico", "Giardino"],
         "soffitto": {"nomi": ["Falda"], "colore": "#EFE8D6", "doga_m": 0.12,
-                     "travetti": {"sezione_m": [0.10, 0.16], "interasse_m": 0.70, "sezione_displuvio_m": [0.14, 0.22],
+                     "travetti": {"sezione_m": [0.10, 0.16], "interasse_m": 0.70, "interasse_ricerca_m": [0.60, 0.80], "sezione_displuvio_m": [0.14, 0.22],
                                   "arretro_infisso_m": 0.25}},
         "pavimento": {"colore": "#BDB6A8", "formato_m": [0.60, 0.60], "fuga_mm": 2.0, "ruvidita": 0.45, "per_vano": {}}}
 def unisci(a, b):
@@ -149,7 +150,9 @@ def zf(f, x, y): return f["c"].z - (f["n"].x * (x - f["c"].x) + f["n"].y * (y - 
 # Regole (Andrea, 2026-11-15):
 #  1. dove due falde si incontrano (colmo, displuvio, compluvio) c'è una trave lungo la linea d'incontro;
 #  2. i travetti delle due falde arrivano su quella trave negli stessi punti e alla stessa quota (incastro a coda di
-#     rondine): si parte dai punti sulla linea e da ognuno scende un travetto per falda, lungo la pendenza;
+#     rondine);
+#  2b. passo e sezione dei travetti identici ovunque: una griglia unica per villa su ognuno dei due assi dell'edificio,
+#     con il passo e l'origine che fanno cadere gli incontri sulle travi a 45°; lo scarto che resta è nel log;
 #  3. un travetto non appoggia mai sopra un infisso: si ferma prima (arretro_infisso_m) su una trave perpendicolare
 #     della stessa sezione, che porta il carico ai travetti subito a destra e a sinistra dell'infisso.
 B_, H_ = T["sezione_m"]; BD, HD = T["sezione_displuvio_m"]; ARR = T["arretro_infisso_m"]
@@ -168,25 +171,22 @@ def trave(villa, a, b, larg, alt, zfun):
 def linee(gm): return [q for q in ([gm] if gm.geom_type == "LineString" else getattr(gm, "geoms", [])) if q.geom_type == "LineString"]
 
 n_giunti = n_trav = n_camb = 0; avvisi = []
+def cerchio(vals, passo):
+    """valore (modulo passo) più vicino a tutti i vals e scarto massimo che resta."""
+    if not vals: return 0.0, 0.0
+    w = sorted(v % passo for v in vals)
+    if len(w) == 1: return w[0], 0.0
+    vuoti = [(w[(k + 1) % len(w)] - w[k]) % passo for k in range(len(w))]
+    k = max(range(len(w)), key=lambda k: vuoti[k]); amp = passo - vuoti[k]
+    return (w[(k + 1) % len(w)] + amp / 2) % passo, amp / 2
+# ---- primo giro: per ogni villa le travi d'incontro e le condizioni perché i travetti vi si incontrino
+VILLE = {}
 for villa in sorted({f["villa"] for f in falde}):
     FV = [f for f in falde if f["villa"] == villa]
     # involucro interno della villa: i vani uniti oltre i tramezzi, così i travetti passano sopra i muri interni
     dentro = unary_union([v["pol"].buffer(0.40) for v in interni if v["villa"] == villa]).buffer(-0.28)
-    for f in FV: f["zona"] = f["imp"].intersection(dentro)
-    def travetto(f, p, origine):
-        """travetto della falda f che parte dal punto p (sulla trave d'incontro) e segue la pendenza fino al bordo."""
-        if f["zona"].is_empty: return
-        g = f["g"]; ln = LineString([(p.x - g.x * 60, p.y - g.y * 60), (p.x + g.x * 60, p.y + g.y * 60)])
-        for pz in linee(ln.intersection(f["zona"])):
-            if pz.length < 0.3: continue
-            a, b = Vector(pz.coords[0]), Vector(pz.coords[-1])
-            if origine == "giunto":
-                if pz.distance(Point(p.x, p.y)) > 0.25: continue
-                # dal punto d'incontro verso il lato più lungo (l'altro pezzo è dentro la trave)
-                a, b = (p, b) if (b - p).length >= (a - p).length else (p, a)
-                if (b - a).length < 0.3: continue
-            f["travetti"].append({"a": Vector(a), "b": Vector(b), "s": Vector(a).dot(f["t"]), "origine": origine, "fermo": None})
-    # 1 e 2: travi d'incontro e travetti dai loro punti
+    for f in FV: f["zona"] = f["imp"].intersection(dentro); f["giunti"] = []
+    giunti = []
     for i_, fa in enumerate(FV):
         for fb in FV[i_ + 1:]:
             striscia = fa["imp"].buffer(0.08).intersection(fb["imp"].buffer(0.08))
@@ -199,35 +199,51 @@ for villa in sorted({f["villa"] for f in falde}):
                 m1 = (Vector(r[1]) + Vector(r[2])) / 2; m2 = (Vector(r[3]) + Vector(r[0])) / 2
             if (m2 - m1).length < 0.6: continue
             if max(abs(zf(fa, q.x, q.y) - zf(fb, q.x, q.y)) for q in (m1, m2)) > 0.12: continue
-            d = (m2 - m1).normalized()
-            ln = LineString([tuple(m1), tuple(m2)]).intersection(dentro)
-            for pz in linee(ln):
+            for pz in linee(LineString([tuple(m1), tuple(m2)]).intersection(dentro)):
                 if pz.length < 0.5: continue
                 a, b = Vector(pz.coords[0]), Vector(pz.coords[-1]); n_giunti += 1
                 trave(villa, a, b, BD, HD, lambda x, y, a=a, b=b, fa=fa: zf(fa, *(a + (b - a) * max(0.0, min(1.0, (Vector((x, y)) - a).dot(b - a) / (b - a).length_squared)))))
-                # passo lungo la linea tale che i travetti risultino a interasse nella falda (colmo: sin = 1; displuvio a 45°: sin = 0,71)
-                sn = max(abs(d.x * fa["g"].y - d.y * fa["g"].x), abs(d.x * fb["g"].y - d.y * fb["g"].x), 0.3)
-                passo = INT / sn; n_p = max(1, int(round(pz.length / passo))); passo = pz.length / n_p
-                for k in range(n_p):
-                    p = a + (b - a).normalized() * passo * (k + 0.5)
-                    travetto(fa, p, "giunto"); travetto(fb, p, "giunto")
-    # falde o parti di falda senza trave d'incontro: travetti a interasse, agganciati alla griglia di quelli che ci sono
+                giunti.append((a, b, fa, fb)); fa["giunti"].append(pz); fb["giunti"].append(pz)
+    # due famiglie di travetti, sugli assi dell'edificio: tutte le falde di una famiglia stanno sulla stessa griglia
+    e1 = max(FV, key=lambda f: f["imp"].area)["t"].copy(); e2 = Vector((-e1.y, e1.x))
+    for f in FV:
+        f["fam"] = 0 if abs(f["t"].dot(e1)) > 0.94 else 1 if abs(f["t"].dot(e2)) > 0.94 else None
+        if f["fam"] is not None: f["t"] = (e1, e2)[f["fam"]].copy()
+    # displuvi e compluvi a 45° tra le due famiglie: i travetti si incontrano se lungo la linea s1 ∓ s2 cade sulla griglia
+    piu, meno = [], []
+    for a, b, fa, fb in giunti:
+        if fa["fam"] is None or fb["fam"] is None or fa["fam"] == fb["fam"]: continue      # colmi: stessa griglia, si incontrano sempre
+        d = (b - a).normalized(); c1, c2 = d.dot(e1), d.dot(e2)
+        if abs(abs(c1) - abs(c2)) > 0.08:
+            avvisi.append(f"villa {villa}: linea d'incontro non a 45° tra {fa['nome']} e {fb['nome']}: con un passo unico i travetti non possono incontrarsi"); continue
+        (piu if c1 * c2 > 0 else meno).append(a.dot(e1) - a.dot(e2) if c1 * c2 > 0 else a.dot(e1) + a.dot(e2))
+    VILLE[villa] = {"FV": FV, "e": (e1, e2), "piu": piu, "meno": meno}
+# ---- passo unico per tutto il progetto (Andrea, 2026-11-15): quello che, nell'intervallo ammesso, fa incontrare meglio i
+# travetti su tutte le travi d'incontro; a parità, il più vicino a interasse_m
+lo, hi = T["interasse_ricerca_m"]; prove = [round(lo + 0.005 * k, 3) for k in range(int(round((hi - lo) / 0.005)) + 1)]
+def scarto(passo): return max([max(cerchio(v["piu"], passo)[1], cerchio(v["meno"], passo)[1]) for v in VILLE.values()] or [0.0])
+INT = min(prove, key=lambda q: (round(scarto(q), 3), abs(q - T["interasse_m"])))
+log(f"passo unico dei travetti {INT * 100:.1f} cm (cercato tra {lo * 100:.0f} e {hi * 100:.0f}); scarto massimo agli incontri {scarto(INT) * 1000:.0f} mm")
+# ---- secondo giro: travetti sulla griglia, infissi, travi perpendicolari
+for villa, DV in VILLE.items():
+    FV = DV["FV"]; p_, sp = cerchio(DV["piu"], INT); q_, sq = cerchio(DV["meno"], INT)
+    orig = ((p_ + q_) / 2, (q_ - p_) / 2)                    # x0 − y0 = p, x0 + y0 = q
+    log(f"villa {villa}: scarto agli incontri {max(sp, sq) * 1000:.0f} mm su {len(DV['piu']) + len(DV['meno'])} displuvi/compluvi")
     for f in FV:
         if f["zona"].is_empty: continue
         g, t = f["g"], f["t"]
         cz = [q for gp in ([f["zona"]] if f["zona"].geom_type == "Polygon" else f["zona"].geoms) for q in gp.exterior.coords]
         ss = [q[0] * t.x + q[1] * t.y for q in cz]; s_min, s_max = min(ss), max(ss)
-        s0 = f["travetti"][0]["s"] if f["travetti"] else (s_min + s_max) / 2
-        k0 = math.ceil((s_min + 0.15 - s0) / INT)
-        esistenti = list(f["travetti"])
-        s = s0 + k0 * INT
-        while s < s_max - 0.15:
+        s0 = orig[f["fam"]] if f["fam"] is not None else (s_min + s_max) / 2
+        s = s0 + math.ceil((s_min + 0.08 - s0) / INT) * INT
+        while s < s_max - 0.08:
             ln = LineString([(t.x * s - g.x * 60, t.y * s - g.y * 60), (t.x * s + g.x * 60, t.y * s + g.y * 60)])
             for pz in linee(ln.intersection(f["zona"])):
-                if pz.length < 0.5: continue
-                a, b = Vector(pz.coords[0]), Vector(pz.coords[-1]); va, vb = sorted((a.dot(g), b.dot(g)))
-                occupato = any(abs(e["s"] - s) < 0.6 * INT and min(vb, max(e["a"].dot(g), e["b"].dot(g))) - max(va, min(e["a"].dot(g), e["b"].dot(g))) > 0.3 for e in esistenti)
-                if not occupato: f["travetti"].append({"a": a, "b": b, "s": s, "origine": "campo", "fermo": None})
+                if pz.length < 0.3: continue
+                a, b = Vector(pz.coords[0]), Vector(pz.coords[-1])
+                f["travetti"].append({"a": a, "b": b, "s": s, "fermo": None,
+                                      "giunto_a": any(j.distance(Point(a.x, a.y)) < 0.25 for j in f["giunti"]),
+                                      "giunto_b": any(j.distance(Point(b.x, b.y)) < 0.25 for j in f["giunti"])})
             s += INT
     # 3: infissi sotto l'appoggio → travetto arretrato e trave perpendicolare
     infissi = []
@@ -240,7 +256,7 @@ for villa in sorted({f["villa"] for f in falde}):
         fermati = {}
         for e in f["travetti"]:
             for capo, altro in (("b", "a"), ("a", "b")):
-                if e["origine"] == "giunto" and capo == "a": continue        # il capo "a" è sulla trave d'incontro
+                if e["giunto_" + capo]: continue                              # capo sulla trave d'incontro
                 q = e[capo]; fuori = (q - e[altro]).normalized(); zq = zf(f, q.x, q.y)
                 sonda = LineString([tuple(q - fuori * 0.05), tuple(q + fuori * 0.7)])
                 inf = next((x for x in infissi if x["pol"].intersects(sonda) and zq - 1.8 <= x["z1"] <= zq + 0.3), None)
@@ -264,7 +280,7 @@ for villa, (V, Fc) in travi.items():
     bm = bmesh.new(); bm.from_mesh(mt); bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:]); bm.to_mesh(mt); bm.free()
     ot = bpy.data.objects.new(f"Orditura tetto villa {villa}", mt); ot["villa"] = villa; ot["finitura"] = "orditura"; FIN.objects.link(ot)
 log("falde con perlinato", len(falde), "| travi d'incontro (colmi, displuvi, compluvi)", n_giunti, f"{BD * 100:.0f}×{HD * 100:.0f} cm",
-    "| travetti", n_trav, f"{B_ * 100:.0f}×{H_ * 100:.0f} cm a {INT * 100:.0f} cm", "| travi perpendicolari sopra gli infissi", n_camb)
+    "| travetti", n_trav, f"{B_ * 100:.0f}×{H_ * 100:.0f} cm a {INT * 100:.1f} cm", "| travi perpendicolari sopra gli infissi", n_camb)
 for a_ in avvisi: log("AVVISO", a_)
 
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(USCITA, "contesto_progetto.blend"))
