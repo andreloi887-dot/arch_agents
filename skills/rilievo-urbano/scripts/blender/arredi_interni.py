@@ -7,8 +7,9 @@ Dopo finiture_interni.py e prima di percorsi_camera.py. Riscrive contesto_proget
 Legge <modello>/arredi.json:
   stile    colori (hex) di legno, laccato, tessuto, tessuto_accento, piano_cucina, metallo, nero, tappeto
   arredi   elenco di pezzi: villa, vano, tipo, anello [[x, y], ...] in coordinate locali del contesto (l'ingombro in pianta)
-Tipi: armadio, letto, comodino, madia_tv, scrivania (con sedia), parete_tv, cucina (ingombro a L o a C: basi, piano,
-pensili dove non c'è un infisso, piano cottura, lavello, colonna), zona_giorno (senza anello: divano, tavolino e tappeto di
+Tipi: armadio, letto, comodino, madia_tv, scrivania (con sedia), parete_tv, cucina (ingombro in linea, a L o a C, diviso
+in moduli da 60 cm: frigo e colonna forno-microonde in fondo a una schiera, lavello e lavastoviglie sulla schiera più
+libera, piano cottura con cappa su un'altra, basi, piano, paraschizzi, pensili dove non c'è una finestra), zona_giorno (senza anello: divano, tavolino e tappeto di
 fronte alla parete TV, tavolo con posti_tavolo sedie vicino alla cucina, con distanza_porte_m liberi davanti alle porte
 interne; "tavolo_contro_vano": tavolo addossato al muro in comune con quel vano, e parete TV, divano e tavolino spostati lungo
 il loro muro di quanto serve).
@@ -34,19 +35,19 @@ A = json.load(open(os.path.join(MOD, "arredi.json"), encoding="utf-8"))
 log = registro(os.path.join(USCITA, "arredi_interni.log"))
 scn = bpy.context.scene
 ST = {"legno": "#C8A47A", "laccato": "#EDE7DA", "tessuto": "#D9D0C1", "tessuto_accento": "#B98466", "piano_cucina": "#DAD5CC",
-      "metallo": "#3A3632", "nero": "#141414", "tappeto": "#CFC4B2", **A.get("stile", {})}
+      "metallo": "#3A3632", "nero": "#141414", "tappeto": "#CFC4B2", "inox": "#C4C4C0", **A.get("stile", {})}
 
 def lin(h):
     h = h.lstrip("#"); c = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
     return [x / 12.92 if x <= 0.04045 else ((x + 0.055) / 1.055) ** 2.4 for x in c] + [1.0]
-RUV = {"legno": 0.45, "laccato": 0.35, "tessuto": 0.95, "tessuto_accento": 0.95, "piano_cucina": 0.3, "metallo": 0.4, "nero": 0.25, "tappeto": 1.0}
+RUV = {"legno": 0.45, "laccato": 0.35, "tessuto": 0.95, "tessuto_accento": 0.95, "piano_cucina": 0.3, "metallo": 0.4, "nero": 0.25, "tappeto": 1.0, "inox": 0.3}
 MATS = {}
 def mat(k):
     if k not in MATS:
         m = bpy.data.materials.get("Arredo " + k) or bpy.data.materials.new("Arredo " + k); m.use_nodes = True
         b = next(n for n in m.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
         b.inputs["Base Color"].default_value = lin(ST[k]); b.inputs["Roughness"].default_value = RUV[k]
-        b.inputs["Metallic"].default_value = 1.0 if k == "metallo" else 0.0; MATS[k] = m
+        b.inputs["Metallic"].default_value = 1.0 if k in ("metallo", "inox") else 0.0; MATS[k] = m
     return MATS[k]
 
 radice = bpy.data.collections.get("PROGETTO") or scn.collection
@@ -64,12 +65,12 @@ for ob in scn.objects:
     if pol.is_empty: continue
     if pol.geom_type != "Polygon": pol = max(pol.geoms, key=lambda q: q.area)
     vani.append({"nome": ob["vano"], "pol": pol, "z0": z0 + 0.004, "villa": int(ob.get("villa", 1))})
-infissi, porte_, interne_ = [], [], []                       # interne_: porte tra due stanze (rifatte da finiture_interni.py)
+infissi, porte_, interne_, infissi_z = [], [], [], []                       # interne_: porte tra due stanze (rifatte da finiture_interni.py)
 for ob in scn.objects:
     if ob.get("ifc_classe") in ("IfcWindow", "IfcDoor") and ob.type == "MESH" and ob.data.vertices:
         r_ = MultiPoint([(ob.matrix_world @ v.co).xy[:] for v in ob.data.vertices]).minimum_rotated_rectangle
         if r_.geom_type != "Polygon" or r_.length > 14: continue          # cancelli e recinzioni non contano
-        infissi.append(r_)
+        infissi.append(r_); zz = [(ob.matrix_world @ v.co).z for v in ob.data.vertices]; infissi_z.append((r_, min(zz), max(zz)))
         if ob["ifc_classe"] == "IfcDoor": porte_.append(r_)
         if ob.get("sostituita"): interne_.append(r_)
 INF = unary_union(infissi) if infissi else Polygon()
@@ -204,38 +205,94 @@ def cucina(nome, anello, v, villa):
             for b in range(j, j1 + 1): piena.discard((a, b))
         rett.append((xs[i], xs[i1 + 1], ys[j], ys[j1 + 1]))
     p = Pezzo(o, u, w, v["z0"]); moduli = []
-    for x0, x1, y0, y1 in rett:
+    for kr, (x0, x1, y0, y1) in enumerate(rett):
         lungo_x = (x1 - x0) >= (y1 - y0); lung, prof = (x1 - x0, y1 - y0) if lungo_x else (y1 - y0, x1 - x0)
-        def box(a0, a1, d0, d1, z0, z1, kk):                   # a lungo la schiera, d in profondità (0 = muro)
-            if lungo_x: p.scat(x0 + a0, x0 + a1, *sorted((ym + sg * d0, ym + sg * d1)), z0, z1, kk)
-            else: p.scat(*sorted((xm + sg * d0, xm + sg * d1)), y0 + a0, y0 + a1, z0, z1, kk)
         # lato muro: quello con meno spazio libero davanti
-        if lungo_x:
-            f0 = libero(v, o + u * ((x0 + x1) / 2) + w * (y0 - 0.3)); f1 = libero(v, o + u * ((x0 + x1) / 2) + w * (y1 + 0.3)); sg = 1 if f0 <= f1 else -1; ym = y0 if sg == 1 else y1
-        else:
-            f0 = libero(v, o + u * (x0 - 0.3) + w * ((y0 + y1) / 2)); f1 = libero(v, o + u * (x1 + 0.3) + w * ((y0 + y1) / 2)); sg = 1 if f0 <= f1 else -1; xm = x0 if sg == 1 else x1
-        box(0, lung, 0, prof - 0.06, 0, 0.10, "metallo"); box(0, lung, 0, prof - 0.022, 0.10, 0.86, "laccato")
-        box(0, lung, 0, prof + 0.02, 0.86, 0.90, "piano_cucina")
+        if lungo_x: f0 = libero(v, o + u * ((x0 + x1) / 2) + w * (y0 - 0.3)); f1 = libero(v, o + u * ((x0 + x1) / 2) + w * (y1 + 0.3)); sg = 1 if f0 <= f1 else -1; m0 = y0 if sg == 1 else y1
+        else: f0 = libero(v, o + u * (x0 - 0.3) + w * ((y0 + y1) / 2)); f1 = libero(v, o + u * (x1 + 0.3) + w * ((y0 + y1) / 2)); sg = 1 if f0 <= f1 else -1; m0 = x0 if sg == 1 else x1
+        def pt(a_, d, lungo_x=lungo_x, x0=x0, y0=y0, m0=m0, sg=sg):       # a_ lungo la schiera, d in profondità (0 = muro) → locale
+            return (x0 + a_, m0 + sg * d) if lungo_x else (m0 + sg * d, y0 + a_)
+        def box(a0, a1, d0, d1, z0, z1, kk, pt=pt):
+            (xa, ya), (xb, yb) = pt(a0, d0), pt(a1, d1); p.scat(min(xa, xb), max(xa, xb), min(ya, yb), max(ya, yb), z0, z1, kk)
+        def mondo(a_, d, pt=pt): q = pt(a_, d); return o + u * q[0] + w * q[1]
         n = max(1, round(lung / 0.6)); la = lung / n
         for i in range(n):
-            a0, a1 = i * la, (i + 1) * la
-            box(a0 + 0.0015, a1 - 0.0015, prof - 0.02, prof, 0.10, 0.80, "laccato")       # anta sotto la gola
-            mid = (o + u * (x0 + (a0 + a1) / 2) + w * (ym)) if lungo_x else (o + u * xm + w * (y0 + (a0 + a1) / 2))
-            finestra = INF.distance(Point(mid.x, mid.y)) < 0.45 if not INF.is_empty else False
-            moduli.append({"box": box, "a": (a0, a1), "prof": prof, "finestra": finestra, "lung": lung, "i": i, "n": n})
-    # pensili dove non c'è un infisso; piano cottura sulla schiera più lunga, lavello sulla seconda, colonna a un estremo libero
+            a0, a1 = i * la, (i + 1) * la; am = (a0 + a1) / 2
+            dietro = Polygon([tuple(mondo(a0, -0.45)), tuple(mondo(a1, -0.45)), tuple(mondo(a1, 0.02)), tuple(mondo(a0, 0.02))])
+            moduli.append({"box": box, "pt": pt, "a": (a0, a1), "am": am, "prof": prof, "lung": lung, "i": i, "n": n, "r": kr, "ruolo": None,
+                           "angolo": lp.contains(Point(pt(am, prof + 0.3))),                     # fronte chiuso da un'altra schiera
+                           "finestra": any(r_.intersects(dietro) and zb < v["z0"] + 2.15 and zt > v["z0"] + 1.0 for r_, zb, zt in infissi_z),
+                           "al_muro": i in (0, n - 1) and libero(v, mondo(-0.25 if i == 0 else lung + 0.25, prof / 2)) < 0})
+    # ruoli. Colonne (frigo, forno e microonde): due moduli in fondo a una schiera, meglio se contro un muro, senza finestra dietro.
+    # Lavello e lavastoviglie sulla schiera con più moduli liberi; piano cottura su un'altra schiera, se c'è posto
+    def di(r): return sorted((m for m in moduli if m["r"] == r), key=lambda m: m["i"])
+    def libero_(m): return m["ruolo"] is None and not m["angolo"]
+    coppie = []
+    for r in {m["r"] for m in moduli}:
+        mm = di(r)
+        for capo, vicino in ((mm[0], mm[1] if len(mm) > 1 else None), (mm[-1], mm[-2] if len(mm) > 1 else None)):
+            if vicino and libero_(capo) and libero_(vicino) and not capo["finestra"] and not vicino["finestra"]: coppie.append((capo, vicino))
+    if coppie:
+        capo, vicino = max(coppie, key=lambda c_: (c_[0]["al_muro"], -c_[0]["lung"])); capo["ruolo"], vicino["ruolo"] = "frigo", "forno"
+    else:
+        solo = next((m for m in moduli if libero_(m) and m["i"] in (0, m["n"] - 1) and not m["finestra"]), None)
+        if solo: solo["ruolo"] = "frigo"
+        log(f"AVVISO {nome}: non c'è posto per due colonne: forno sotto il piano cottura, niente microonde")
+    conta_l = {r: sum(libero_(m) for m in di(r)) for r in {m["r"] for m in moduli}}; r_acqua = max(conta_l, key=lambda r: conta_l[r])
+    lib = [m for m in di(r_acqua) if libero_(m)]
+    if lib:
+        lav = min(lib, key=lambda m: abs(m["am"] - m["lung"] / 2)); lav["ruolo"] = "lavello"
+        acc = [m for m in lib if abs(m["i"] - lav["i"]) == 1 and libero_(m)]
+        if acc: acc[0]["ruolo"] = "lavastoviglie"
+    resto = [m for m in moduli if libero_(m) and not m["finestra"]] or [m for m in moduli if libero_(m)]
+    if resto:
+        pc = max(resto, key=lambda m: (m["r"] != r_acqua, not any(x["ruolo"] == "lavello" and x["r"] == m["r"] and abs(x["i"] - m["i"]) == 1 for x in moduli)))
+        pc["ruolo"] = "cottura" if coppie else "cottura_forno"
+    ZC, ZP, ZS, ZA, HP = 0.10, 0.86, 0.90, 1.45, 2.15                 # zoccolo, sotto il piano, sopra il piano, pensili da-a
+    def forno(box, a0, a1, d, z0):
+        box(a0 + 0.003, a1 - 0.003, d, d + 0.02, z0, z0 + 0.595, "nero"); box(a0 + 0.003, a1 - 0.003, d + 0.02, d + 0.022, z0 + 0.50, z0 + 0.595, "inox")
+        box(a0 + 0.06, a1 - 0.06, d + 0.02, d + 0.05, z0 + 0.455, z0 + 0.475, "inox")
     for m in moduli:
-        if not m["finestra"]: m["box"](m["a"][0] + 0.0015, m["a"][1] - 0.0015, 0, 0.35, 1.45, 2.15, "legno")
-    schiere = sorted({m["lung"] for m in moduli}, reverse=True)
-    def al_centro(lung): return min((m for m in moduli if m["lung"] == lung), key=lambda m: abs((m["a"][0] + m["a"][1]) / 2 - lung / 2))
-    m = al_centro(schiere[0]); am = (m["a"][0] + m["a"][1]) / 2; m["box"](am - 0.29, am + 0.29, 0.06, 0.56, 0.90, 0.906, "nero")
-    if len(schiere) > 1:
-        m = al_centro(schiere[1]); am = (m["a"][0] + m["a"][1]) / 2; m["box"](am - 0.25, am + 0.25, 0.10, 0.50, 0.896, 0.903, "metallo")
-        m["box"](am - 0.01, am + 0.01, 0.05, 0.08, 0.90, 1.15, "metallo")
-    estremi = [m for m in moduli if m["i"] in (0, m["n"] - 1) and not m["finestra"] and m["lung"] == schiere[-1]]
-    if estremi and len(schiere) > 1:
-        m = estremi[-1]; m["box"](m["a"][0] + 0.0015, m["a"][1] - 0.0015, 0, m["prof"], 0.90, 2.15, "laccato")
+        box, (a0, a1), prof, am, ruolo = m["box"], m["a"], m["prof"], m["am"], m["ruolo"]; f = prof - 0.02
+        if ruolo in ("frigo", "forno"):
+            box(a0, a1, 0, prof - 0.06, 0, ZC, "metallo"); box(a0, a1, 0, f, ZC, HP, "laccato")
+            if ruolo == "frigo":                               # frigo combinato a vista, in acciaio: congelatore sotto, frigo sopra
+                box(a0 + 0.004, a1 - 0.004, f, prof + 0.03, ZC + 0.02, 0.78, "inox"); box(a0 + 0.004, a1 - 0.004, f, prof + 0.03, 0.79, HP - 0.20, "inox")
+                box(a0 + 0.0015, a1 - 0.0015, f, prof, HP - 0.19, HP, "laccato")
+                lato = a0 + 0.06 if m["i"] == 0 else a1 - 0.08
+                box(lato, lato + 0.02, prof + 0.03, prof + 0.065, 0.45, 0.74, "metallo"); box(lato, lato + 0.02, prof + 0.03, prof + 0.065, 0.83, 1.35, "metallo")
+            else:                                              # colonna: cestone, forno, microonde, anta
+                box(a0 + 0.0015, a1 - 0.0015, f, prof, ZC, 0.70, "laccato"); forno(box, a0, a1, f, 0.715)
+                box(a0 + 0.003, a1 - 0.003, f, prof, 1.325, 1.705, "nero"); box(a1 - 0.14, a1 - 0.003, prof, prof + 0.002, 1.325, 1.705, "inox")
+                box(a1 - 0.165, a1 - 0.15, prof, prof + 0.03, 1.36, 1.67, "inox")
+                box(a0 + 0.0015, a1 - 0.0015, f, prof, 1.72, HP, "laccato")
+            continue
+        box(a0, a1, 0, prof - 0.06, 0, ZC, "metallo"); box(a0, a1, 0, 0.012, ZS, ZA, "piano_cucina")              # zoccolo e paraschizzi
+        alto = 0.66 if ruolo == "lavello" else ZP                                                                   # sotto il lavello il mobile è più basso: c'è la vasca
+        box(a0, a1, 0, f, ZC, alto, "laccato")
+        if ruolo == "lavello":
+            v0, v1, b0, b1 = am - 0.25, am + 0.25, 0.10, 0.50
+            for q in ((a0, v0, 0, prof + 0.02), (v1, a1, 0, prof + 0.02), (v0, v1, 0, b0), (v0, v1, b1, prof + 0.02)): box(*q, ZP, ZS, "piano_cucina")
+            box(v0, v1, b0, b1, ZS - 0.19, ZS - 0.185, "inox")
+            for q in ((v0 - 0.004, v0, b0, b1), (v1, v1 + 0.004, b0, b1), (v0, v1, b0 - 0.004, b0), (v0, v1, b1, b1 + 0.004)): box(*q, ZS - 0.19, ZS + 0.002, "inox")
+            p.cil(*m["pt"](am, 0.055), 0.018, 0.018, ZS, ZS + 0.28, "inox"); box(am - 0.012, am + 0.012, 0.055, 0.25, ZS + 0.26, ZS + 0.284, "inox")
+            box(a0 + 0.0015, a1 - 0.0015, f, prof, ZC, 0.80, "laccato")
+        else:
+            box(a0, a1, 0, prof + 0.02, ZP, ZS, "piano_cucina")
+            if ruolo == "lavastoviglie":
+                box(a0 + 0.003, a1 - 0.003, f, prof, ZC, 0.80, "inox"); box(a0 + 0.08, a1 - 0.08, prof, prof + 0.03, 0.72, 0.74, "metallo")
+            elif ruolo == "cottura_forno": forno(box, a0, a1, f, 0.20); box(a0 + 0.0015, a1 - 0.0015, f, prof, ZC, 0.195, "laccato")
+            elif ruolo == "cottura":                           # cassettoni sotto il piano cottura
+                for z0_, z1_ in ((ZC, 0.44), (0.445, 0.80)): box(a0 + 0.0015, a1 - 0.0015, f, prof, z0_, z1_, "laccato")
+            else: box(a0 + 0.0015, a1 - 0.0015, f, prof, ZC, 0.80, "laccato")                                      # anta sotto la gola
+        if ruolo in ("cottura", "cottura_forno"):
+            box(am - 0.29, am + 0.29, 0.06, 0.56, ZS, ZS + 0.006, "nero")
+            for da, dd in ((-0.14, 0.19), (0.14, 0.19), (-0.14, 0.43), (0.14, 0.43)): p.cil(*m["pt"](am + da, dd), 0.085, 0.085, ZS + 0.006, ZS + 0.0065, "metallo", seg=24)
+        if not m["finestra"]:
+            box(a0 + 0.0015, a1 - 0.0015, 0, 0.35, ZA, HP, "legno")
+            if ruolo in ("cottura", "cottura_forno"): box(a0 + 0.02, a1 - 0.02, 0.012, 0.47, ZA - 0.035, ZA, "inox")     # cappa sotto il pensile
     p.fine(nome, villa, "cucina", pol)
+    log(f"{nome}: moduli", ", ".join(f"{m['ruolo'] or ('angolo' if m['angolo'] else 'base')}{'' if not m['finestra'] else ' (finestra)'}" for m in moduli))
     return len(rett)
 
 def zona_giorno(a, v, villa, tv):

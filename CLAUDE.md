@@ -1,6 +1,7 @@
 # Istruzioni per Claude in questo repository
 
 Rispondi in italiano. Procedimento di progetto: [PROCEDIMENTO.md](PROCEDIMENTO.md).
+Interni (finiture, porte, arredi, viste): [PROGRAMMA_INTERNI.md](PROGRAMMA_INTERNI.md).
 
 ## Scelta del modello in base al compito
 

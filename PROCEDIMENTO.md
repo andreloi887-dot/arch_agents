@@ -134,5 +134,8 @@ Script in `skills/rilievo-urbano/scripts/blender/` (vedi il README lì), tutti s
   Edificius e verificato sugli archi della planimetria, scorrevole a scomparsa in cucina), controsoffitto del disimpegno
   a 2,40 m con faretti LED e griglia di ripresa, bocchette di immissione sopra le porte delle stanze. Tavolo da 4
   addossato al muro verso la camera singola, parete TV e divano spostati verso la vetrata (`arredi.json`).
+- Programma degli interni (2026-11-15): [PROGRAMMA_INTERNI.md](PROGRAMMA_INTERNI.md) raccoglie sequenza, valori, regole
+  fissate da Andrea, controlli, limiti e prossimi passi. Cucina a moduli con elettrodomestici. Si lavora solo sulla
+  villa A finché non è approvata.
 - Installati: Blender 5.2 + Bonsai 0.9.0, Unreal Engine 5.8, FFmpeg.
 - Fasi 3–6 ancora da costruire.

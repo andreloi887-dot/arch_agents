@@ -31,3 +31,6 @@ grafica, `apt-get install libegl1 libgl1-mesa-dri`; poi `python <script> -- <mod
 Su CPU: ~30 s per immagine EEVEE 1280×720, ~3 s per fotogramma WORKBENCH 960×540.
 
 Opzioni comuni: `--render`, `--viste SV-08,VISTA_angolo` (solo alcune camere), `--samples 16`.
+
+
+Script di servizio in `controlli/`: `apri.py` (apre un .blend e lancia uno script, per Blender come modulo), `viste.py` (viste Cycles di controllo), `pianta_arredi.py`, `pianta_orditura.py`, `arredi_da_pdf.py` (ingombri da una planimetria PDF vettoriale). Uso in [PROGRAMMA_INTERNI.md](../../../../PROGRAMMA_INTERNI.md).
