@@ -27,7 +27,7 @@ import bpy, bmesh, json, math, os, sys
 from mathutils import Matrix, Vector, kdtree, geometry as mgeo
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comune import argomenti, registro, z_piano, rendi_camere
-import ifcopenshell, ifcopenshell.geom
+import ifcopenshell, ifcopenshell.geom, ifcopenshell.util.element as ue, ifcopenshell.util.placement as up
 from shapely import affinity
 from shapely.geometry import LineString, MultiPoint, Point, Polygon
 from shapely.ops import unary_union
@@ -143,6 +143,23 @@ def oggetto(el, W, T, g, mid, nome=None, villa=None):
         if NV > 1: coll(f"Villa {villa + 1}").objects.link(ob)
     return ob
 
+def dati_porta(ob, el, Mv):
+    """vano, spessore del muro, tipo e verso di apertura della porta, come proprietà dell'oggetto (servono a
+    finiture_interni.py). Assi locali dell'IFC: x lungo la larghezza, y normale al muro, origine a un capo della soglia.
+    Regola letta sugli archi delle planimetrie di Edificius (9 porte su 9): l'anta apre verso +y; la cerniera è a
+    x = larghezza, oppure a x = 0 se il Pset di Edificius IFC_Pset_Geometria ha "Inverti (dx/sx)"."""
+    Mw = Mv @ Matrix(up.get_local_placement(el.ObjectPlacement).tolist()); tipo = ue.get_type(el)
+    ys = [-0.02, 0.08]
+    for r in el.Representation.Representations:                      # impronta in pianta: da qui lo spessore del muro
+        if r.RepresentationIdentifier != "FootPrint": continue
+        yy = [p.Coordinates[1] for it in r.Items for e in getattr(it, "Elements", []) if e.is_a("IfcPolyline") for p in e.Points]
+        if yy: ys = [min(yy), max(yy)]
+    ob["porta_origine"] = list(Mw.translation); ob["porta_x"] = list(Mw.col[0].xy.normalized()); ob["porta_y"] = list(Mw.col[1].xy.normalized())
+    ob["porta_larghezza"] = float(el.OverallWidth or 0.8); ob["porta_altezza"] = float(el.OverallHeight or 2.1); ob["porta_muro_y"] = ys
+    ob["porta_tipo"] = str(getattr(tipo, "OperationType", None) or getattr(el, "OperationType", None) or "SINGLE_SWING_RIGHT")
+    ob["porta_modello"] = str(getattr(tipo, "Name", "") or "")
+    ob["porta_cerniera_a_zero"] = bool(ue.get_psets(el).get("IFC_Pset_Geometria", {}).get("Inverti (dx/sx)", False))
+
 # ------------------------------------------------------------------ 1) marciapiede di progetto
 # prima degli altri elementi: le quote dei cancelli si leggono sul marciapiede
 MARC_POL, MARC_Z = [], []
@@ -212,7 +229,8 @@ for el, g in forme:
         continue
     c_ = centro(V)
     if not PERIM.contains(c_): n_fuori += 1; log("fuori dal lotto, non importato:", el.is_a(), el.Name); continue
-    kv = villa_di(c_.x, c_.y); oggetto(el, [MV[kv] @ p for p in V], T, g, mid, villa=kv); n_ok += 1
+    kv = villa_di(c_.x, c_.y); ob = oggetto(el, [MV[kv] @ p for p in V], T, g, mid, villa=kv); n_ok += 1
+    if el.is_a("IfcDoor"): dati_porta(ob, el, MV[kv])
 for kv in range(NV):
     if not SITO[kv] or not SITO_G: continue
     W = [MV[kv] @ p for t in SITO[kv] for p in t]; T = [(3 * i, 3 * i + 1, 3 * i + 2) for i in range(len(SITO[kv]))]

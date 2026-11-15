@@ -342,8 +342,11 @@ def interni():
         percorso(nome, "interni", punti, mire, I["focale_mm"], libero=I["spazio_libero_m"])
         PERCORSI[-1]["stanze"] = [vani[k]["nome"] for k in comp]; PERCORSI[-1]["porte_aperte"] = sorted(porte[kp]["ob"] for kp in usate)
         log(f"  {nome}: ingresso {porte[kp0]['ob']} ({porte[kp0]['larg']:.2f} m) → {stanze}; porte aperte {len(usate)}")
+        ribassati = [Polygon(list(zip(list(o["controsoffitto_anello"])[0::2], list(o["controsoffitto_anello"])[1::2]))) for o in scn.objects if "controsoffitto_anello" in o]
         for k in comp:                                                   # luce a soffitto, potenza per superficie
-            v = vani[k]; ld = bpy.data.lights.new("Luce " + v["nome"], "AREA"); ld.shape = "DISK"; ld.size = 0.6
+            v = vani[k]
+            if any(q.contains(Point(v["centro"].x, v["centro"].y)) for q in ribassati): continue      # controsoffitto: ha già i suoi faretti
+            ld = bpy.data.lights.new("Luce " + v["nome"], "AREA"); ld.shape = "DISK"; ld.size = 0.6
             ld.energy = I["luce_w_m2"] * v["pol"].area; ld.color = I["luce_colore"]
             lo = bpy.data.objects.new(f"Luce {v['nome']} v{villa}", ld); coll("Luci interni").objects.link(lo)
             lo.location = (v["centro"].x, v["centro"].y, v["z1"] - 0.15)

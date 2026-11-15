@@ -437,8 +437,9 @@
    "vano": "Soggiorno",
    "tipo": "zona_giorno",
    "posti_tavolo": 4,
-   "distanza_porte_m": 0.9,
-   "_nota": "da disporre con le regole: divano di fronte alla parete TV, tavolo da 4 allungabile, lontano dalle porte (Andrea, 2026-11-15)"
+   "distanza_porte_m": 1.0,
+   "_nota": "Andrea, 2026-11-15: tavolo da 4 allungabile, addossato al muro in comune con la camera singola; parete TV, divano e tavolino spostati verso la vetrata di quanto serve; passaggio libero davanti alla porta del disimpegno",
+   "tavolo_contro_vano": "Camera Singola"
   }
  ]
 }

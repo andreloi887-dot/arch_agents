@@ -126,8 +126,13 @@ Script in `skills/rilievo-urbano/scripts/blender/` (vedi il README lì), tutti s
   arredi (l'IFC ha solo i sanitari), materiali PBR degli interni.
 - Villa A, interni (2026-11-15): `finiture_interni.py` (pavimento Marazzi Room Beige 100×100 posato lungo i muri,
   perlinato, orditura a vista con travi d'incontro, travetti 10×16 a 70 cm, travi perpendicolari sopra gli infissi) e
-  `arredi_interni.py` (15 ingombri dalla planimetria di Andrea in `arredi.json`, più divano e tavolo da 6 con le
+  `arredi_interni.py` (15 ingombri dalla planimetria di Andrea in `arredi.json`, più divano e tavolo con le
   regole). Mobili parametrici: sedute e tessili da sostituire con modelli di libreria. Il tetto dell'IFC ha 7 linee
   d'incontro non a 45°: da correggere in Edificius perché i travetti si incontrino ovunque a passo costante.
+- Villa A, dettagli (2026-11-15): `finiture_interni.py` fa anche pavimento continuo tra le stanze, battiscopa in gres
+  da 7 cm (bagni esclusi), porte interne rifatte (imbotte, coprifilo da 5 cm, anta aperta con il verso letto dall'IFC di
+  Edificius e verificato sugli archi della planimetria, scorrevole a scomparsa in cucina), controsoffitto del disimpegno
+  a 2,40 m con faretti LED e griglia di ripresa, bocchette di immissione sopra le porte delle stanze. Tavolo da 4
+  addossato al muro verso la camera singola, parete TV e divano spostati verso la vetrata (`arredi.json`).
 - Installati: Blender 5.2 + Bonsai 0.9.0, Unreal Engine 5.8, FFmpeg.
 - Fasi 3–6 ancora da costruire.

@@ -1061,8 +1061,37 @@
   ],
   "finiture": {
    "_nota": "Andrea, 2026-11-15. Soffitti: falde in legno con travi a vista e perlinato, avorio chiaro (sezioni e interasse da confermare). Pavimenti: Marazzi Room Beige 100x100 rettificato (nella foto di riferimento è la versione Strutturato, cod. MP6M), colore letto dalla foto del produttore.",
-   "soffitto": {"colore": "#EFE8D6"},
-   "pavimento": {"colore": "#BFAE95", "formato_m": [1.0, 1.0], "fuga_mm": 2.0}
+   "soffitto": {
+    "colore": "#EFE8D6"
+   },
+   "pavimento": {
+    "colore": "#BFAE95",
+    "formato_m": [
+     1.0,
+     1.0
+    ],
+    "fuga_mm": 2.0
+   },
+   "battiscopa": {
+    "altezza_m": 0.07,
+    "escludi": [
+     "Bagno"
+    ]
+   },
+   "porte": {
+    "coprifilo_m": 0.05,
+    "colore": "#F1EEE6"
+   },
+   "controsoffitto": {
+    "vani": [
+     "Dis"
+    ],
+    "altezza_m": 2.4,
+    "bocchette_escludi": [
+     "Bagno"
+    ]
+   },
+   "_nota_2": "Andrea, 2026-11-15. Pavimento continuo tra le stanze, senza soglie. Battiscopa dello stesso gres, 7 cm, ovunque tranne nei bagni. Porte interne moderne con coprifilo discreto, versi di apertura come in planimetria, doppia scorrevole a scomparsa in cucina. Disimpegno controsoffittato a 2,40 m con faretti LED tondi e griglie di ripresa (sopra c'è la macchina del clima); bocchetta di immissione in ogni stanza sopra la porta (bagni esclusi: ipotesi da confermare)."
   },
   "margine_m": 1.0,
   "_nota_quota": "dz agganciato a Via della Menta (Andrea, 2026-11-07): mediana z_rilievo - z_IFC del terreno Edificius su carreggiata e marciapiede entro 7 m dall'asse DBGT, n 1589, p25/p75 3,67/4,02",
