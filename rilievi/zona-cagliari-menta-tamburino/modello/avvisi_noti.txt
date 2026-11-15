@@ -1,0 +1,12 @@
+AVVISO villa 1: Falda 4294967270 e Falda 4294967267 si incontrano su una linea non a 45°: passo rispettato, incontro dei travetti solo approssimato
+AVVISO villa 1: Falda 4294967270 e Falda 4294967265 si incontrano su una linea non a 45°: passo rispettato, incontro dei travetti solo approssimato
+AVVISO villa 1: Falda 4294967265 e Falda 4294967262 si incontrano su una linea non a 45°: passo rispettato, incontro dei travetti solo approssimato
+AVVISO villa 1: Falda 4294967264 e Falda 4294967263 si incontrano su una linea non a 45°: passo rispettato, incontro dei travetti solo approssimato
+AVVISO villa 1: Falda 4294967263 e Falda 4294967262 si incontrano su una linea non a 45°: passo rispettato, incontro dei travetti solo approssimato
+AVVISO villa 1: Falda 4294967265 e Falda 4294967264 si incontrano su una linea non a 45°: passo rispettato, incontro dei travetti solo approssimato
+AVVISO villa 1: Falda 4294967273 e Falda 4294967262 si incontrano su una linea non a 45°: passo rispettato, incontro dei travetti solo approssimato
+AVVISO 848 mesh su 1495 senza UV: in Unreal le texture non si applicano
+AVVISO Falda 4294967272: sopra Finestra 226332 manca il travetto portante a destra: non aggiunto (lì la falda è lunga solo 0.25 m)
+AVVISO Falda 4294967275: sopra Finestra 11528 manca il travetto portante a sinistra: non aggiunto (uscirebbe dal bordo della falda)
+AVVISO Falda 4294967275: sopra Finestra 14586 manca il travetto portante a sinistra: non aggiunto (a un passo di distanza la falda è già finita)
+AVVISO Falda 4294967277: sopra Finestra 217921 manca il travetto portante a destra: non aggiunto (a un passo di distanza la falda è già finita)

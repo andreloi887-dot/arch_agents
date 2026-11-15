@@ -10,6 +10,7 @@ rilievi/*/modello/uscita_sketchup/
 rilievi/*/geometria/dsm_2008/
 rilievi/*/geometria/dsm/
 rilievi/*/modello/uscita_blender/
+rilievi/*/modello/uscita_blender_*/
 libreria/*/
 
 # Chiavi dei modelli gratuiti (mai in git)

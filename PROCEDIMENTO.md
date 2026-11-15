@@ -105,7 +105,8 @@ Script in `skills/rilievo-urbano/scripts/blender/` (vedi il README lì), tutti s
       dettagli LOD3 (infissi, balconi, cancelli, recinzioni, segnaletica, lampioni), controlli automatici
       (`verifica_contesto.py`); lezioni in `skills/rilievo-urbano/references/08-lezioni-apprese.md`.
 - [ ] Prova del motore su un secondo lotto.
-- [ ] Scrivere gli agenti e le skill per l'assemblaggio in Blender e per i video in Unreal.
+- [x] Skill e agente per l'assemblaggio in Blender e il passaggio a Unreal (2026-11-15): `skills/filiera-progetto/`,
+      agente `filiera-progetto`, comando unico `skills/rilievo-urbano/scripts/filiera.py`. Da aggiungere: resa e video in Unreal.
 - [ ] Prova completa su un progetto vero.
 
 ## Stato
@@ -138,4 +139,6 @@ Script in `skills/rilievo-urbano/scripts/blender/` (vedi il README lì), tutti s
   fissate da Andrea, controlli, limiti e prossimi passi. Cucina a moduli con elettrodomestici. Si lavora solo sulla
   villa A finché non è approvata.
 - Installati: Blender 5.2 + Bonsai 0.9.0, Unreal Engine 5.8, FFmpeg.
-- Fasi 3–6 ancora da costruire.
+- Unreal (2026-11-15, sul PC): import USD della villa A verificato contro Blender (luci, triangoli, materiali,
+  ingombro, camere, fps) con `filiera.py`; Cycles su GPU OptiX (4–5 s a vista). Lezioni in PROGRAMMA_INTERNI §10.
+- Da costruire: resa in Unreal (Nanite, materiali di libreria, Movie Render Queue sulla GPU) e montaggio (fase 6).

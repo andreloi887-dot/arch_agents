@@ -30,17 +30,12 @@ I materiali sono procedurali (nodi Blender): per Unreal vanno rifatti come mater
 import bpy, bmesh, json, math, os, sys
 from mathutils import Matrix, Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from comune import argomenti, registro
+from comune import avvio, lin, svuota
 from shapely.geometry import LineString, Point, Polygon
 from shapely.ops import unary_union
 
-argv, opt = argomenti()
-MOD = os.path.abspath(argv[0]) if argv else os.getcwd()
-USCITA = os.path.join(MOD, opt("--uscita", "uscita_blender"))
-if opt("--blend"): bpy.ops.wm.open_mainfile(filepath=os.path.join(USCITA, opt("--blend")))
+argv, opt, MOD, USCITA, log, scn = avvio("finiture_interni.log")
 L = json.load(open(os.path.join(MOD, "lotto.json"), encoding="utf-8"))
-log = registro(os.path.join(USCITA, "finiture_interni.log"))
-scn = bpy.context.scene
 
 PRED = {"esterni": ["Cortile", "Balcone", "Veranda", "Terrazza", "Portico", "Giardino"],
         "soffitto": {"nomi": ["Falda"], "colore": "#EFE8D6", "doga_m": 0.12,
@@ -56,9 +51,6 @@ def unisci(a, b):
     return {k: (unisci(a[k], b[k]) if isinstance(a[k], dict) and isinstance(b.get(k), dict) and k != "per_vano" else b.get(k, a[k])) for k in a}
 F = unisci(PRED, {k: v for k, v in L.get("progetto_ifc", {}).get("finiture", {}).items() if not k.startswith("_")})
 
-def lin(h):
-    h = h.lstrip("#"); c = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
-    return [x / 12.92 if x <= 0.04045 else ((x + 0.055) / 1.055) ** 2.4 for x in c] + [1.0]
 
 def materiale(nome, colore, ruvidita, modulo, fuga_m, scuro=0.55, sfalsato=0.0):
     """Principled con un reticolo procedurale (piastrelle o doghe) sulle coordinate UV in metri."""
@@ -81,7 +73,7 @@ def coll(nome):
     if not c: c = bpy.data.collections.new(nome); radice.children.link(c)
     return c
 FIN = coll("PRG_Finiture")
-for o in list(FIN.objects): bpy.data.objects.remove(o, do_unlink=True)      # rilancio: le finiture si rifanno
+svuota(bpy, FIN.objects)      # rilancio: le finiture si rifanno
 
 # ------------------------------------------------------------------------------------------------ vani
 vani = []
@@ -470,6 +462,28 @@ for villa in sorted({f["villa"] for f in falde}):
                     f["travetti"].append({"a": a, "b": b, "s": s, "fermo": None})
         for e in f["travetti"]:
             for capo in "ab": e["giunto_" + capo] = any(j.distance(Point(e[capo].x, e[capo].y)) < 0.25 for j in f["giunti"])
+def portante_nuovo(f, s_c, v_st, infissi):
+    """travetto intero della falda f all'ascissa s_c che copre la quota v_st lungo la pendenza, solo se la posizione è
+    pulita: dentro la falda con tutto lo spessore, lontano dagli altri travetti, capi non sopra un infisso.
+    Restituisce (travetto, None) oppure (None, motivo)."""
+    g, t = f["g"], f["t"]
+    ln = LineString([(t.x * s_c - g.x * 60, t.y * s_c - g.y * 60), (t.x * s_c + g.x * 60, t.y * s_c + g.y * 60)])
+    for pz in linee(ln.intersection(f["zona"])):
+        a, b = Vector(pz.coords[0]), Vector(pz.coords[-1]); va, vb = sorted((a.dot(g), b.dot(g)))
+        if not va - 0.1 <= v_st <= vb + 0.1: continue
+        if pz.length < 0.6: return None, f"lì la falda è lunga solo {pz.length:.2f} m"
+        if not f["zona"].buffer(0.01).contains(pz.buffer(B_ / 2, cap_style=2)): return None, "uscirebbe dal bordo della falda"
+        if any(abs(e["s"] - s_c) < 0.4 * INT and min(vb, max(e["a"].dot(g), e["b"].dot(g))) - max(va, min(e["a"].dot(g), e["b"].dot(g))) > 0.3 for e in f["travetti"]):
+            return None, "si sovrapporrebbe a un altro travetto"
+        e = {"a": a, "b": b, "s": s_c, "fermo": None}
+        for capo, altro in (("a", "b"), ("b", "a")):
+            q = e[capo]; e["giunto_" + capo] = any(j.distance(Point(q.x, q.y)) < 0.25 for j in f["giunti"])
+            if e["giunto_" + capo]: continue
+            fuori = (q - e[altro]).normalized(); zq = zf(f, q.x, q.y); sonda = LineString([tuple(q - fuori * 0.05), tuple(q + fuori * 0.7)])
+            if any(x["pol"].intersects(sonda) and zq - 1.8 <= x["z1"] <= zq + 0.3 for x in infissi): return None, "finirebbe anch'esso sopra un infisso"
+        return e, None
+    return None, "a un passo di distanza la falda è già finita"
+n_port = 0
 for villa, DV in VILLE.items():
     FV = DV["FV"]
     # 3: infissi sotto l'appoggio → travetto arretrato e trave perpendicolare
@@ -495,8 +509,17 @@ for villa, DV in VILLE.items():
             portanti = [e for e in f["travetti"] if not e["fermo"] and min(e["a"].dot(g), e["b"].dot(g)) - 0.1 <= v_st <= max(e["a"].dot(g), e["b"].dot(g)) + 0.1]
             sx = max((e["s"] for e in portanti if e["s"] < min(s_g) - 0.05), default=None)
             dx = min((e["s"] for e in portanti if e["s"] > max(s_g) + 0.05), default=None)
-            if sx is None or dx is None:
-                avvisi.append(f"{f['nome']}: sopra {nome_i} manca il travetto portante a {'sinistra' if sx is None else 'destra'} (infisso al bordo della falda)")
+            # infisso al bordo della falda: da un lato non c'è un travetto intero su cui scaricare la trave perpendicolare.
+            # Se c'è una posizione pulita a un passo dall'ultimo travetto fermato, lo si aggiunge (Andrea, 2026-11-15)
+            for lato, s_c in (("sinistra", min(s_g) - INT), ("destra", max(s_g) + INT)):
+                if (sx if lato == "sinistra" else dx) is not None: continue
+                nuovo, motivo = portante_nuovo(f, s_c, v_st, infissi)
+                if nuovo is None:
+                    avvisi.append(f"{f['nome']}: sopra {nome_i} manca il travetto portante a {lato}: non aggiunto ({motivo})"); continue
+                f["travetti"].append(nuovo); n_port += 1
+                log(f"{f['nome']}: sopra {nome_i} aggiunto il travetto portante a {lato}, lungo {(nuovo['b'] - nuovo['a']).length:.2f} m")
+                if lato == "sinistra": sx = s_c
+                else: dx = s_c
             sx = sx if sx is not None else min(s_g); dx = dx if dx is not None else max(s_g)
             if dx - sx < 0.1: continue
             trave(villa, t * sx + g * v_st, t * dx + g * v_st, B_, H_, lambda x, y, f=f: zf(f, x, y)); n_camb += 1
@@ -507,7 +530,7 @@ for villa, (V, Fc) in travi.items():
     bm = bmesh.new(); bm.from_mesh(mt); bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:]); bm.to_mesh(mt); bm.free()
     ot = bpy.data.objects.new(f"Orditura tetto villa {villa}", mt); ot["villa"] = villa; ot["finitura"] = "orditura"; FIN.objects.link(ot)
 log("falde con perlinato", len(falde), "| travi d'incontro (colmi, displuvi, compluvi)", n_giunti, f"{BD * 100:.0f}×{HD * 100:.0f} cm",
-    "| travetti", n_trav, f"{B_ * 100:.0f}×{H_ * 100:.0f} cm a {INT * 100:.1f} cm", "| travi perpendicolari sopra gli infissi", n_camb, "| travetti doppi scartati", n_doppi)
+    "| travetti", n_trav, f"{B_ * 100:.0f}×{H_ * 100:.0f} cm a {INT * 100:.1f} cm", "| travi perpendicolari sopra gli infissi", n_camb, "| travetti portanti aggiunti", n_port, "| travetti doppi scartati", n_doppi)
 for a_ in avvisi: log("AVVISO", a_)
 
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(USCITA, "contesto_progetto.blend"))

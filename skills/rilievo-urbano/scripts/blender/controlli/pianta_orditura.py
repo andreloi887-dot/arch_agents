@@ -2,7 +2,8 @@ import bpy, math, sys
 import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
 from shapely.geometry import MultiPoint, Polygon
 from shapely.ops import unary_union
-blend, villa, out = sys.argv[1], int(sys.argv[2]), sys.argv[3]
+arg = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:]   # blender -b -P ... -- oppure python
+blend, villa, out = arg[0], int(arg[1]), arg[2]
 bpy.ops.wm.open_mainfile(filepath=blend)
 fig,ax=plt.subplots(figsize=(13,13))
 for o in bpy.data.objects:

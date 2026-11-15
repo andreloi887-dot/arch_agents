@@ -24,24 +24,16 @@ dentro i mobili.
 import bpy, json, math, os, sys
 from mathutils import Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from comune import argomenti, registro
+from comune import avvio, lin, svuota
 from shapely.geometry import MultiPoint, Point, Polygon
 from shapely.ops import unary_union
 from shapely.prepared import prep
 
-argv, opt = argomenti()
-MOD = os.path.abspath(argv[0]) if argv else os.getcwd()
-USCITA = os.path.join(MOD, opt("--uscita", "uscita_blender"))
-if opt("--blend"): bpy.ops.wm.open_mainfile(filepath=os.path.join(USCITA, opt("--blend")))
+argv, opt, MOD, USCITA, log, scn = avvio("arredi_interni.log")
 A = json.load(open(os.path.join(MOD, "arredi.json"), encoding="utf-8"))
-log = registro(os.path.join(USCITA, "arredi_interni.log"))
-scn = bpy.context.scene
 ST = {"legno": "#C8A47A", "laccato": "#EDE7DA", "tessuto": "#D9D0C1", "tessuto_accento": "#B98466", "piano_cucina": "#DAD5CC",
       "metallo": "#3A3632", "nero": "#141414", "tappeto": "#CFC4B2", "inox": "#C4C4C0", **A.get("stile", {})}
 
-def lin(h):
-    h = h.lstrip("#"); c = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
-    return [x / 12.92 if x <= 0.04045 else ((x + 0.055) / 1.055) ** 2.4 for x in c] + [1.0]
 RUV = {"legno": 0.45, "laccato": 0.35, "tessuto": 0.95, "tessuto_accento": 0.95, "piano_cucina": 0.3, "metallo": 0.4, "nero": 0.25, "tappeto": 1.0, "inox": 0.3}
 MATS = {}
 def mat(k):
@@ -56,7 +48,7 @@ def mat(k):
 radice = bpy.data.collections.get("PROGETTO") or scn.collection
 ARR = bpy.data.collections.get("PRG_Arredi")
 if not ARR: ARR = bpy.data.collections.new("PRG_Arredi"); radice.children.link(ARR)
-for o in list(ARR.objects): bpy.data.objects.remove(o, do_unlink=True)
+svuota(bpy, ARR.objects)
 
 # ------------------------------------------------------------------------------------------------ vani e infissi
 vani = []
@@ -68,16 +60,14 @@ for ob in scn.objects:
     if pol.is_empty: continue
     if pol.geom_type != "Polygon": pol = max(pol.geoms, key=lambda q: q.area)
     vani.append({"nome": ob["vano"], "pol": pol, "z0": z0 + 0.004, "villa": int(ob.get("villa", 1))})
-infissi, porte_, interne_, infissi_z = [], [], [], []                       # interne_: porte tra due stanze (rifatte da finiture_interni.py)
+porte_, interne_, infissi_z = [], [], []                       # interne_: porte tra due stanze (rifatte da finiture_interni.py)
 for ob in scn.objects:
     if ob.get("ifc_classe") in ("IfcWindow", "IfcDoor") and ob.type == "MESH" and ob.data.vertices:
         r_ = MultiPoint([(ob.matrix_world @ v.co).xy[:] for v in ob.data.vertices]).minimum_rotated_rectangle
         if r_.geom_type != "Polygon" or r_.length > 14: continue          # cancelli e recinzioni non contano
-        infissi.append(r_); zz = [(ob.matrix_world @ v.co).z for v in ob.data.vertices]; infissi_z.append((r_, min(zz), max(zz)))
+        zz = [(ob.matrix_world @ v.co).z for v in ob.data.vertices]; infissi_z.append((r_, min(zz), max(zz)))
         if ob["ifc_classe"] == "IfcDoor": porte_.append(r_)
         if ob.get("sostituita"): interne_.append(r_)
-INF = unary_union(infissi) if infissi else Polygon()
-PORTE = unary_union(porte_) if porte_ else Polygon()
 
 # soffitto sopra un punto: la prima superficie di falde, travi a vista e controsoffitti che si incontra salendo
 from mathutils.bvhtree import BVHTree
@@ -92,6 +82,7 @@ def soffitto(x, y, z_da, pred=2.7):
     return h[0].z if h[0] is not None else z_da + pred
 
 # ------------------------------------------------------------------------------------------------ costruzione
+POSATI = []   # un record per mobile o lampada: scritto in arredi_posati.json
 class Pezzo:
     """un mobile: volumi rigidi (spigolo smussato 4 mm) e volumi morbidi (cuscini, materassi: smusso largo)."""
     def __init__(s, o, u, v, z0): s.o, s.u, s.v, s.z0 = Vector(o), Vector(u), Vector(v), z0; s.b = {"duro": ([], [], []), "morbido": ([], [], [])}; s.m = []
@@ -113,12 +104,22 @@ class Pezzo:
             j = (i + 1) % seg; F.append((n + i, n + j, n + seg + j, n + seg + i)); M.append(s._m(k))
         F += [tuple(n + i for i in reversed(range(seg))), tuple(n + seg + i for i in range(seg))]; M += [s._m(k)] * 2
     def fine(s, nome, villa, tipo, ingombro):
+        # per Unreal (arredi_posati.json): dove sta il pezzo, com'è girato e quanto misura, per metterci un modello di libreria
+        tutti = [Vector(q) for V, _, _ in s.b.values() for q in V]
+        if tutti:
+            aa = [(q.xy - s.o).dot(s.u) for q in tutti]; bb = [(q.xy - s.o).dot(s.v) for q in tutti]; zz = [q.z for q in tutti]
+            cen = s.o + s.u * (min(aa) + max(aa)) / 2 + s.v * (min(bb) + max(bb)) / 2
+            POSATI.append({"nome": None, "tipo": tipo, "villa": villa, "centro_m": [round(cen.x, 4), round(cen.y, 4), round(min(zz), 4)],
+                           "lungo": [round(s.u.x, 5), round(s.u.y, 5)], "fronte": [round(s.v.x, 5), round(s.v.y, 5)],
+                           "misure_m": [round(max(aa) - min(aa), 3), round(max(bb) - min(bb), 3), round(max(zz) - min(zz), 3)]})
+            if getattr(s, "verso", None) is not None: POSATI[-1]["verso"] = [round(s.verso.x, 5), round(s.verso.y, 5)]
         for parte, (V, F, M) in s.b.items():
             if not V: continue
             me = bpy.data.meshes.new(nome); me.from_pydata(V, [], F)
             for k in s.m: me.materials.append(mat(k))
             me.polygons.foreach_set("material_index", M); me.update()
             ob = bpy.data.objects.new(nome + ("" if parte == "duro" else " (tessili)"), me); ARR.objects.link(ob)
+            if POSATI and POSATI[-1]["nome"] is None: POSATI[-1]["nome"] = ob.name     # il nome vero (Blender aggiunge .001 ai doppi)
             ob["villa"] = villa; ob["arredo"] = tipo; ob["ingombro"] = [c for q in ingombro.exterior.coords[:-1] for c in q]
             bv = ob.modifiers.new("Smusso", "BEVEL"); bv.limit_method = "ANGLE"
             bv.width, bv.segments = (0.004, 2) if parte == "duro" else (0.035, 4)
@@ -159,6 +160,7 @@ def armadio(p, L, W, H=2.40):
 
 def letto(p, L, W, v, c, u):
     testata_meno = libero(v, c - u * (L / 2 + 0.2)) <= libero(v, c + u * (L / 2 + 0.2)); s = 1 if testata_meno else -1
+    p.verso = -u * s                                   # dai piedi alla testata: serve a Unreal per girare il modello di libreria
     def U(a, b): return (min(s * a, s * b), max(s * a, s * b))
     p.scat(*U(-L / 2 + 0.08, L / 2 - 0.08), -W / 2 + 0.08, W / 2 - 0.08, 0, 0.10, "metallo")
     p.scat(*U(-L / 2, L / 2), -W / 2, W / 2, 0.10, 0.30, "legno"); p.scat(*U(-L / 2, -L / 2 + 0.05), -W / 2, W / 2, 0.30, 1.05, "legno")
@@ -313,7 +315,6 @@ def cucina(nome, anello, v, villa):
             if ruolo in ("cottura", "cottura_forno"): box(a0 + 0.02, a1 - 0.02, 0.012, 0.47, ZA - 0.035, ZA, "inox")     # cappa sotto il pensile
     p.fine(nome, villa, "cucina", pol)
     log(f"{nome}: moduli", ", ".join(f"{m['ruolo'] or ('angolo' if m['angolo'] else 'base')}{'' if not m['finestra'] else ' (finestra)'}" for m in moduli))
-    return len(rett)
 
 def zona_giorno(a, v, villa, tv):
     """divano, tavolino e tappeto di fronte alla parete TV; tavolo da pranzo nel posto libero più ampio."""
@@ -447,7 +448,8 @@ for a in A["arredi"]:
     if a["tipo"] != "zona_giorno": continue
     villa = int(a.get("villa", 1)); chiave = next((k for k in tele_tv if k[0] == villa and k[1].startswith(a["vano"])), None)
     if not chiave: log("AVVISO: zona giorno senza parete TV in", a["vano"]); continue
-    v = next(x for x in vani if x["villa"] == villa and x["nome"] == chiave[1] and x["pol"].contains(Point(tele_tv[chiave][0])))
+    v = next((x for x in vani if x["villa"] == villa and x["nome"] == chiave[1] and x["pol"].contains(Point(tele_tv[chiave][0]))), None)
+    if v is None: log("AVVISO: parete TV fuori dal vano", chiave[1]); continue
     ok = zona_giorno(a, v, villa, tele_tv[chiave]); conta["zona_giorno"] = conta.get("zona_giorno", 0) + 1
     log("zona giorno villa", villa, "| divano", ok[0], "| tavolo", ok[1])
 # ------------------------------------------------------------------------------------------------ punti luce
@@ -504,5 +506,10 @@ for o in scn.objects:
         if int(m_.get("villa", 1)) == int(o.get("villa", 1)) and ing.intersects(bt) and not m_.name.endswith("(tessili)"):
             log(f"AVVISO: {o.name} aprendosi urta {m_.name} ({ing.intersection(bt).area:.2f} m² di sovrapposizione)")
 log("arredi:", json.dumps(conta, ensure_ascii=False), "| oggetti", len(ARR.objects))
+json.dump({"_nota": "mobili e lampade posati da arredi_interni.py, coordinate locali del contesto in metri (x Est, y Nord, z quota). "
+                    "centro_m = centro in pianta e quota d'appoggio (per le lampade: punto più basso); lungo = asse lungo; fronte = lato verso la stanza; verso = direzione principale se il pezzo ne ha una (letto: dai piedi alla testata); "
+                    "misure_m = [lungo, profondo, alto]. In Unreal: x = x*100, y = -y*100, z = z*100.", "arredi": POSATI},
+          open(os.path.join(USCITA, "arredi_posati.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+log("arredi_posati.json:", len(POSATI), "pezzi")
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(USCITA, "contesto_progetto.blend"))
 log("salvato", os.path.join(USCITA, "contesto_progetto.blend")); log("fine")

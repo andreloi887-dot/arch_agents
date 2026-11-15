@@ -79,7 +79,7 @@ DESCRIVI                                   SKETCHUP                       VERIFI
 | Script | Uso |
 |---|---|
 | `contesto/` (README) | Motore: `prepara_lotto.py` (scarica i dati), `contesto.py` (lotto.json → contesto.json, rilancia `scena.py`), `verifica_contesto.py` (controlli) |
-| `blender/` (README) | `importa_contesto.py`, `allinea_ifc.py`, `importa_progetto.py`: scena Blender del contesto e del progetto |
+| `blender/` (README) | `allinea_ifc.py` e scena Blender; dal progetto IFC in poi (interni, USD, Unreal) vale la skill `filiera-progetto` con `filiera.py` |
 | `sv_edifici.py` | Tre riprese Street View mirate per ogni edificio |
 | `gmaps.py geocode` | Indirizzo → lat/lng |
 | `gmaps.py sv-meta` | Metadata Street View (gratuito): pano, posizione reale, data |

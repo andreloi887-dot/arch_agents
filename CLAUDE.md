@@ -2,6 +2,8 @@
 
 Rispondi in italiano. Procedimento di progetto: [PROCEDIMENTO.md](PROCEDIMENTO.md).
 Interni (finiture, porte, arredi, viste): [PROGRAMMA_INTERNI.md](PROGRAMMA_INTERNI.md).
+Filiera Blender → Unreal: skill [filiera-progetto](skills/filiera-progetto/SKILL.md), agente `filiera-progetto`, un comando:
+`python skills/rilievo-urbano/scripts/filiera.py rilievi/<zona>/modello` (riepilogo compatto, niente ricerche nei log).
 
 ## Scelta del modello in base al compito
 

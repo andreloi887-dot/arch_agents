@@ -8,20 +8,17 @@ riesportare da sole dopo una modifica ai percorsi:
   scena.usdc    geometria, materiali (USD Preview Surface, texture copiate in textures/), sole; senza camere.
                 Solo gli oggetti visibili in render: il contesto nascosto sotto il progetto non esce
   camere.usdc   le camere PERCORSO_* con l'animazione, un campione per fotogramma
-Metri, asse Z in alto, nomi senza caratteri fuori ASCII (Unreal li rifiuta). Controllo finale: numero di mesh,
-materiali e camere riletti dai file, nel log.
+Metri, asse Z in alto, nomi senza caratteri fuori ASCII (Unreal li rifiuta); framesPerSecond delle camere allineato al
+fps della scena (Blender lo lascia a 24). Controllo finale: tipi riletti dai file nel log, e usd/riferimento.json con
+luci, triangoli, materiali distinti, ingombro in cm (assi di Unreal), camere, fps e l'impronta della geometria
+(cambia solo se cambia il risultato; dettaglio per mesh in usd/impronta_mesh.json). filiera.py lo confronta con Unreal.
 """
-import bpy, os, sys
+import bpy, json, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from comune import argomenti, registro
+from comune import avvio
 
-argv, opt = argomenti()
-MOD = os.path.abspath(argv[0]) if argv else os.getcwd()
-USCITA = os.path.join(MOD, opt("--uscita", "uscita_blender"))
-if opt("--blend"): bpy.ops.wm.open_mainfile(filepath=os.path.join(USCITA, opt("--blend")))
+argv, opt, MOD, USCITA, log, scn = avvio("esporta_usd.log")
 USD = os.path.join(USCITA, "usd"); os.makedirs(USD, exist_ok=True)
-log = registro(os.path.join(USCITA, "esporta_usd.log"))
-scn = bpy.context.scene
 log("scena", bpy.data.filepath)
 
 COMUNI = dict(evaluation_mode="RENDER", allow_unicode=False, root_prim_path="/scena", convert_scene_units="METERS",
@@ -48,13 +45,62 @@ else:
     log("nessuna camera PERCORSO_*: lanciare prima percorsi_camera.py")
 
 try:
-    from pxr import Usd, UsdGeom
+    from pxr import Usd, UsdGeom, UsdShade
+    if f_camere:
+        # Blender scrive timeCodesPerSecond ma lascia framesPerSecond a 24: Unreal legge questo e fa la Level Sequence
+        # a 24 fps (provato in UE 5.8, 2026-11-15). Si allinea al fps della scena.
+        st = Usd.Stage.Open(f_camere); st.SetFramesPerSecond(scn.render.fps / scn.render.fps_base)
+        st.SetTimeCodesPerSecond(scn.render.fps / scn.render.fps_base); st.GetRootLayer().Save()
+    # riferimento per il controllo in Unreal (importa_usd.py scrive controllo_unreal.json con le stesse voci)
+    import hashlib, numpy as np
+    st = Usd.Stage.Open(f_scena); rif = {"luci": {}, "mesh": 0, "triangoli": 0, "mesh_senza_uv": 0}; per_mesh = {}
+    firme, mn, mx = set(), [1e12] * 3, [-1e12] * 3
+    for pr in Usd.PrimRange.Stage(st, Usd.TraverseInstanceProxies()):
+        t = pr.GetTypeName()
+        if t.endswith("Light"):
+            # Unreal: DistantLight → Directional, SphereLight con cono (ShapingAPI) → Spot, senza → Point
+            from pxr import UsdLux
+            k = {"DistantLight": "Directional", "RectLight": "Rect"}.get(t) or ("Spot" if pr.HasAPI(UsdLux.ShapingAPI) else "Point")
+            rif["luci"][k] = rif["luci"].get(k, 0) + 1
+        elif t == "Mesh" and UsdGeom.Imageable(pr).ComputeVisibility() != "invisible":
+            m = UsdGeom.Mesh(pr); rif["mesh"] += 1
+            # impronta della geometria: vertici al mm, trasformazione e materiale; cambia solo se cambia il risultato
+            pts = np.asarray(m.GetPointsAttr().Get() or [], dtype=np.float64)
+            mw = np.asarray(UsdGeom.Xformable(pr).ComputeLocalToWorldTransform(Usd.TimeCode.Default()), dtype=np.float64)
+            mb, _ = UsdShade.MaterialBindingAPI(pr).ComputeBoundMaterial()
+            h = hashlib.sha256(np.round(pts * 1000).astype(np.int64).tobytes() + np.round(mw * 1000).astype(np.int64).tobytes()
+                               + str(mb.GetPath() if mb else "").encode()).hexdigest()[:12]
+            per_mesh[str(pr.GetPath())] = h
+            rif["triangoli"] += sum(max(n - 2, 0) for n in (m.GetFaceVertexCountsAttr().Get() or []))
+            if not UsdGeom.PrimvarsAPI(pr).HasPrimvar("st"): rif["mesh_senza_uv"] += 1
+    for pr in st.Traverse():
+        if pr.GetTypeName() == "Material":     # Unreal accorpa i materiali uguali: si contano i contenuti distinti
+            firme.add(tuple(tuple(sorted((a.GetName(), str(a.Get())) for a in d.GetAttributes()
+                                         if a.GetName().startswith("inputs:") and not a.HasAuthoredConnections()))
+                            for d in Usd.PrimRange(pr) if d.GetTypeName() == "Shader"))
+    bb = UsdGeom.BBoxCache(Usd.TimeCode.Default(), ["default", "render"]).ComputeWorldBound(st.GetPseudoRoot()).ComputeAlignedRange()
+    # porte: nessuna può mancare in scena; le interne IFC sono nascoste solo perché rifatte con l'anta (sostituita)
+    rif["porte_nascoste"] = sorted(o.name for o in scn.objects if o.get("ifc_classe") == "IfcDoor" and o.hide_render and not o.get("sostituita"))
+    rif["porte"] = sum(1 for o in scn.objects if o.get("ifc_classe") == "IfcDoor")
+    rif["materiali_distinti"] = len(firme); rif["impronta"] = hashlib.sha256((json.dumps(sorted(per_mesh.items())) + repr(sorted(firme))).encode()).hexdigest()[:16]   # l'export cambia l'ordine dei prim: si ordina
+    # Unreal: centimetri e asse y ribaltato (mano sinistra)
+    rif["ingombro_cm"] = [[round(bb.GetMin()[0] * 100), round(-bb.GetMax()[1] * 100), round(bb.GetMin()[2] * 100)],
+                          [round(bb.GetMax()[0] * 100), round(-bb.GetMin()[1] * 100), round(bb.GetMax()[2] * 100)]]
+    if f_camere:
+        sc = Usd.Stage.Open(f_camere)
+        rif["camere"] = len(percorsi); rif["fps"] = sc.GetFramesPerSecond()
+        rif["fotogrammi"] = [int(sc.GetStartTimeCode()), int(sc.GetEndTimeCode())]
+    json.dump(rif, open(os.path.join(USD, "riferimento.json"), "w", encoding="utf-8"), indent=1)
+    # per capire cosa è cambiato quando l'impronta cambia: confrontare due copie di questo file
+    json.dump(per_mesh, open(os.path.join(USD, "impronta_mesh.json"), "w", encoding="utf-8"), indent=0)
     for f in filter(None, (f_scena, f_camere)):
-        st = Usd.Stage.Open(f); tipi = {}
-        for pr in st.Traverse(): tipi[pr.GetTypeName()] = tipi.get(pr.GetTypeName(), 0) + 1
-        log(os.path.basename(f), "| asse", UsdGeom.GetStageUpAxis(st), "| metri per unità", UsdGeom.GetStageMetersPerUnit(st),
-            "| fotogrammi", st.GetStartTimeCode(), "-", st.GetEndTimeCode(), "|",
-            ", ".join(f"{k or 'senza tipo'} {v}" for k, v in sorted(tipi.items())))
+        s2 = Usd.Stage.Open(f); tipi = {}
+        for pr in s2.Traverse(): tipi[pr.GetTypeName()] = tipi.get(pr.GetTypeName(), 0) + 1
+        log(os.path.basename(f), "| asse", UsdGeom.GetStageUpAxis(s2), "| metri per unità", UsdGeom.GetStageMetersPerUnit(s2),
+            "| fotogrammi", s2.GetStartTimeCode(), "-", s2.GetEndTimeCode(),
+            "| fps", s2.GetFramesPerSecond(), "|", ", ".join(f"{k or 'senza tipo'} {v}" for k, v in sorted(tipi.items())))
+    log("riferimento per Unreal", json.dumps(rif))
+    if rif["mesh_senza_uv"]: log(f"AVVISO {rif['mesh_senza_uv']} mesh su {rif['mesh']} senza UV: in Unreal le texture non si applicano")
 except ImportError:
-    log("controllo saltato: modulo pxr non disponibile in questo Python")
+    log("AVVISO controllo saltato: modulo pxr non disponibile, riferimento.json non scritto")
 log("fine")

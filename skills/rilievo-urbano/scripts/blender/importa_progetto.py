@@ -26,21 +26,17 @@ Salva <uscita>/contesto_progetto.blend; con --render rende le camere in <uscita>
 import bpy, bmesh, json, math, os, sys
 from mathutils import Matrix, Vector, kdtree, geometry as mgeo
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from comune import argomenti, registro, z_piano, rendi_camere
+from comune import avvio, z_piano, rendi_camere
 import ifcopenshell, ifcopenshell.geom, ifcopenshell.util.element as ue, ifcopenshell.util.placement as up
 from shapely import affinity
 from shapely.geometry import LineString, MultiPoint, Point, Polygon
 from shapely.ops import unary_union
 from shapely.strtree import STRtree
 
-argv, opt = argomenti()
-MOD = os.path.abspath(argv[0]) if argv else os.getcwd()
-USCITA = os.path.join(MOD, opt("--uscita", "uscita_blender"))
+argv, opt, MOD, USCITA, log, scn = avvio("importa_progetto.log")
 L = json.load(open(os.path.join(MOD, "lotto.json"), encoding="utf-8"))
 P = L["progetto_ifc"]
 CT = json.load(open(os.path.join(MOD, "contesto.json"), encoding="utf-8"))
-log = registro(os.path.join(USCITA, "importa_progetto.log"))
-scn = bpy.context.scene
 
 FILE = P["file"] if os.path.isabs(P["file"]) else os.path.normpath(os.path.join(MOD, P["file"]))
 f = ifcopenshell.open(FILE); log("IFC", FILE, f.schema)
@@ -59,7 +55,12 @@ for el in f.by_type("IfcProduct"):
     if not el.Representation or el.is_a("IfcSpace") or el.is_a("IfcOpeningElement"): continue
     if el.Name and el.Name.startswith(ESCL): continue
     try: g = ifcopenshell.geom.create_shape(st, el).geometry
-    except Exception as e: log("salto", el.is_a(), el.Name, str(e)[:120]); continue
+    except Exception as e:
+        # un assemblaggio le cui parti hanno geometria propria non perde nulla: le parti si importano a sé
+        parti = ue.get_decomposition(el) if el.is_a("IfcElementAssembly") else []
+        if parti and all(p.Representation for p in parti): log("assemblaggio senza forma propria, parti importate:", el.Name, len(parti))
+        else: log("AVVISO elemento IFC non importato:", el.is_a(), el.Name, str(e)[:120])
+        continue
     if g.verts: forme.append((el, g))
 def triangoli(g):
     v = g.verts; F = g.faces
@@ -204,7 +205,7 @@ if VL:
         trovato = next(((e, gg) for e, gg in forme if e.Name == nome_c), None)
         if not trovato: sys.exit(f"cancello {nome_c} non trovato nell'IFC")
         V, _, _ = triangoli(trovato[1]); zb = min(p.z for p in V); c_ = centro(V)
-        if villa_di(c_.x, c_.y) != k_v: log(f"ATTENZIONE: il cancello {nome_c} cade nella villa {villa_di(c_.x, c_.y) + 1}, non nella {k_v + 1}")
+        if villa_di(c_.x, c_.y) != k_v: log(f"AVVISO: il cancello {nome_c} cade nella villa {villa_di(c_.x, c_.y) + 1}, non nella {k_v + 1}")
         q = LOTTO.exterior.interpolate(LOTTO.exterior.project(c_)); zm = z_esterno(q, *normale_esterna(q))
         DZV.append(zm - zb if zm is not None else dz)
         log(f"villa {k_v + 1}: cancello {nome_c}, soglia IFC {zb:.2f}, marciapiede {zm if zm is None else round(zm, 2)} → dz {DZV[-1]:.2f}")
@@ -237,12 +238,12 @@ for kv in range(NV):
     ob = oggetto(SITO_G[0], W, T, SITO_G[1], SITO_MID[kv], nome=f"Terreno di progetto – villa {kv + 1}", villa=kv)
     bm = bmesh.new(); bm.from_mesh(ob.data); bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.002); bm.to_mesh(ob.data); bm.free()
 log("elementi importati:", n_ok, "+ marciapiedi", n_marc, "| esclusi fuori lotto:", n_fuori, "| ville:", NV)
-# vani (IfcSpace): volumi nascosti in vista e in render, con il nome della stanza; servono a percorsi_interni.py
+# vani (IfcSpace): volumi nascosti in vista e in render, con il nome della stanza; servono a finiture_interni.py, arredi_interni.py e percorsi_camera.py
 n_vani = 0
 for el in f.by_type("IfcSpace"):
     if not el.Representation: continue
     try: g = ifcopenshell.geom.create_shape(st, el).geometry
-    except Exception as e: log("salto", el.is_a(), el.Name, str(e)[:120]); continue
+    except Exception as e: log("AVVISO vano IFC non importato:", el.Name, str(e)[:120]); continue
     if not g.verts: continue
     V, T, mid = triangoli(g); c_ = centro(V); kv = villa_di(c_.x, c_.y)
     ob = oggetto(el, [MV[kv] @ p for p in V], T, g, None, villa=kv)

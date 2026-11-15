@@ -2,16 +2,17 @@
 
   blender -b <modello>/uscita_blender/contesto_progetto.blend -P percorsi_camera.py -- <cartella modello>
           [--render] [--motore EEVEE|WORKBENCH|CYCLES] [--scala 50] [--passo 2] [--samples 8] [--solo drone,strada,interni]
-          [--villa 1,2] [--fotogrammi 1,200,400]
-  python percorsi_camera.py -- <cartella modello> --blend contesto.blend ...     (Blender come modulo: pip install bpy)
+          [--villa 1,2] [--fotogrammi 1,200,400] [--cpu] [--esposizione 0.7] [--uscita uscita_blender]
+  python percorsi_camera.py -- <cartella modello> --blend contesto_progetto.blend ...     (Blender come modulo: pip install bpy)
 
 Percorsi (camere animate, un fotogramma chiave per fotogramma, velocità costante):
   PERCORSO_drone           giro completo attorno al lotto, in quota, sguardo sul lotto; parte dal lato del sole,
                            così le prime facciate inquadrate sono in luce
   PERCORSO_strada_<nome>   camminata ad altezza d'occhio lungo ogni strada che tocca il lotto (asse DBGT, spostato
                            sul lato opposto al lotto), sguardo in avanti che si gira verso il lotto quando è davanti
-  PERCORSO_interni_villa<n>  visita di ogni unità abitativa: dentro dalla porta d'ingresso, stanza per stanza attraverso
-                           le porte (che si nascondono: porta aperta), luce a soffitto in ogni stanza. Servono i vani
+  PERCORSO_interni_villa<n>  visita di ogni unità abitativa: parte dentro, oltre la porta d'ingresso (chiusa, visibile), stanza per stanza attraverso
+                           le porte (le interne restano visibili come ante aperte, finiture_interni.py); luce a soffitto
+                           solo dove non ci sono le lampade di arredi_interni.py né un controsoffitto. Servono i vani
                            IfcSpace con il nome della stanza. Piani raggiunti solo da scala: da fare
 Avvicinamento all'ingresso: da aggiungere.
 --fotogrammi 1,200,400: con --render, solo questi fotogrammi (immagini chiave) invece del video.
@@ -32,17 +33,12 @@ anche su CPU, per le immagini chiave (--fotogrammi), con --esposizione per gli i
 import bpy, json, math, os, shutil, subprocess, sys
 from mathutils import Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from comune import argomenti, registro
+from comune import avvio, cycles, svuota
 from shapely.geometry import LineString, Point, Polygon, box
 from shapely.ops import linemerge, unary_union
 
-argv, opt = argomenti()
-MOD = os.path.abspath(argv[0]) if argv else os.getcwd()
-USCITA = os.path.join(MOD, opt("--uscita", "uscita_blender"))
-if opt("--blend"): bpy.ops.wm.open_mainfile(filepath=os.path.join(USCITA, opt("--blend")))
+argv, opt, MOD, USCITA, log, scn = avvio("percorsi.log")
 L = json.load(open(os.path.join(MOD, "lotto.json"), encoding="utf-8"))
-log = registro(os.path.join(USCITA, "percorsi.log"))
-scn = bpy.context.scene
 log("scena", bpy.data.filepath)
 
 PRED = {"fps": 25, "risoluzione": [1920, 1080], "occhio_m": 1.65, "focale_strada_mm": 24, "focale_drone_mm": 28,
@@ -50,7 +46,7 @@ PRED = {"fps": 25, "risoluzione": [1920, 1080], "occhio_m": 1.65, "focale_strada
         "drone": {"quota_m": 26.0, "distanza_dal_lotto_m": 28.0, "durata_s": 24.0, "mira_m": 3.0},
         "strada": {"scostamento_m": 1.5, "distanza_max_dal_lotto_m": 15.0, "margine_area_m": 12.0, "raggio_dal_lotto_m": 45.0,
                    "lunghezza_minima_m": 25.0, "sguardo_avanti_m": 10.0, "peso_lotto": 0.5},
-        "interni": {"occhio_m": 1.55, "velocita_m_s": 0.7, "focale_mm": 18, "spazio_libero_m": 0.25, "fuori_dalla_porta_m": 2.5,
+        "interni": {"occhio_m": 1.55, "velocita_m_s": 0.7, "focale_mm": 18, "spazio_libero_m": 0.25, "dentro_dalla_porta_m": 0.9,
                     "oltre_la_porta_m": 0.6, "giro_sguardo_s": 1.5, "luce_w_m2": 12.0, "luce_colore": [1.0, 0.9, 0.78],
                     "esterni": ["Cortile", "Balcone", "Veranda", "Terrazza", "Portico", "Giardino"], "ingressi": {}},
         "spazio_libero_m": 0.6, "collezioni_suolo": ["Terreno", "Strade"]}
@@ -80,7 +76,7 @@ RAGGIO = max(CEN.distance(Point(p)) for p in LOTTO.convex_hull.exterior.coords)
 
 deps = bpy.context.evaluated_depsgraph_get()
 CAMERE_PRIMA = [o for o in scn.objects if o.name.startswith("PERCORSO_")]
-for o in CAMERE_PRIMA: bpy.data.objects.remove(o, do_unlink=True)      # rilancio: i percorsi si rifanno da capo
+svuota(bpy, CAMERE_PRIMA)      # rilancio: i percorsi si rifanno da capo
 deps.update()
 SUOLO = set(PAR["collezioni_suolo"])
 def terreno(x, y, da=500.0):
@@ -205,7 +201,8 @@ def strada(nome, asse):
 def interni():
     """un percorso per ogni unità (vani collegati da porte) che ha una porta d'ingresso dal cortile: si entra, si visita
     ogni stanza passando dalle porte e si torna nel disimpegno. Vani = oggetti nascosti con la proprietà "vano"
-    (importa_progetto.py); le porte attraversate si nascondono (porta aperta). Una luce per stanza, a soffitto."""
+    (importa_progetto.py); le porte interne sono già ante aperte (finiture_interni.py). Luce a soffitto solo dove mancano
+    le lampade di arredi_interni.py e il controsoffitto."""
     from shapely.geometry import MultiPoint
     from shapely.ops import nearest_points
     I = PAR["interni"]; passo = I["velocita_m_s"] / FPS
@@ -275,7 +272,7 @@ def interni():
         unita.append(comp)
     luci = bpy.data.collections.get("Luci interni")
     if luci:
-        for o in list(luci.objects): bpy.data.objects.remove(o, do_unlink=True)
+        svuota(bpy, luci.objects)
     n_un = {}
     for comp in sorted(unita, key=lambda c: (vani[c[0]]["villa"], min(vani[k]["z0"] for k in c))):
         villa = vani[comp[0]]["villa"]
@@ -300,11 +297,12 @@ def interni():
             pt = porte[kp]; c = Vector((pt["c"].x, pt["c"].y)); n = pt["n"].copy()
             if n.dot(Vector((verso.x, verso.y)) - c) < 0: n = -n
             return [tuple(c - n * I["oltre_la_porta_m"]), tuple(c + n * I["oltre_la_porta_m"])]
-        usate = {kp0}; tappe = []; c0 = vani[k0]["centro"]
+        # si parte dentro, oltre la porta d'ingresso: la porta resta chiusa e visibile (regola di Andrea, 2026-11-15:
+        # nessuna porta si toglie per far passare la camera; se un passaggio non c'è, cambia la traiettoria)
+        usate = set(); tappe = []; c0 = vani[k0]["centro"]
         pt0 = porte[kp0]; n0 = pt0["n"].copy(); cc = Vector((pt0["c"].x, pt0["c"].y))
         if n0.dot(Vector((c0.x, c0.y)) - cc) < 0: n0 = -n0
-        tappe.append((tuple(cc - n0 * I["fuori_dalla_porta_m"]), vani[k0]["z0"]))
-        tappe += [(q, vani[k0]["z0"]) for q in attraverso(kp0, None, c0)]
+        tappe.append((tuple(cc + n0 * I["dentro_dalla_porta_m"]), vani[k0]["z0"]))
         fatti = set()
         def visita(k):
             fatti.add(k); v = vani[k]; tappe.append(((v["centro"].x, v["centro"].y), v["z0"]))
@@ -335,13 +333,12 @@ def interni():
         ang = liscia(ang, int(round(I["giro_sguardo_s"] * FPS / 2)))
         punti = [(x, y, z) for x, y in zip(xs, ys)]
         mire = [(x + 5 * math.cos(a_), y + 5 * math.sin(a_), z - 0.25) for x, y, a_ in zip(xs, ys, ang)]
-        for kp in usate:
+        for kp in usate:                    # si passa solo dove finiture_interni.py ha messo l'anta aperta
             o = scn.objects.get(porte[kp]["ob"])
-            if o: o.hide_render = True; o.hide_viewport = True; o["porta_aperta"] = True
-        deps.update()
+            if o and not o.get("sostituita"): log(f"AVVISO {nome}: il percorso attraversa la porta chiusa {o.name} (manca finiture_interni.py?)")
         percorso(nome, "interni", punti, mire, I["focale_mm"], libero=I["spazio_libero_m"])
         PERCORSI[-1]["stanze"] = [vani[k]["nome"] for k in comp]; PERCORSI[-1]["porte_aperte"] = sorted(porte[kp]["ob"] for kp in usate)
-        log(f"  {nome}: ingresso {porte[kp0]['ob']} ({porte[kp0]['larg']:.2f} m) → {stanze}; porte aperte {len(usate)}")
+        log(f"  {nome}: parte dentro l'ingresso {porte[kp0]['ob']} ({porte[kp0]['larg']:.2f} m) → {stanze}; porte attraversate (ante aperte) {len(usate)}")
         ribassati = [Polygon(list(zip(list(o["controsoffitto_anello"])[0::2], list(o["controsoffitto_anello"])[1::2]))) for o in scn.objects if "controsoffitto_anello" in o]
         for k in comp:                                                   # luce a soffitto, potenza per superficie
             v = vani[k]
@@ -376,10 +373,8 @@ if "--render" in argv:
         sh.light = "STUDIO"; sh.color_type = "MATERIAL"; sh.show_shadows = True; sh.show_cavity = True
         scn.view_settings.view_transform = "Standard"; scn.view_settings.look = "None"; scn.view_settings.exposure = 0
     elif motore == "CYCLES":
-        # luce e ombre vere anche senza scheda grafica (EEVEE su CPU non calcola le ombre): ~1 min a immagine 960×540
-        scn.render.engine = "CYCLES"; scn.cycles.samples = int(opt("--samples", "48")); scn.cycles.use_denoising = True
-        scn.cycles.max_bounces = 6; scn.cycles.diffuse_bounces = 4
-        if "--gpu" not in argv: scn.cycles.device = "CPU"
+        # luce e ombre vere; scheda grafica se c'è (OptiX), altrimenti CPU (~1 min a immagine 960×540); --cpu la forza
+        cycles(bpy, scn, int(opt("--samples", "48")), cpu="--cpu" in argv, log=log)
         if any(p["tipo"] == "interni" for p in PERCORSI):       # interni: esposizione da interno, cielo a piena forza
             scn.view_settings.exposure = float(opt("--esposizione", "0.7"))
             bg = next((n for n in scn.world.node_tree.nodes if n.type == "BACKGROUND"), None) if scn.world and scn.world.node_tree else None

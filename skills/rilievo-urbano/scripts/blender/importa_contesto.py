@@ -21,7 +21,7 @@ import bpy, bmesh, json, math, os, sys
 from mathutils import Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from comune import argomenti, registro, resa, rendi_camere
+from comune import argomenti, registro, resa, rendi_camere, lin
 argv, opt = argomenti()
 MOD = os.path.abspath(argv[0]) if argv else os.getcwd()
 USCITA = os.path.join(MOD, opt("--uscita", "uscita_blender"))
@@ -54,10 +54,7 @@ def coll(nome):
     return COLL[nome]
 
 # ------------------------------------------------------------------------------------------------ materiali
-def srgb2lin(c):
-    return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
-def hex2rgb(h):
-    h = h.lstrip("#"); return tuple(srgb2lin(int(h[i:i+2], 16) / 255) for i in (0, 2, 4))
+def hex2rgb(h): return tuple(lin(h)[:3])
 RUVIDITA = {"asfalto": 0.85, "cls": 0.8, "calcestruzzo": 0.8, "intonaco": 0.9, "tegole": 0.7, "coppi": 0.7,
             "acciaio": 0.35, "alluminio": 0.3, "vetro": 0.05, "VETRO": 0.03, "FV": 0.15, "SEGN": 0.4}
 METALLO = ("acciaio", "alluminio", "zincato", "PALO_LUCE", "ARMATURA")
@@ -140,7 +137,7 @@ def pbr(nt, b, asg, rgb):
         nt.links.new(no.outputs["Color"], nm.inputs["Color"]); nt.links.new(nm.outputs["Normal"], b.inputs["Normal"])
 
 # ------------------------------------------------------------------------------------------------ costruzione mesh
-def oggetto_mesh(nome, verts, faces, mats_idx, materiali, collezione, smooth_deg=None, props=None):
+def oggetto_mesh(nome, verts, faces, mats_idx, materiali, collezione, props=None):
     me = bpy.data.meshes.new(nome)
     me.from_pydata([tuple(v) for v in verts], [], [tuple(f) for f in faces])
     me.validate(clean_customdata=False)
@@ -149,8 +146,6 @@ def oggetto_mesh(nome, verts, faces, mats_idx, materiali, collezione, smooth_deg
         me.polygons.foreach_set("material_index", mats_idx)
     me.update()
     ob = bpy.data.objects.new(nome, me); coll(collezione).objects.link(ob)
-    if smooth_deg:
-        for p in me.polygons: p.use_smooth = False
     for k, v in (props or {}).items(): ob[k] = v
     return ob
 
@@ -429,9 +424,7 @@ def prato_lotto():
     jo = N.new("GeometryNodeJoinGeometry"); Lk.new(gi.outputs[0], jo.inputs[0]); Lk.new(iop.outputs[0], jo.inputs[0])
     Lk.new(jo.outputs[0], go.inputs[0])
     md = ob.modifiers.new("Erbe spontanee", "NODES"); md.node_group = ng
-    class _St: pass
-    st = _St(); st.count = int(area_ * cfg.get("densita_m2", 3.0))
-    log("prato del lotto:", st.count, "ciuffi a particelle su", round(area_), "m²")
+    log("prato del lotto:", int(area_ * cfg.get("densita_m2", 3.0)), "ciuffi a particelle su", round(area_), "m²")
 def erba_lotto():
     sst = (LIBJ or {}).get("sostituzioni", {}).get("erba_lotto")
     if not sst: return
@@ -511,7 +504,8 @@ try:
         sky.sun_disc = False
     if hasattr(sky, "altitude"): sky.altitude = 40.0
     w.node_tree.links.new(sky.outputs["Color"], bg.inputs["Color"]); bg.inputs["Strength"].default_value = 0.35
-except Exception:
+except Exception as e:
+    log("AVVISO cielo fisico non creato, cielo a tinta unita:", e)
     bg.inputs["Color"].default_value = (0.55, 0.7, 0.95, 1)
 
 def camera(nome, eye, target=None, fov=60, heading=None, pitch=0.0, res=(1280, 720)):
@@ -544,12 +538,12 @@ if man_p:
     for r in man["riprese"]:
         x, y = locale(r["lat"], r["lng"]); z = r.get("z_occhio_m") or (quota_terreno(x, y) + eh)
         camere.append((camera(r["id"], (x, y, z), fov=r["fov"], heading=r["heading"], pitch=r.get("pitch", 0), res=(640, 640)), r["id"]))
-camere.append((camera("VISTA_aerea_SO", (-60, -45, 40), (5, 20, 2), 55), "vista_aerea_SO"))
-camere.append((camera("VISTA_aerea_NE", (55, 75, 38), (0, 15, 2), 55), "vista_aerea_NE"))
-camere.append((camera("VISTA_angolo", (-12, 4, 2.6), (2, 16, 2.0), 75), "vista_angolo"))
-scn.camera = camere[-3][0]
+# viste fisse del lotto (aeree, d'angolo): lotto.json → viste_aeree; la prima è la camera attiva
+LOTTO = json.load(open(os.path.join(MOD, "lotto.json"), encoding="utf-8")) if os.path.isfile(os.path.join(MOD, "lotto.json")) else {}
+for i, v in enumerate(LOTTO.get("viste_aeree", [])):
+    co = camera(v["nome"], tuple(v["occhio"]), tuple(v["mira"]), v.get("fov", 55)); camere.append((co, v["nome"]))
+    if i == 0: scn.camera = co
 
-for co, nome in camere: co["file"] = nome
 resa(scn, SAMPLES)          # salvata nel .blend: si apre già con la resa giusta e importa_progetto.py la eredita
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(USCITA, "contesto.blend"))
 log("salvato", os.path.join(USCITA, "contesto.blend"))

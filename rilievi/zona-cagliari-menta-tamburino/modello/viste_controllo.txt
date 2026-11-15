@@ -1,0 +1,5 @@
+# viste di controllo della villa A (filiera.py --viste): nome:x,y,h,tx,ty,th[,focale], h sul pavimento del soggiorno
+ingresso:-1.33,27.64,1.5,-6.27,28.41,1.4
+disimpegno:-8.24,27.97,1.5,-6.71,32.73,1.4
+camera:-9.15,28.97,1.5,-12.84,32.35,1.4
+porta_ingresso:-3.49,28.03,1.5,-0.40,27.74,1.1

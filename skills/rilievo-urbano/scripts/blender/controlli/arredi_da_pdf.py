@@ -12,9 +12,10 @@ import bpy, json, math, os, re, sys
 from shapely import affinity
 from shapely.geometry import Polygon
 from shapely.ops import unary_union
-svg, MOD, villa, uscita = sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4]
-colori = dict(a.split("=") for a in sys.argv[5:]) or {"100%, 100%, 76": "giallo", "100%, 50.1": "arancio"}
-P = json.load(open(os.path.join(MOD, "lotto.json"), encoding="utf-8"))["progetto_ifc"]; s = open(svg).read()
+arg = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:]   # blender -b -P ... -- oppure python
+svg, MOD, villa, uscita = arg[0], arg[1], int(arg[2]), arg[3]
+colori = dict(a.split("=") for a in arg[4:]) or {"100%, 100%, 76": "giallo", "100%, 50.1": "arancio"}
+P = json.load(open(os.path.join(MOD, "lotto.json"), encoding="utf-8"))["progetto_ifc"]; s = open(svg, encoding="utf-8").read()
 bpy.ops.wm.open_mainfile(filepath=os.path.join(MOD, "uscita_blender", "contesto_progetto.blend"))
 vani = []
 for o in bpy.data.objects:
