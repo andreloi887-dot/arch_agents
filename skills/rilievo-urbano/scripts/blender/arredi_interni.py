@@ -9,7 +9,7 @@ Legge <modello>/arredi.json:
   arredi   elenco di pezzi: villa, vano, tipo, anello [[x, y], ...] in coordinate locali del contesto (l'ingombro in pianta)
 Tipi: armadio, letto, comodino, madia_tv, scrivania (con sedia), parete_tv, cucina (ingombro a L o a C: basi, piano,
 pensili dove non c'è un infisso, piano cottura, lavello, colonna), zona_giorno (senza anello: divano, tavolino e tappeto di
-fronte alla parete TV, tavolo con posti_tavolo sedie nel posto libero più ampio).
+fronte alla parete TV, tavolo con posti_tavolo sedie nel posto libero più ampio, a distanza_porte_m dalle porte).
 Regole: il fronte di un mobile è il lato lungo verso il centro della stanza; la testata del letto è il lato corto contro
 il muro; ogni pezzo sta sul pavimento del suo vano. Mobili parametrici, fatti di volumi semplici con spigoli smussati:
 danno misure e proporzioni giuste; sedute e tessili andranno sostituiti con modelli di libreria per i render finali.
@@ -237,11 +237,16 @@ def cucina(nome, anello, v, villa):
 def zona_giorno(a, v, villa, tv):
     """divano, tavolino e tappeto di fronte alla parete TV; tavolo da pranzo nel posto libero più ampio."""
     c, u, vv, L, W = tv; occupati = [Polygon(x["anello"]).buffer(0.05) for x in A["arredi"] if x.get("anello") and x["villa"] == villa]
-    porte = PORTE.buffer(float(a.get("distanza_porte_m", 0.5))); n_p = int(a.get("posti_tavolo", 6)); lt = 0.6 * (n_p // 2); x0, y0, x1, y1 = v["pol"].bounds
+    sue = [q for q in porte_ if q.distance(v["pol"]) < 0.3]              # porte della stanza
+    cucine = [x["pol"] for x in vani if x["villa"] == villa and x["nome"].startswith("Cucina")]
+    verso_cucina = min(sue, key=lambda q: min(q.distance(k_) for k_ in cucine)) if sue and cucine else None
+    d_porte = float(a.get("distanza_porte_m", 0.9)); porte = Polygon(); n_p = int(a.get("posti_tavolo", 6)); lt = max(1.4, 0.6 * (n_p // 2)); wt = 0.45 if n_p > 4 else 0.40; x0, y0, x1, y1 = v["pol"].bounds
     def divano_a(d): return Polygon([tuple(c + vv * (W / 2 + d + sv) + u * su) for su, sv in ((-1.15, -0.475), (1.15, -0.475), (1.15, 0.475), (-1.15, 0.475))])
     def zona_tv(d): return Polygon([tuple(c + u * su + vv * sv) for su, sv in ((-1.2, 0), (1.2, 0), (1.2, W / 2 + d), (-1.2, W / 2 + d))])
+    stato = {"porte": Polygon()}
     def tavolo_con(d):
-        """posto del tavolo (180×90 con le sedie: zona 2,3×2,0 m) più lontano da muri e mobili, dato il divano a distanza d."""
+        """posto del tavolo (con le sedie), dato il divano a distanza d: vicino alla cucina, libero da mobili e porte."""
+        porte = stato["porte"]
         occ = unary_union(occupati + ([divano_a(d).buffer(0.15), zona_tv(d)] if d else [])); meglio = None
         for asse in (u, vv):
             pa = Vector((-asse.y, asse.x)); i = 0
@@ -249,16 +254,22 @@ def zona_giorno(a, v, villa, tv):
                 j = 0
                 while y0 + 0.15 * j < y1:
                     q = Vector((x0 + 0.15 * i, y0 + 0.15 * j)); j += 1
-                    zona = Polygon([tuple(q + asse * sa + pa * sb) for sa, sb in ((-lt / 2 - 0.15, -0.95), (lt / 2 + 0.15, -0.95), (lt / 2 + 0.15, 0.95), (-lt / 2 - 0.15, 0.95))])
+                    zona = Polygon([tuple(q + asse * sa + pa * sb) for sa, sb in ((-lt / 2 - 0.15, -wt - 0.5), (lt / 2 + 0.15, -wt - 0.5), (lt / 2 + 0.15, wt + 0.5), (-lt / 2 - 0.15, wt + 0.5))])
                     if not v["pol"].buffer(-0.05).contains(zona) or zona.intersects(occ) or zona.intersects(porte): continue
-                    voto = min(v["pol"].exterior.distance(Point(q)), occ.distance(Point(q)))
+                    # il tavolo sta vicino alla cucina; senza cucina accanto, nel punto più lontano da muri e mobili
+                    voto = -verso_cucina.distance(Point(q)) if verso_cucina is not None else min(v["pol"].exterior.distance(Point(q)), occ.distance(Point(q)))
                     if meglio is None or voto > meglio[0]: meglio = (voto, q, asse, pa, zona)
                 i += 1
         return meglio
     # distanza del divano dalla TV: la più comoda (3,0 m) che lascia posto anche al tavolo; se non c'è, la più comoda e basta
     possibili = [d for d in [3.0 - 0.1 * k for k in range(11)] if v["pol"].buffer(-0.08).contains(divano_a(d))]
-    dist = next((d for d in possibili if tavolo_con(d)), possibili[0] if possibili else None)
-    meglio = tavolo_con(dist); fatti = []
+    dist, meglio = (possibili[0] if possibili else None), None
+    # spazio libero davanti alle porte: quello chiesto, poi via via meno finché il tavolo trova posto (resta nel log)
+    for dp in [d_porte - 0.1 * k for k in range(int(round((d_porte - 0.4) / 0.1)) + 1)]:
+        stato["porte"] = unary_union([q.buffer(dp) for q in sue]) if sue else Polygon()
+        dd = next((d for d in possibili if d >= 2.4 and tavolo_con(d)), None) or next((d for d in possibili if tavolo_con(d)), None)
+        if dd: dist, meglio = dd, tavolo_con(dd); log(f"zona giorno villa {villa}: divano a {dd:.1f} m dalla TV, {dp:.1f} m liberi davanti alle porte"); break
+    fatti = []
     if dist:
         cs = c + vv * (W / 2 + dist); p = Pezzo(cs, u, -vv, v["z0"])           # il divano guarda la TV: fronte = -vv
         p.scat(-1.15, 1.15, -0.475, 0.475, 0, 0.06, "metallo"); p.scat(-1.15, 1.15, -0.475, 0.475, 0.06, 0.40, "tessuto", "morbido")
@@ -279,11 +290,12 @@ def zona_giorno(a, v, villa, tv):
     else: log(f"AVVISO villa {villa}: il divano non entra di fronte alla parete TV")
     if meglio:
         _, q, asse, pa, zona = meglio; p = Pezzo(q, asse, pa, v["z0"])
-        p.scat(-lt / 2, lt / 2, -0.45, 0.45, 0.72, 0.76, "legno")
+        p.scat(-lt / 2, lt / 2, -wt, wt, 0.72, 0.76, "legno")
         for su in (-lt / 2 + 0.08, lt / 2 - 0.14):
-            for sv in (-0.37, 0.31): p.scat(su, su + 0.06, sv, sv + 0.06, 0, 0.72, "legno")
-        for i in range(n_p // 2):
-            cu = -lt / 2 + 0.3 + 0.6 * i; sedia(p, (cu, 0.62), (0, -1)); sedia(p, (cu, -0.62), (0, 1))
+            for sv in (-wt + 0.08, wt - 0.14): p.scat(su, su + 0.06, sv, sv + 0.06, 0, 0.72, "legno")
+        lato = n_p // 2; passo_s = lt / lato
+        for i in range(lato):
+            cu = -lt / 2 + passo_s * (i + 0.5); sedia(p, (cu, wt + 0.17), (0, -1)); sedia(p, (cu, -wt - 0.17), (0, 1))
         p.fine(f"Tavolo da {n_p} v{villa}", villa, "tavolo", zona.buffer(-0.2))
     else: log(f"AVVISO villa {villa}: nessun posto libero per il tavolo da {n_p}")
     return bool(dist), bool(meglio)
