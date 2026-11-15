@@ -3,7 +3,8 @@
 Scritto il 2026-11-15 sulla villa A di Via della Menta. È la parte "interni" delle fasi 3 e 4 di
 [PROCEDIMENTO.md](PROCEDIMENTO.md): chi riprende il lavoro parte da qui.
 
-**Stato.** La villa A è completa come anteprima: finiture, porte, controsoffitto, arredi, viste con luce vera.
+**Stato.** Villa A approvata da Andrea come anteprima il 2026-11-15 (finiture, porte, controsoffitto, arredi, cucina,
+luci): si passa a Unreal (sezione 10).
 Ville B, C, D: ferme per scelta di Andrea (2026-11-15), si riprendono quando la A è approvata.
 
 ## 1. Cosa serve da Andrea
@@ -90,14 +91,18 @@ Dopo il passo 1 vanno rifatti tutti.
 
 **Disimpegno e clima**
 - Controsoffitto in cartongesso a 2,40 m con faretti LED tondi a incasso e griglie di ripresa: sopra c'è la macchina.
-- Una bocchetta di immissione in ogni stanza, sopra la porta. *Ipotesi da confermare*: quota 2,45–2,60 m, bagni esclusi.
+- Una bocchetta di immissione in ogni stanza, sopra la porta, tra 2,45 e 2,60 m (quota confermata da Andrea); bagni
+  e cucina senza.
 
 **Arredi**
 - Stile caldo, naturale, minimale: rovere chiaro, laccato avorio, lino, un accento terracotta.
 - Ingombri dalla planimetria; il resto (divano, tavolino, tavolo, sedie) lo dispone lo script.
 - Tavolo da 4 allungabile, addossato al muro tra soggiorno e camera singola; parete TV, divano e tavolino spostati
   verso la vetrata di quanto serve. Passaggio libero davanti alla porta del disimpegno.
-- Cucina: frigo, colonna forno e microonde, lavello, lavastoviglie, piano cottura con cappa, pensili.
+- Cucina: frigo, colonna forno e microonde, lavello, lavastoviglie, piano cottura con cappa; pensili con la parte
+  bassa a 1,45 m e la parte alta sotto la trave più bassa.
+- Punti luce: una sospensione per stanza, due in zona giorno (tavolo e tavolino), luce sotto i pensili, faretti nel
+  disimpegno; luce calda.
 
 ## 6. Controlli prima di mostrare qualcosa ad Andrea
 
@@ -111,7 +116,7 @@ Dopo il passo 1 vanno rifatti tutti.
 - **Tetto**: nell'IFC sette linee d'incontro della villa A non sono a 45° con falde di pari pendenza. Lì passo costante
   e incontro esatto dei travetti non stanno insieme: va corretto il tetto in Edificius.
 - **Muri interni**: alcuni non arrivano al tetto; sopra la porta della cucina si vede il vano accanto.
-- **Pensili della cucina**: alti fino a 2,15 m, non controllano la quota della falda.
+- **Armadi**: alti 2,40 m, non controllano la quota della falda (i pensili della cucina sì).
 - **Mobili**: volumi parametrici. Vanno bene armadi, cucina e parete TV; divano, sedie, letti e tessili sono da
   sostituire con modelli di libreria (Poly Haven ha poco di moderno: Fab/Megascans in Unreal).
 - **Materiali**: procedurali di Blender; in Unreal vanno rifatti dalla libreria di studio. Il gres esce troppo chiaro.
@@ -129,6 +134,22 @@ Dopo il passo 1 vanno rifatti tutti.
 6. Unreal sul PC di Andrea: import USD, materiali e arredi di libreria, Sequencer, Movie Render Queue.
 7. Contesto esterno dalle foto del sopralluogo.
 8. Trasformare questo programma in una skill con il suo agente.
+
+## 10. Passaggio a Unreal (sul PC desktop di Andrea)
+
+Dal cloud il PC non si raggiunge: le cartelle di Remote Control risultano "non disponibili" per le sessioni cloud
+(provato il 2026-11-14 e il 2026-11-15). La fase 5 si fa quindi in una **sessione di Claude Code aperta sul desktop**,
+nella cartella del repo.
+
+1. Sul desktop: `git pull` del branch, poi i passi 1, 2, 5, 6 e 9 della sezione 3 con il Blender installato
+   (`blender -b <file.blend> -P <script> -- <modello>`). Le uscite non sono in git: si rigenerano in un paio di minuti.
+2. In Unreal 5.8: progetto vuoto con i plugin *USD Importer* e *Python Editor Script Plugin*; poi
+   `skills/rilievo-urbano/scripts/unreal/importa_usd.py`. **È una bozza mai eseguita**: il primo compito è provarla e
+   correggerla.
+3. Controllare scala (metri → centimetri), assi, materiali arrivati, luci (sospensioni, faretti, sottopensili).
+4. Poi, in ordine: materiali della libreria di studio; arredi Fab/Megascans al posto dei mobili parametrici; Level
+   Sequence dalle camere; Movie Render Queue da riga di comando; montaggio con FFmpeg.
+5. Ogni cosa imparata in Unreal va scritta qui.
 
 ## 9. Livello di modello
 

@@ -16,6 +16,8 @@ il loro muro di quanto serve).
 Regole: il fronte di un mobile è il lato lungo verso il centro della stanza; la testata del letto è il lato corto contro
 il muro; ogni pezzo sta sul pavimento del suo vano. Mobili parametrici, fatti di volumi semplici con spigoli smussati:
 danno misure e proporzioni giuste; sedute e tessili andranno sostituiti con modelli di libreria per i render finali.
+Punti luce ("luci": w_m2, colore): una sospensione per stanza (sul tavolo e sul tavolino in zona giorno), luce sotto i
+pensili in cucina; nessuno dove c'è un controsoffitto con i suoi faretti. I pensili si fermano sotto la trave più bassa.
 Ogni oggetto porta la proprietà "ingombro" (anello in pianta): percorsi_camera.py la usa per non mettere la camera
 dentro i mobili.
 """
@@ -48,6 +50,7 @@ def mat(k):
         b = next(n for n in m.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
         b.inputs["Base Color"].default_value = lin(ST[k]); b.inputs["Roughness"].default_value = RUV[k]
         b.inputs["Metallic"].default_value = 1.0 if k in ("metallo", "inox") else 0.0; MATS[k] = m
+        if k == "lampadina": b.inputs["Emission Color"].default_value = lin(ST[k]); b.inputs["Emission Strength"].default_value = 8.0
     return MATS[k]
 
 radice = bpy.data.collections.get("PROGETTO") or scn.collection
@@ -75,6 +78,18 @@ for ob in scn.objects:
         if ob.get("sostituita"): interne_.append(r_)
 INF = unary_union(infissi) if infissi else Polygon()
 PORTE = unary_union(porte_) if porte_ else Polygon()
+
+# soffitto sopra un punto: la prima superficie di falde, travi a vista e controsoffitti che si incontra salendo
+from mathutils.bvhtree import BVHTree
+_V, _F = [], []
+for ob in scn.objects:
+    if ob.type != "MESH" or "vano" in ob or not (ob.name.startswith(("Falda", "Orditura", "Controsoffitto")) or ob.get("ifc_classe") in ("IfcRoof", "IfcSlab")): continue
+    n0 = len(_V); _V += [ob.matrix_world @ v.co for v in ob.data.vertices]; _F += [[n0 + i for i in pl.vertices] for pl in ob.data.polygons]
+TETTO = BVHTree.FromPolygons(_V, _F) if _F else None
+def soffitto(x, y, z_da, pred=2.7):
+    """quota del soffitto sopra (x, y) partendo da z_da; pred sopra z_da se non c'è niente."""
+    h = TETTO.ray_cast(Vector((x, y, z_da)), Vector((0, 0, 1)), 12.0) if TETTO else (None,)
+    return h[0].z if h[0] is not None else z_da + pred
 
 # ------------------------------------------------------------------------------------------------ costruzione
 class Pezzo:
@@ -255,6 +270,8 @@ def cucina(nome, anello, v, villa):
     for m in moduli:
         box, (a0, a1), prof, am, ruolo = m["box"], m["a"], m["prof"], m["am"], m["ruolo"]; f = prof - 0.02
         if ruolo in ("frigo", "forno"):
+            zt = min(soffitto(*tuple(o + u * q[0] + w * q[1]), v["z0"] + 1.8) for q in (m["pt"](a_, d_) for a_ in (a0 + 0.01, am, a1 - 0.01) for d_ in (0.02, prof / 2, prof))) - v["z0"] - 0.02
+            if zt < HP: log(f"AVVISO {nome}: la colonna {ruolo} (2,15 m) tocca il tetto, che lì è a {zt:.2f} m")
             box(a0, a1, 0, prof - 0.06, 0, ZC, "metallo"); box(a0, a1, 0, f, ZC, HP, "laccato")
             if ruolo == "frigo":                               # frigo combinato a vista, in acciaio: congelatore sotto, frigo sopra
                 box(a0 + 0.004, a1 - 0.004, f, prof + 0.03, ZC + 0.02, 0.78, "inox"); box(a0 + 0.004, a1 - 0.004, f, prof + 0.03, 0.79, HP - 0.20, "inox")
@@ -289,7 +306,10 @@ def cucina(nome, anello, v, villa):
             box(am - 0.29, am + 0.29, 0.06, 0.56, ZS, ZS + 0.006, "nero")
             for da, dd in ((-0.14, 0.19), (0.14, 0.19), (-0.14, 0.43), (0.14, 0.43)): p.cil(*m["pt"](am + da, dd), 0.085, 0.085, ZS + 0.006, ZS + 0.0065, "metallo", seg=24)
         if not m["finestra"]:
-            box(a0 + 0.0015, a1 - 0.0015, 0, 0.35, ZA, HP, "legno")
+            # il pensile arriva sotto la trave o la falda più bassa che ha sopra (2 cm d'aria), al massimo a HP
+            zt = min(soffitto(*tuple(o + u * q[0] + w * q[1]), v["z0"] + ZA) for q in (m["pt"](a_, d_) for a_ in (a0 + 0.01, am, a1 - 0.01) for d_ in (0.02, 0.18, 0.34))) - v["z0"] - 0.02
+            if min(HP, zt) - ZA >= 0.35: box(a0 + 0.0015, a1 - 0.0015, 0, 0.35, ZA, min(HP, zt), "legno")
+            else: log(f"{nome}: modulo {m['r']}.{m['i']} senza pensile, il tetto è a {zt:.2f} m")
             if ruolo in ("cottura", "cottura_forno"): box(a0 + 0.02, a1 - 0.02, 0.012, 0.47, ZA - 0.035, ZA, "inox")     # cappa sotto il pensile
     p.fine(nome, villa, "cucina", pol)
     log(f"{nome}: moduli", ", ".join(f"{m['ruolo'] or ('angolo' if m['angolo'] else 'base')}{'' if not m['finestra'] else ' (finestra)'}" for m in moduli))
@@ -430,11 +450,56 @@ for a in A["arredi"]:
     v = next(x for x in vani if x["villa"] == villa and x["nome"] == chiave[1] and x["pol"].contains(Point(tele_tv[chiave][0])))
     ok = zona_giorno(a, v, villa, tele_tv[chiave]); conta["zona_giorno"] = conta.get("zona_giorno", 0) + 1
     log("zona giorno villa", villa, "| divano", ok[0], "| tavolo", ok[1])
+# ------------------------------------------------------------------------------------------------ punti luce
+# Una sospensione al centro di ogni stanza; in zona giorno una sul tavolo e una sul tavolino; in cucina anche la luce sotto i
+# pensili. Niente nei vani con controsoffitto (hanno i faretti). La potenza totale di ogni stanza è w_m2 × superficie:
+# percorsi_camera.py non aggiunge la sua luce dove trova questi punti luce.
+LU = {"w_m2": 14.0, "colore": [1.0, 0.86, 0.70], "esterni": ["Cortile", "Balcone", "Veranda", "Terrazza", "Portico", "Giardino"], **A.get("luci", {})}
+ribassati = [Polygon(list(zip(list(o_["controsoffitto_anello"])[0::2], list(o_["controsoffitto_anello"])[1::2]))) for o_ in scn.objects if "controsoffitto_anello" in o_]
+n_luci = 0
+def sospensione(v, villa, q, z_sotto, nome_l, watt, raggio=0.19):
+    """paralume a campana appeso al soffitto con il bordo inferiore a z_sotto dal pavimento, e la sua luce."""
+    global n_luci
+    zs = soffitto(q.x, q.y, v["z0"] + 1.9) - v["z0"]; p = Pezzo(q, Vector((1, 0)), Vector((0, 1)), v["z0"])
+    p.cil(0, 0, 0.05, 0.05, zs - 0.025, zs, "laccato"); p.cil(0, 0, 0.003, 0.003, z_sotto + 0.2, zs - 0.02, "metallo", seg=8)
+    p.cil(0, 0, raggio, raggio * 0.28, z_sotto, z_sotto + 0.2, "tessuto"); p.cil(0, 0, 0.035, 0.035, z_sotto + 0.03, z_sotto + 0.11, "lampadina")
+    p.fine(nome_l, villa, "lampada", Point(q.x, q.y).buffer(0.01))
+    for o_ in ARR.objects:
+        if o_.name.startswith(nome_l): o_["ingombro"] = []                      # appesa: non ingombra il pavimento
+    ld = bpy.data.lights.new(nome_l, "POINT"); ld.energy = watt; ld.color = LU["colore"]; ld.shadow_soft_size = 0.06
+    lo = bpy.data.objects.new("Luce " + nome_l, ld); lo.location = (q.x, q.y, v["z0"] + z_sotto - 0.03); ARR.objects.link(lo)
+    lo["villa"] = villa; lo["punto_luce"] = v["nome"]; n_luci += 1
+ST["lampadina"] = "#FFF0D8"; RUV["lampadina"] = 0.5
+for v in vani:
+    c_ = v["pol"].representative_point()
+    if v["nome"].startswith(tuple(LU["esterni"])) or any(q.contains(c_) for q in ribassati): continue
+    villa = v["villa"]; watt = LU["w_m2"] * v["pol"].area; qui = [o_ for o_ in ARR.objects if o_.get("villa") == villa and len(o_.get("ingombro", [])) >= 6 and "(tessili)" not in o_.name
+                                                               and v["pol"].contains(Point(sum(list(o_["ingombro"])[0::2]) / (len(o_["ingombro"]) / 2), sum(list(o_["ingombro"])[1::2]) / (len(o_["ingombro"]) / 2)))]
+    def centro_di(o_): i_ = list(o_["ingombro"]); return Vector((sum(i_[0::2]) / (len(i_) / 2), sum(i_[1::2]) / (len(i_) / 2)))
+    punti = [(centro_di(o_), 1.50, 0.22) for o_ in qui if o_["arredo"] == "tavolo"] + [(centro_di(o_), 2.05, 0.19) for o_ in qui if o_["arredo"] == "tavolino"]
+    if not punti:                                             # centro della parte libera della stanza
+        lib_ = v["pol"].difference(unary_union([Polygon(list(zip(list(o_["ingombro"])[0::2], list(o_["ingombro"])[1::2]))).buffer(0) for o_ in qui] or [Polygon()]))
+        lib_ = max(([lib_] if lib_.geom_type == "Polygon" else list(lib_.geoms)), key=lambda g: g.area); cc = lib_.centroid if lib_.contains(lib_.centroid) else lib_.representative_point()
+        punti = [(Vector((cc.x, cc.y)), 2.10, 0.19)]
+    cucine_qui = [o_ for o_ in qui if o_["arredo"] == "cucina"]; quota_sosp = 0.6 if cucine_qui else 1.0
+    for k, (q, zb, rg) in enumerate(punti): sospensione(v, villa, q, zb, f"Sospensione {v['nome']} v{villa} {k + 1}", watt * quota_sosp / len(punti), rg)
+    for o_ in cucine_qui:                                     # luce sotto i pensili: una striscia per ogni tratto di cucina, verso il piano
+        i_ = list(o_["ingombro"]); an = list(zip(i_[0::2], i_[1::2])); lati = [(Vector(an[k]), Vector(an[(k + 1) % len(an)])) for k in range(len(an))]
+        muro = [(a_, b_) for a_, b_ in lati if (b_ - a_).length > 0.9 and v["pol"].exterior.distance(Point(tuple((a_ + b_) / 2))) < 0.08]
+        for a_, b_ in muro:
+            d_ = (b_ - a_).normalized(); n_ = Vector((-d_.y, d_.x)); n_ = n_ if v["pol"].contains(Point(tuple((a_ + b_) / 2 + n_ * 0.5))) else -n_
+            ld = bpy.data.lights.new("Sottopensile", "AREA"); ld.shape = "RECTANGLE"; ld.size = max(0.3, (b_ - a_).length - 1.3); ld.size_y = 0.02
+            ld.energy = watt * 0.4 / len(muro); ld.color = LU["colore"]
+            lo = bpy.data.objects.new(f"Luce sottopensile {v['nome']} v{villa}", ld); m_ = (a_ + b_) / 2 + n_ * 0.2
+            lo.location = (m_.x, m_.y, v["z0"] + 1.44); lo.rotation_euler = (0, 0, math.atan2(d_.y, d_.x)); ARR.objects.link(lo); lo["villa"] = villa; lo["punto_luce"] = v["nome"]; n_luci += 1
+log("punti luce:", n_luci, f"| {LU['w_m2']} W/m² per stanza")
+
 # nessun mobile nello spazio spazzato dalle ante (proprietà "battuta" scritta da finiture_interni.py)
 for o in scn.objects:
     if "battuta" not in o: continue
     bt = Polygon(list(zip(list(o["battuta"])[0::2], list(o["battuta"])[1::2]))).buffer(-0.03)
     for m_ in ARR.objects:
+        if len(m_.get("ingombro", [])) < 6: continue
         ing = Polygon(list(zip(list(m_["ingombro"])[0::2], list(m_["ingombro"])[1::2]))).buffer(0)
         if int(m_.get("villa", 1)) == int(o.get("villa", 1)) and ing.intersects(bt) and not m_.name.endswith("(tessili)"):
             log(f"AVVISO: {o.name} aprendosi urta {m_.name} ({ing.intersection(bt).area:.2f} m² di sovrapposizione)")

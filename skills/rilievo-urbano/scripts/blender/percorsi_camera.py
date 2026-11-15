@@ -346,6 +346,7 @@ def interni():
         for k in comp:                                                   # luce a soffitto, potenza per superficie
             v = vani[k]
             if any(q.contains(Point(v["centro"].x, v["centro"].y)) for q in ribassati): continue      # controsoffitto: ha già i suoi faretti
+            if any(o.get("punto_luce") and int(o.get("villa", 1)) == villa and v["pol"].contains(Point(o.location.x, o.location.y)) for o in scn.objects): continue   # lampade di arredi_interni.py
             ld = bpy.data.lights.new("Luce " + v["nome"], "AREA"); ld.shape = "DISK"; ld.size = 0.6
             ld.energy = I["luce_w_m2"] * v["pol"].area; ld.color = I["luce_colore"]
             lo = bpy.data.objects.new(f"Luce {v['nome']} v{villa}", ld); coll("Luci interni").objects.link(lo)
