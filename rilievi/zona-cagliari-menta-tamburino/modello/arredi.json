@@ -1,0 +1,443 @@
+{
+ "_nota": "Arredi indicati da Andrea sulla planimetria (Villa_A.PDF, 2026-11-15): ingombri estratti dal PDF vettoriale e portati nelle coordinate locali del contesto con l'allineamento di lotto.json → progetto_ifc. Stile: caldo, naturale, minimale. Il tipo si può correggere a mano.",
+ "stile": {
+  "legno": "#C8A47A",
+  "laccato": "#EDE7DA",
+  "tessuto": "#D9D0C1",
+  "tessuto_accento": "#B98466",
+  "piano_cucina": "#DAD5CC",
+  "metallo": "#3A3632",
+  "nero": "#141414",
+  "tappeto": "#CFC4B2"
+ },
+ "arredi": [
+  {
+   "villa": 1,
+   "vano": "Cucina",
+   "tipo": "cucina",
+   "misure_m": [
+    2.79,
+    2.45
+   ],
+   "anello": [
+    [
+     -5.563,
+     25.651
+    ],
+    [
+     -5.957,
+     26.102
+    ],
+    [
+     -7.8,
+     24.487
+    ],
+    [
+     -5.964,
+     22.39
+    ],
+    [
+     -5.061,
+     23.181
+    ],
+    [
+     -5.457,
+     23.632
+    ],
+    [
+     -5.908,
+     23.238
+    ],
+    [
+     -6.954,
+     24.431
+    ]
+   ]
+  },
+  {
+   "villa": 1,
+   "vano": "Camera Matrimoniale",
+   "tipo": "armadio",
+   "misure_m": [
+    4.49,
+    0.6
+   ],
+   "anello": [
+    [
+     -8.411,
+     28.914
+    ],
+    [
+     -7.96,
+     29.31
+    ],
+    [
+     -10.915,
+     32.685
+    ],
+    [
+     -11.367,
+     32.289
+    ]
+   ]
+  },
+  {
+   "villa": 1,
+   "vano": "Camera Matrimoniale",
+   "tipo": "letto",
+   "misure_m": [
+    2.1,
+    1.7
+   ],
+   "anello": [
+    [
+     -10.792,
+     29.521
+    ],
+    [
+     -11.912,
+     30.8
+    ],
+    [
+     -13.492,
+     29.417
+    ],
+    [
+     -12.372,
+     28.138
+    ]
+   ]
+  },
+  {
+   "villa": 1,
+   "vano": "Camera Matrimoniale",
+   "tipo": "comodino",
+   "misure_m": [
+    0.4,
+    0.4
+   ],
+   "anello": [
+    [
+     -11.807,
+     28.1
+    ],
+    [
+     -12.07,
+     28.401
+    ],
+    [
+     -12.372,
+     28.138
+    ],
+    [
+     -12.108,
+     27.837
+    ]
+   ]
+  },
+  {
+   "villa": 1,
+   "vano": "Camera Matrimoniale",
+   "tipo": "comodino",
+   "misure_m": [
+    0.4,
+    0.4
+   ],
+   "anello": [
+    [
+     -13.191,
+     29.68
+    ],
+    [
+     -13.454,
+     29.982
+    ],
+    [
+     -13.756,
+     29.717
+    ],
+    [
+     -13.492,
+     29.417
+    ]
+   ]
+  },
+  {
+   "villa": 1,
+   "vano": "Camera Matrimoniale",
+   "tipo": "madia_tv",
+   "misure_m": [
+    1.2,
+    0.6
+   ],
+   "anello": [
+    [
+     -10.784,
+     27.767
+    ],
+    [
+     -9.881,
+     28.557
+    ],
+    [
+     -10.276,
+     29.009
+    ],
+    [
+     -11.179,
+     28.219
+    ]
+   ]
+  },
+  {
+   "villa": 1,
+   "vano": "Camera Singola",
+   "tipo": "letto",
+   "misure_m": [
+    2.0,
+    0.9
+   ],
+   "anello": [
+    [
+     -8.563,
+     31.706
+    ],
+    [
+     -7.97,
+     31.029
+    ],
+    [
+     -6.466,
+     32.346
+    ],
+    [
+     -7.058,
+     33.024
+    ]
+   ]
+  },
+  {
+   "villa": 1,
+   "vano": "Camera Singola",
+   "tipo": "comodino",
+   "misure_m": [
+    0.4,
+    0.4
+   ],
+   "anello": [
+    [
+     -7.623,
+     33.061
+    ],
+    [
+     -7.359,
+     32.76
+    ],
+    [
+     -7.058,
+     33.024
+    ],
+    [
+     -7.321,
+     33.324
+    ]
+   ]
+  },
+  {
+   "villa": 1,
+   "vano": "Camera Singola",
+   "tipo": "scrivania",
+   "misure_m": [
+    1.2,
+    0.7
+   ],
+   "anello": [
+    [
+     -10.658,
+     32.543
+    ],
+    [
+     -10.197,
+     32.016
+    ],
+    [
+     -9.294,
+     32.807
+    ],
+    [
+     -9.756,
+     33.333
+    ]
+   ]
+  },
+  {
+   "villa": 1,
+   "vano": "Camera Singola",
+   "tipo": "armadio",
+   "misure_m": [
+    1.5,
+    0.6
+   ],
+   "anello": [
+    [
+     -7.394,
+     33.407
+    ],
+    [
+     -8.383,
+     34.536
+    ],
+    [
+     -8.834,
+     34.141
+    ],
+    [
+     -7.846,
+     33.013
+    ]
+   ]
+  },
+  {
+   "villa": 1,
+   "vano": "Camera Singola",
+   "tipo": "letto",
+   "misure_m": [
+    2.1,
+    0.9
+   ],
+   "anello": [
+    [
+     -5.675,
+     31.71
+    ],
+    [
+     -6.268,
+     32.386
+    ],
+    [
+     -7.847,
+     31.003
+    ],
+    [
+     -7.255,
+     30.327
+    ]
+   ]
+  },
+  {
+   "villa": 1,
+   "vano": "Camera Singola",
+   "tipo": "comodino",
+   "misure_m": [
+    0.4,
+    0.4
+   ],
+   "anello": [
+    [
+     -7.255,
+     30.327
+    ],
+    [
+     -6.991,
+     30.025
+    ],
+    [
+     -6.69,
+     30.288
+    ],
+    [
+     -6.953,
+     30.59
+    ]
+   ]
+  },
+  {
+   "villa": 1,
+   "vano": "Camera Singola",
+   "tipo": "armadio",
+   "misure_m": [
+    2.3,
+    0.6
+   ],
+   "anello": [
+    [
+     -3.361,
+     31.875
+    ],
+    [
+     -4.876,
+     33.605
+    ],
+    [
+     -5.327,
+     33.211
+    ],
+    [
+     -3.813,
+     31.48
+    ]
+   ]
+  },
+  {
+   "villa": 1,
+   "vano": "Camera Singola",
+   "tipo": "scrivania",
+   "misure_m": [
+    1.2,
+    0.7
+   ],
+   "anello": [
+    [
+     -5.351,
+     31.063
+    ],
+    [
+     -4.89,
+     30.536
+    ],
+    [
+     -3.988,
+     31.327
+    ],
+    [
+     -4.448,
+     31.853
+    ]
+   ]
+  },
+  {
+   "villa": 1,
+   "vano": "Soggiorno",
+   "tipo": "parete_tv",
+   "misure_m": [
+    3.0,
+    0.6
+   ],
+   "anello": [
+    [
+     -3.169,
+     30.746
+    ],
+    [
+     -1.193,
+     28.489
+    ],
+    [
+     -0.741,
+     28.885
+    ],
+    [
+     -2.718,
+     31.142
+    ]
+   ]
+  },
+  {
+   "villa": 1,
+   "vano": "Soggiorno",
+   "tipo": "zona_giorno",
+   "posti_tavolo": 6,
+   "_nota": "da disporre con le regole: divano di fronte alla parete TV, tavolo da 6"
+  }
+ ]
+}

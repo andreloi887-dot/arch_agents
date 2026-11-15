@@ -10,6 +10,7 @@ Mai `read_factory_settings()` / `read_homefile()` negli script (cancella le libr
 | `allinea_ifc.py <ifc> [--scrivi]` | rotazione, traslazione e quota di un IFC non georiferito sul lotto | valori per `lotto.json → progetto_ifc` |
 | `importa_progetto.py` (da aprire su `contesto.blend`) | IFC nella scena: ville alla quota dei cancelli, terreno nel perimetro, muraglioni, marciapiede di progetto, contesto tolto o nascosto sotto il progetto | `contesto_progetto.blend`, `perimetro_progetto.json`, con `--render` `viste_progetto/` |
 | `finiture_interni.py` (su `contesto_progetto.blend`, che riscrive) | ciò che l'IFC non porta: pavimento per vano, perlinato sotto le falde, travetti a vista; valori in `lotto.json → progetto_ifc → finiture` | `contesto_progetto.blend` |
+| `arredi_interni.py` (su `contesto_progetto.blend`, che riscrive) | mobili parametrici dagli ingombri di `arredi.json` (planimetria di Andrea): armadi, letti, comodini, scrivanie, parete TV, cucina; divano e tavolo disposti con le regole | `contesto_progetto.blend` |
 | `percorsi_camera.py` (su `contesto_progetto.blend` o `contesto.blend`) | camere animate dalle regole: giro del drone attorno al lotto, camminata lungo le strade che lo toccano; controlli di ostacoli e quota; valori in `lotto.json → percorsi` | `scena_percorsi.blend`, `percorsi.json`, con `--render` `anteprime/<percorso>.mp4` |
 | `esporta_usd.py` (su `scena_percorsi.blend`) | export verso Unreal: scena e camere in due file | `usd/scena.usdc`, `usd/camere.usdc` |
 | `comune.py` | argomenti, log, quota su un triangolo, resa (AgX), render delle camere | modulo |
@@ -18,7 +19,7 @@ Ordine dopo una modifica al contesto o al progetto:
 1. `contesto/contesto.py <modello>` e `verifica_contesto.py <modello>`;
 2. `importa_contesto.py`;
 3. `importa_progetto.py` (riscrive `perimetro_progetto.json`: se il perimetro cambia, ripetere da 1).
-4. `finiture_interni.py`;
+4. `finiture_interni.py`, poi `arredi_interni.py`;
 5. `percorsi_camera.py --render` (anteprime da far approvare ad Andrea), poi `esporta_usd.py`.
 
 Anteprime: `--motore EEVEE` (predefinito, sole e materiali) oppure `--motore WORKBENCH` (animatic per giudicare solo

@@ -220,14 +220,17 @@ def interni():
         vani.append({"nome": ob["vano"], "ob": ob.name, "pol": pol, "z0": z0, "z1": z1, "villa": int(ob.get("villa", 1)),
                      "esterno": ob["vano"].startswith(tuple(I["esterni"])), "porte": []})
     if not vani: log("interni: nessun vano nella scena (serve contesto_progetto.blend con gli IfcSpace)"); return
+    # ingombri dei mobili (arredi_interni.py): la camera non ci entra
+    mobili = unary_union([Polygon(list(zip(list(o["ingombro"])[0::2], list(o["ingombro"])[1::2]))).buffer(0)
+                          for o in scn.objects if "ingombro" in o and len(o["ingombro"]) >= 6] or [Polygon()])
     def dentro(v):
-        """punto di vista della stanza: il punto interno più lontano dai muri."""
+        """punto di vista della stanza: il punto interno più lontano da muri e mobili."""
         best, pb = -1.0, v["pol"].representative_point(); x0, y0, x1, y1 = v["pol"].bounds; n = 24
         for i in range(n + 1):
             for j in range(n + 1):
                 q = Point(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * j / n)
                 if v["pol"].contains(q):
-                    d = v["pol"].exterior.distance(q)
+                    d = min(v["pol"].exterior.distance(q), mobili.distance(q) if not mobili.is_empty else 9.0)
                     if d > best: best, pb = d, q
         return pb
     for v in vani: v["centro"] = dentro(v)

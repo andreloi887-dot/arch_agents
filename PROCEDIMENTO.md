@@ -124,5 +124,10 @@ Script in `skills/rilievo-urbano/scripts/blender/` (vedi il README lì), tutti s
   scena anche i vani (nascosti), `percorsi_camera.py --solo interni` genera la visita stanza per stanza con porte
   aperte e una luce per stanza. Provato sulla villa A (8 stanze, 86 s). Da fare: ingressi delle ville B, C, D, scale,
   arredi (l'IFC ha solo i sanitari), materiali PBR degli interni.
+- Villa A, interni (2026-11-15): `finiture_interni.py` (pavimento Marazzi Room Beige 100×100 posato lungo i muri,
+  perlinato, orditura a vista con travi d'incontro, travetti 10×16 a 70 cm, travi perpendicolari sopra gli infissi) e
+  `arredi_interni.py` (15 ingombri dalla planimetria di Andrea in `arredi.json`, più divano e tavolo da 6 con le
+  regole). Mobili parametrici: sedute e tessili da sostituire con modelli di libreria. Il tetto dell'IFC ha 7 linee
+  d'incontro non a 45°: da correggere in Edificius perché i travetti si incontrino ovunque a passo costante.
 - Installati: Blender 5.2 + Bonsai 0.9.0, Unreal Engine 5.8, FFmpeg.
 - Fasi 3–6 ancora da costruire.
