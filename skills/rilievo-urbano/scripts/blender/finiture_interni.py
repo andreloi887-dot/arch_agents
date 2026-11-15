@@ -223,22 +223,40 @@ for villa in sorted({f["villa"] for f in falde}):
             b = b if (b - p).length >= (a - p).length else a; a = p.copy()
             if (b - a).length < 0.3: continue
             s_ = a.dot(f["t"]); va, vb = sorted((a.dot(g), b.dot(g)))
-            if any(abs(e["s"] - s_) < 0.3 * INT and min(vb, max(e["a"].dot(g), e["b"].dot(g))) - max(va, min(e["a"].dot(g), e["b"].dot(g))) > 0.3 for e in f["travetti"]):
+            if any(abs(e["s"] - s_) < 0.5 * INT and min(vb, max(e["a"].dot(g), e["b"].dot(g))) - max(va, min(e["a"].dot(g), e["b"].dot(g))) > 0.3 for e in f["travetti"]):
                 n_doppi += 1; continue
             f["travetti"].append({"a": a, "b": b, "s": s_, "fermo": None})
     # 2: i travetti partono a coppie dagli stessi punti della trave d'incontro. Displuvi e compluvi: dal capo alto, un punto
     # ogni passo misurato sulla falda; colmi: dai due capi verso il centro, con il campo di compensazione al centro
     def nodo(g_, q): return any(o is not g_ and o["ln"].distance(Point(q.x, q.y)) < 0.3 for o in giunti)
-    for g_ in sorted(giunti, key=lambda x: x["colmo"]):
+    def arrivi(f, g_):
+        """ascisse lungo la trave g_ dei travetti della falda f che già vi arrivano."""
+        d = (g_["b"] - g_["a"]).normalized()
+        return sorted((e[c] - g_["a"]).dot(d) for e in f["travetti"] for c in "ab" if g_["ln"].distance(Point(e[c].x, e[c].y)) < 0.2)
+    # prima i colmi (campata tra due nodi: dai capi verso il centro), poi displuvi e compluvi dall'alto verso il basso:
+    # ognuno riprende la griglia dei travetti che gli arrivano già addosso, così il passo resta lo stesso da una campata all'altra
+    ordine = sorted(giunti, key=lambda x: (not x["colmo"], -max(zf(x["fa"], x["a"].x, x["a"].y), zf(x["fa"], x["b"].x, x["b"].y))))
+    for g_ in ordine:
         a, b, fa, fb = g_["a"], g_["b"], g_["fa"], g_["fb"]; d = (b - a).normalized(); lung = (b - a).length
-        if g_["colmo"]: us = campo(lung, nodo(g_, a), nodo(g_, b))
+        if g_["colmo"]:
+            for u in campo(lung, nodo(g_, a), nodo(g_, b)):
+                p = a + d * u; travetto(fa, p); travetto(fb, p)
+            continue
+        sa, sb = max(abs(d.dot(fa["t"])), 0.3), max(abs(d.dot(fb["t"])), 0.3); ea, eb = arrivi(fa, g_), arrivi(fb, g_)
+        def griglia(du, base):
+            k0 = math.ceil((0.12 - base) / du); return [base + k * du for k in range(k0, int((lung - 0.1 - base) / du) + 1)]
+        if abs(sa - sb) <= 0.08:                               # linea a 45°: stessi punti per le due falde, passo INT su entrambe
+            du = INT / ((sa + sb) / 2); base = (ea or eb or [0.0])[0]
+            for u in griglia(du, base):
+                p = a + d * u
+                for f, e_ in ((fa, ea), (fb, eb)):
+                    if not any(abs(u - x) < 0.12 for x in e_): travetto(f, p)
         else:
-            sn = max(abs(d.dot(fa["t"])), abs(d.dot(fb["t"])), 0.3); du = INT / sn
-            us = [k * du for k in range(1, int((lung - 0.1) / du) + 1)]
-            if abs(abs(d.dot(fa["t"])) - abs(d.dot(fb["t"]))) > 0.08:
-                avvisi.append(f"villa {villa}: {fa['nome']} e {fb['nome']} si incontrano su una linea non a 45°: su una delle due il passo dei travetti è minore di {INT * 100:.0f} cm")
-        for u in us:
-            p = a + d * u; travetto(fa, p); travetto(fb, p)
+            # linea non a 45° (falde tagliate male nel modello): passo uguale e incontro esatto non stanno insieme; vince il passo
+            avvisi.append(f"villa {villa}: {fa['nome']} e {fb['nome']} si incontrano su una linea non a 45°: passo rispettato, incontro dei travetti solo approssimato")
+            for f, sn, e_ in ((fa, sa, ea), (fb, sb, eb)):
+                for u in griglia(INT / sn, (e_ or [0.0])[0]):
+                    if not any(abs(u - x) < 0.12 for x in e_): travetto(f, a + d * u)
     # campi senza trave d'incontro (falde a una pendenza, tratti tra due zone): stesso passo, compensazione al centro
     for f in FV:
         if f["zona"].is_empty: continue
