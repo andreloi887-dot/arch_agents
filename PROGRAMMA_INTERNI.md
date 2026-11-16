@@ -92,6 +92,8 @@ e rifanno le proprie collezioni. Dopo "progetto" vanno rifatti tutti quelli succ
   non sopra un altro infisso); altrimenti resta così e il log dice perché (Andrea, 2026-11-15). Nella villa A i 4 casi
   restano così: a un passo la falda è già finita, o il travetto uscirebbe dal bordo o sarebbe lungo 25 cm.
 - Perlinato e travi avorio chiaro (#EFE8D6).
+- Perlinato a doghe continue: nessuna giunzione trasversale in vista, i tagli stanno sopra le travi (Andrea, 2026-11-16).
+  Vale in Blender (`finiture_interni.py`) e in Unreal (`prepara_render.py`).
 
 **Pavimento e battiscopa**
 - Marazzi Room Beige 100×100, fughe parallele ai muri, mai in diagonale.
@@ -119,6 +121,10 @@ e rifanno le proprie collezioni. Dopo "progetto" vanno rifatti tutti quelli succ
   verso la vetrata di quanto serve. Passaggio libero davanti alla porta del disimpegno.
 - Cucina: frigo, colonna forno e microonde, lavello, lavastoviglie, piano cottura con cappa; pensili con la parte
   bassa a 1,45 m e la parte alta sotto la trave più bassa.
+- Armadi: altezza unica, sotto il punto più basso di travi, travetti e falde sopra il loro ingombro, con 2 cm d'aria,
+  al massimo 2,40 m (Andrea, 2026-11-16: scelta tra gradini per anta, altezza unica e cima inclinata). Villa A:
+  matrimoniale 1,84 m, camera singola 1,87 m; sotto 1,60 m il log dà un AVVISO.
+- Comodini: il fronte guarda dove guarda il letto accanto (dalla testata ai piedi), non verso il letto.
 - Punti luce: una sospensione per stanza, due in zona giorno (tavolo e tavolino), luce sotto i pensili, faretti nel
   disimpegno; luce calda.
 
@@ -134,7 +140,6 @@ e rifanno le proprie collezioni. Dopo "progetto" vanno rifatti tutti quelli succ
 - **Tetto**: nell'IFC sette linee d'incontro della villa A non sono a 45° con falde di pari pendenza. Lì passo costante
   e incontro esatto dei travetti non stanno insieme: va corretto il tetto in Edificius.
 - **Muri interni**: alcuni non arrivano al tetto; sopra la porta della cucina si vede il vano accanto.
-- **Armadi**: alti 2,40 m, non controllano la quota della falda (i pensili della cucina sì).
 - **Mobili**: volumi parametrici. Vanno bene armadi, cucina e parete TV; divano, sedie, letti e tessili sono da
   sostituire con modelli di libreria (Poly Haven ha poco di moderno: Fab/Megascans in Unreal).
 - **Materiali**: procedurali di Blender; in Unreal vanno rifatti dalla libreria di studio. Il gres esce troppo chiaro.
@@ -143,9 +148,9 @@ e rifanno le proprie collezioni. Dopo "progetto" vanno rifatti tutti quelli succ
 - **Peso**: la scena esportata ha 62 milioni di triangoli (1494 mesh con le istanze, quasi tutti nel prato a
   particelle e nel contesto). In Unreal va attivato Nanite sulle mesh pesanti prima della resa.
 - **Percorso di camera**: nato per le stanze vuote. Controlla gli ostacoli solo ad altezza d'occhio, guarda spesso
-  un muro, e ha 12 avvisi di passaggio stretto. Le viste fisse del passo 8 rendono meglio.
+  un muro, e ha 13 avvisi di passaggio stretto (12 al 2026-11-15). Le viste fisse del passo 8 rendono meglio.
 - **Video interno**: non rifatto dopo arredi e porte. In Cycles: ~30 ore sulla CPU del cloud, ~3 ore sulla GPU
-  del PC (1965 fotogrammi × ~5 s, stima dalle viste). Il video finale si fa comunque in Unreal.
+  del PC (1847 fotogrammi al 2026-11-16, erano 1965; × ~5 s, stima dalle viste). Il video finale si fa comunque in Unreal.
 
 ## 8. Prossimi passi, in ordine
 
@@ -175,7 +180,7 @@ se manca, `filiera.py` ne crea uno vuoto uguale.
 Esito del controllo (filiera, passo unreal), Blender → Unreal: luci 1 sole, 29 punti, 16 faretti, 3 rettangolari ✓;
 62 059 121 triangoli contro 62 060 177 (Unreal scarta i degeneri, 0,002 %) ✓; 73 materiali distinti ✓ (Unreal
 accorpa i materiali uguali: 87 in USD, 84 usati, 73 diversi); ingombro in cm uguale, con l'asse y ribaltato ✓;
-camera e Level Sequence `LS_camere` a 25 fps, fotogrammi 1–1965 ✓. Livello: `/Game/Progetto/Scena`.
+camera e Level Sequence `LS_camere` a 25 fps, fotogrammi 1–1965 ✓ (1–1847 dal 2026-11-16, percorso rifatto). Livello: `/Game/Progetto/Scena`.
 
 Lezioni (già negli script):
 1. `-run=pythonscript -script="file argomenti"` spezza gli argomenti agli spazi: lo script li riunisce.
@@ -253,6 +258,59 @@ Lumen, Nanite (in `Config/DefaultEngine.ini`; `filiera.py` crea così anche un p
   `get_num_triangles(0)` dà la mesh di ripiego.
 - Da Git Bash un argomento `/Game/...` diventa `C:/Program Files/Git/Game/...`: serve `MSYS_NO_PATHCONV=1`. Da
   `filiera.py` (Python) il problema non c'è: è un altro motivo per usare sempre il comando unico.
+
+**Controllo da vicino (2026-11-16)**, con le viste `griglia_disimpegno`, `comodini_matrimoniale`, `armadio_matrimoniale`,
+`armadio_singola` in `viste_controllo.txt`:
+- Gli armadi da 2,40 m bucavano il tetto: nella camera singola la falda è a 2,21 m e i travetti a 2,10 (fino a 1,89).
+  Misura: raggi verso l'alto ogni 5 cm (un travetto è largo 10) partendo da 1 m dal pavimento, così il primo
+  ostacolo è il fondo della trave e non la falda sopra. Ora `h_armadio` in `arredi_interni.py` (regola in §5).
+- Comodini: `telaio()` su un ingombro quasi quadrato sceglie l'asse lungo a caso, e 3 su 4 guardavano il letto. Ora
+  si posano dopo i letti e ne prendono il verso.
+- Luci delle sospensioni: Blender le mette 3 cm sotto il bordo del paralume parametrico. Con il modello di libreria
+  restavano fuori dalla sfera (27 su 29 da 3 a 16 cm sotto il fondo; 2 a 21 cm sopra, non al centro). `sostituisci_arredi.py` le sposta al centro del
+  paralume (in pianta al centro del modello, in quota a metà larghezza sopra il fondo) e le elenca in
+  `usd/controllo_arredi.json → luci_nei_paralumi`. Di giorno sono spente: si controllano con un render `--luce sera`.
+- La griglia di ripresa del disimpegno c'è ed è al suo posto, tra i due faretti.
+- Progetto Unreal: la sessione precedente usava la variabile `UE_PROGETTO`. In una sessione nuova, senza la variabile,
+  `filiera.py` ha creato un progetto vuoto accanto a `ViaDellaMenta`: 0 modelli di libreria, nessun avviso che lo
+  fermasse. Ora il nome sta in `lotto.json → progetto_ue`; se manca, la filiera lo scrive in chiaro.
+- Al rilancio del passo `unreal` in un progetto già preparato, il controllo dei fotogrammi leggeva `Viste/LS_viste` (uno
+  scatto per vista, `[0, 4]`) invece della sequenza delle camere importate: `importa_usd.py` ora la esclude.
+- Sera (`--luce sera`): con le luci dentro le sfere di rattan la trama del paralume si stampa su muri e soffitto, come
+  nella realtà. EV 5 (predefinito per la sera) dà immagini quasi nere; EV 3 si legge, ma le stanze restano buie
+  (14 W/m² di Blender) e le lampade da comodino di libreria non hanno luce: da tarare con l'esposizione (§8 punto 3).
+  Immagini: `uscita_blender/render_unreal/` (giorno, aggiornate), `render_unreal_sera_ev5/`, `render_unreal_sera_ev3/`.
+- Aperto: la sospensione `Bagno v1 1.001` (e `Rip v4 1`) con il modello di libreria alla scala minima 0,6 pende più in basso
+  del previsto: fondo a 1,87 m dal pavimento. Da decidere: lampada più corta o plafoniera nei bagni.
+- Asset `SM_Nightstand_01`: il fronte (cassetti) è su +Y, come vuole `sostituisci_arredi.py`, senza `ruota_gradi`
+  (render `comodini_matrimoniale`).
+- **Perlinato del soffitto assente in Unreal (errore trovato da Andrea, 2026-11-16).** In Blender il perlinato è un Brick
+  procedurale sulle UV in metri dell'intradosso; l'USD porta solo la tinta, e `prepara_render.py` rifaceva gres e legno
+  ma non il perlinato: tutti i render Unreal fino a quel giorno avevano il soffitto liscio. Ora `prepara_render.py` crea
+  `M_Perlinato` con lo stesso disegno di Blender (doga `soffitto.doga_m`, fuga 4 mm al 70 %, due toni) e lo mette su ogni `MI_Perlinato*`; controllo `perlinato_parti` in `controllo_render.json` (villa A: 18,
+  come le falde del log di finiture) e AVVISO se è 0. **Regola:** ogni materiale procedurale di Blender che conta va rifatto
+  in Unreal, e ogni render Unreal va confrontato con la vista Blender omonima anche per le finiture, non solo per la
+  geometria. Ancora da rifare: travi con venatura se servono.
+- **Vetro a specchio in Unreal (2026-11-16).** I vetri dell'IFC arrivano come istanze di `UsdPreviewSurface` con Opacity 0,2,
+  ma il materiale base è opaco e l'opacità si perde: lastra bianca lucida che riflette la stanza (vista `armadio_singola`,
+  sembrava un armadio fuori dalla camera). Ora `prepara_render.py` mette `M_Vetro` (traslucido, opacità 0,06–0,5 con il
+  Fresnel, ruvidità 0,02, senza ombra) su ogni istanza importata con 0 < Opacity < 0,99: villa A 30 parti, tutte
+  `Finestra_*`; controllo `vetro_parti` e AVVISO se è 0. Il nome dell'enum del modo di luce del traslucido cambia tra le
+  versioni di Unreal: si cerca tra quelli disponibili. Le istanze con Opacity 0 (`Involucro_fittizio`) restano come sono.
+- **Abat-jour senza luce (2026-11-16).** Nessuno script aveva mai messo una sorgente nelle lampade dei comodini. Ora
+  `arredi_interni.py` mette una luce a punto (`luci.abatjour_w`, 25 W) nel paralume parametrico e `sostituisci_arredi.py`
+  la porta nel paralume della lampada di libreria (`con` con "lamp" nel nome); controllo in `luci_nei_paralumi`
+  (villa A: 4 × 1). Luci a punto 33 = 29 sospensioni + 4 abat-jour.
+- **"Sera" con il sole del giorno (2026-11-16).** `prepara_render.py` lasciava il sole acceso anche di sera: finché i vetri
+  erano opachi non si vedeva, con i vetri veri la sera era giorno pieno. Ora di sera il sole è spento. Il render di sera va
+  in `render_unreal_sera/`, quello di giorno in `render_unreal/`: prima la sera sovrascriveva il giorno.
+- **Esposizione per vista (2026-11-16).** `filiera.py --taratura`: dopo il render misura la chiave di ogni immagine (media
+  geometrica della luminanza lineare, senza i pixel bruciati), scrive l'EV di ogni vista in
+  `uscita_blender/ev_viste_<luce>.json` e rifà prepara e render (al massimo 3 giri); `prepara_render.py` mette l'EV nella
+  camera, che vince sul volume. Chiave voluta: giorno 0,20 (converge in 2 giri, EV da 8,96 a 11,28), sera 0,09 (partendo da
+  EV 5 servono 3 giri e l'ultimo corregge ancora fino a 1 EV: il tone mapping non è lineare). Le EV di sera trovate a sole
+  acceso (da 9,7 a 11,2) erano sbagliate e sono state cancellate. Di sera, con poca luce, Lumen lascia macchie sui muri: da
+  affinare (qualità di Lumen o più campioni).
 
 Prossimi passi in Unreal, in ordine: divano, tavolo con sedie e scrivanie di libreria; materiali per tessuti, laccati
 e intonaco; EV per vista; alberi come istanze; viste verso le vetrate e dall'esterno; poi il video (percorso interno,

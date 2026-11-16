@@ -18,21 +18,37 @@ Passi, in ordine (--da / --fino per farne solo una parte; dopo "progetto" vanno 
   prepara    unreal/prepara_render.py  Nanite, luce (--luce giorno|sera, --ev <EV100>), materiali di gres e legno, camere
                                    dalle viste di <modello>/viste_controllo.txt, sequenza e configurazione MRQ
   render     Movie Render Queue    sulla scheda grafica (-game): un PNG per camera in uscita_blender/render_unreal/
+             --taratura: dopo il render misura la chiave di ogni immagine (media geometrica della luminanza, senza i
+                                   pixel bruciati), scrive l'EV di ogni vista in uscita_blender/ev_viste_<luce>.json e rifà prepara
+                                   e render (al massimo 3 giri). Chiave voluta: --chiave, giorno 0.20, sera 0.09. I giri dopo
+                                   usano il file da soli
 I passi prepara e render si chiedono con --fino render (senza, la filiera si ferma a libreria).
 
 Per ogni passo: esito, tempo, avvisi. Un avviso già in <modello>/avvisi_noti.txt (una riga per avviso accettato,
 testo esatto) conta come noto; gli altri si stampano per intero. Riepilogo anche in uscita_blender/riepilogo_filiera.json.
 Eseguibili: variabili BLENDER e UE_EDITOR, altrimenti la versione più recente nelle cartelle standard di Windows.
-Progetto Unreal: --progetto-ue o variabile UE_PROGETTO; se manca si crea vuoto in Documenti/Unreal Projects/<zona>.
+Progetto Unreal: --progetto-ue, variabile UE_PROGETTO o lotto.json → progetto_ue (cartella in Documenti/Unreal Projects); se
+manca tutto si usa o si crea vuoto Documenti/Unreal Projects/<zona>, e lo si scrive.
 Esce con codice 1 se un passo fallisce o se il confronto con Unreal non torna.
 """
-import glob, json, os, re, subprocess, sys, time
+import glob, json, math, os, re, subprocess, sys, time
 
 QUI = os.path.dirname(os.path.abspath(__file__))
 BL = os.path.join(QUI, "blender")
 PASSI = ["contesto", "progetto", "finiture", "arredi", "percorsi", "usd", "viste", "unreal", "libreria", "prepara", "render"]
 LOG = {"contesto": "importa.log", "progetto": "importa_progetto.log", "finiture": "finiture_interni.log",
        "arredi": "arredi_interni.log", "percorsi": "percorsi.log", "usd": "esporta_usd.log", "unreal": "unreal.log"}
+
+
+def chiave(png):
+    """chiave dell'immagine: media geometrica della luminanza lineare, senza i pixel bruciati (finestre al sole)."""
+    from PIL import Image
+    im = Image.open(png).convert("RGB"); im.thumbnail((480, 270))
+    lin = lambda c: c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+    px = im.get_flattened_data() if hasattr(im, "get_flattened_data") else im.getdata()
+    L = [0.2126 * lin(r / 255) + 0.7152 * lin(g / 255) + 0.0722 * lin(b / 255) for r, g, b in px]
+    L = [x for x in L if x < 0.95] or L
+    return math.exp(sum(math.log(max(x, 1e-4)) for x in L) / len(L))
 
 
 def opzione(argv, nome, pred=None):
@@ -49,9 +65,15 @@ def eseguibile(var, schema):
 def progetto_ue(argv, mod):
     p = opzione(argv, "--progetto-ue") or os.environ.get("UE_PROGETTO")
     if p: return p
-    zona = os.path.basename(os.path.dirname(os.path.abspath(mod)))
-    cart = os.path.join(os.path.expanduser("~"), "Documents", "Unreal Projects", zona.replace("-", "_"))
-    p = os.path.join(cart, zona.replace("-", "_") + ".uproject")
+    # nome del progetto in lotto.json → progetto_ue (cartella in Documenti/Unreal Projects). Senza, la filiera del
+    # 2026-11-16 ha creato un progetto vuoto accanto a quello vero, senza i pacchetti di libreria: 0 arredi sostituiti.
+    f_lotto = os.path.join(mod, "lotto.json")
+    nome = json.load(open(f_lotto, encoding="utf-8")).get("progetto_ue") if os.path.isfile(f_lotto) else None
+    if not nome:
+        nome = os.path.basename(os.path.dirname(os.path.abspath(mod))).replace("-", "_")
+        print(f"ATTENZIONE: lotto.json non ha 'progetto_ue': uso o creo il progetto Unreal '{nome}'")
+    cart = os.path.join(os.path.expanduser("~"), "Documents", "Unreal Projects", nome)
+    p = os.path.join(cart, nome + ".uproject")
     if not os.path.isfile(p):
         os.makedirs(os.path.join(cart, "Content"), exist_ok=True); os.makedirs(os.path.join(cart, "Config"), exist_ok=True)
         json.dump({"FileVersion": 3, "EngineAssociation": "", "Plugins": [{"Name": n, "Enabled": True} for n in
@@ -145,7 +167,13 @@ def main(argv):
     if "render" in scelti and "prepara" not in scelti and not os.path.isfile(f_ren):
         raise SystemExit("render senza preparazione: lanciare prima --da prepara (manca usd/controllo_render.json)")
     esito, ok_tutto = {"modello": mod, "passi": []}, True
-    for p in scelti:
+    taratura = "--taratura" in argv; luce_t = opzione(argv, "--luce", "giorno")
+    bersaglio = float(opzione(argv, "--chiave", "0.20" if luce_t == "giorno" else "0.09")); GIRI_T = 3
+    f_ev_t = os.path.join(U, f"ev_viste_{luce_t}.json")
+    if taratura and "render" not in scelti: raise SystemExit("--taratura vuole il render: --da prepara --fino render")
+    coda, giro_t = list(scelti), 0
+    while coda:
+        p = coda.pop(0)
         t0 = time.time(); print(f"== {p} ...", flush=True)
         for f in {"usd": [f_rif, f_ue], "unreal": [f_ue]}.get(p, []):     # mai confrontare file di un giro prima
             if os.path.isfile(f): os.remove(f)
@@ -188,6 +216,21 @@ def main(argv):
             fatte = [c for c in cr["camere"] if os.path.isfile(os.path.join(cart, c + ".png")) and os.path.getmtime(os.path.join(cart, c + ".png")) >= t0]
             voce["render"] = {"cartella": cart, "immagini": fatte, "mancanti": [c for c in cr["camere"] if c not in fatte], "luce": cr.get("luce"), "ev": cr.get("ev")}
             if voce["render"]["mancanti"]: errore = True; voce["ok"] = False; uscita += "\nError: immagini non scritte: " + ", ".join(voce["render"]["mancanti"])
+        if p == "render" and not errore and taratura and giro_t < GIRI_T:
+            # taratura dell'esposizione: chiave di ogni immagine → EV che la porta alla chiave voluta; poi prepara e render
+            cr = json.load(open(f_ren, encoding="utf-8")); usati = cr.get("ev_viste") or {}
+            nuovi_ev, delta = {}, {}
+            for c in cr["camere"]:
+                k = chiave(os.path.join(cr["uscita"], c + ".png")); e0 = usati.get(c, cr.get("ev"))
+                d = max(-4.0, min(4.0, math.log2(max(k, 1e-4) / bersaglio)))   # immagine troppo chiara → EV più alto
+                nuovi_ev[c] = round(max(-2.0, min(16.0, e0 + d)), 2); delta[c] = (round(k, 3), round(d, 2))
+            giro_t += 1
+            voce["taratura"] = {"giro": giro_t, "chiave_voluta": bersaglio, "chiave_e_correzione": delta, "ev": nuovi_ev}
+            print(f"      taratura giro {giro_t}: chiave voluta {bersaglio}, " + ", ".join(f"{c[6:]} {k}→{d:+}" for c, (k, d) in delta.items()))
+            if any(abs(d) > 0.25 for _, d in delta.values()):
+                json.dump({"_nota": f"EV100 per vista, luce {cr.get('luce')}, chiave {bersaglio}: filiera.py --taratura del {time.strftime('%Y-%m-%d')}", **nuovi_ev},
+                          open(f_ev_t, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+                coda = ["prepara", "render"] + coda
         if p == "unreal" and not errore:
             voce["confronto"] = [{"voce": v, "atteso": a, "trovato": t, "ok": k} for v, a, t, k in
                                  confronta(json.load(open(f_rif)), json.load(open(f_ue)))]
@@ -214,7 +257,8 @@ def main(argv):
             print(f"      luce {c['luce']}, EV {c.get('ev')}, Nanite su {c['nanite_mesh']} mesh, luci accese {c['luci_accese']} / spente {c['luci_spente']}, "
                   f"camere {len(c['camere'])}, gres su {c.get('gres_parti')} parti, legno su {c.get('legno_parti')}")
         if "render" in voce:
-            print(f"      {len(voce['render']['immagini'])} immagini in {voce['render']['cartella']} (luce {voce['render']['luce']}, EV {voce['render']['ev']})")
+            evv = cr.get("ev_viste") or {}; ev_t = f"EV per vista da {min(evv.values()):g} a {max(evv.values()):g}" if cr.get("ev_tarati") and evv else f"EV {voce['render']['ev']}"
+            print(f"      {len(voce['render']['immagini'])} immagini in {voce['render']['cartella']} (luce {voce['render']['luce']}, {ev_t})")
         if errore:
             coda = [r for r in uscita.splitlines() if re.search(r"Error|Traceback|AVVISO|SystemExit", r)][-15:]
             print("\n".join("      " + r[-300:] for r in coda)); ok_tutto = False; break

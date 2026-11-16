@@ -50,7 +50,8 @@ MESH = [c for a in tutti if a.get_class().get_name() == "Actor" for c in a.get_c
 PREFISSI = {pulito(p["nome"].split(" v")[0]) for p in POSATI}
 for c in MESH:                                                     # rilancio: tornano visibili i volumi nascosti la volta prima
     if not c.is_visible() and any(c.get_name().startswith(k) for k in PREFISSI): c.set_visibility(True); c.set_hidden_in_game(False)
-fatti, parametrici, scarti, senza_volume = [], [], [], []
+fatti, parametrici, scarti, senza_volume, luci_spostate = [], [], [], [], []
+LUCI = [l for a in tutti for l in a.get_components_by_class(unreal.PointLightComponent)]    # anche le spot: sottoclasse
 for p in POSATI:
     scelta = MAPPA.get(p["nome"]) or MAPPA.get(p["tipo"])
     if not scelta: parametrici.append(p["nome"]); continue
@@ -97,20 +98,43 @@ for p in POSATI:
     n = attori.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(px, py, pz), unreal.Rotator(0, 0, yaw_tot))
     n.static_mesh_component.set_static_mesh(sm)
     n.set_actor_scale3d(unreal.Vector(sx, sy, sz)); n.set_actor_label("LIB_" + pulito(p["nome"])); n.set_folder_path("Arredi di libreria")
+    lume = None                                                                # lampada da tavolo messa con "con"
     for k, extra in enumerate(scelta.get("con", [])):
         sm2 = unreal.EditorAssetLibrary.load_asset(extra["asset"]) if unreal.EditorAssetLibrary.does_asset_exist(extra["asset"]) else None
         if not isinstance(sm2, unreal.StaticMesh): unreal.log_warning(f"AVVISO {p['nome']}: asset {extra['asset']} non trovato"); continue
         n2 = attori.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(px, py, pz + extra.get("z_cm", 0) * sz), unreal.Rotator(0, 0, yaw_tot))
         n2.static_mesh_component.set_static_mesh(sm2); n2.set_actor_scale3d(unreal.Vector(sx, sy, sz))
         n2.set_actor_label(f"LIB_{pulito(p['nome'])}_{k + 1}"); n2.set_folder_path("Arredi di libreria")
+        if "lamp" in extra["asset"].lower(): lume = n2
     o, e = n.get_actor_bounds(False)
+    if p["tipo"] == "lampada":
+        # la luce di Blender sta 3 cm sotto il bordo del paralume parametrico: con il modello di libreria resterebbe fuori,
+        # sotto la sfera (controllo del 2026-11-16: 27 sospensioni su 29 da 3 a 16 cm sotto, 2 fuori centro). Va al centro del
+        # paralume: in pianta al centro del modello, in quota a metà larghezza sopra il fondo.
+        dentro = unreal.Vector(o.x, o.y, o.z - e.z + min(e.x, e.y, e.z))
+        vicine = [l for l in LUCI if math.hypot(l.get_world_location().x - x, l.get_world_location().y - y) < 30
+                  and z - 40 <= l.get_world_location().z <= z + H + 10]
+        for l in vicine: l.set_world_location(dentro, False, False)
+        if len(vicine) != 1: unreal.log_warning(f"AVVISO {p['nome']}: {len(vicine)} luci trovate vicino alla lampada invece di 1")
+        luci_spostate.append({"nome": p["nome"], "luci": len(vicine), "a_cm": [round(dentro.x, 1), round(dentro.y, 1), round(dentro.z, 1)]})
+    if lume:
+        # abat-jour (2026-11-16): la luce di arredi_interni.py sta nel paralume parametrico, 72 cm sul pavimento e 5 cm
+        # dietro il centro del comodino; va nel paralume della lampada di libreria, a un terzo dell'altezza sotto la cima
+        o2, e2 = lume.get_actor_bounds(False)
+        dentro = unreal.Vector(o2.x, o2.y, o2.z + e2.z - 2 * e2.z / 3)
+        vicine = [l for l in LUCI if math.hypot(l.get_world_location().x - x, l.get_world_location().y - y) < 40
+                  and z <= l.get_world_location().z <= z + H + 40]
+        for l in vicine: l.set_world_location(dentro, False, False)
+        if len(vicine) != 1: unreal.log_warning(f"AVVISO {p['nome']}: {len(vicine)} luci trovate vicino all'abat-jour invece di 1")
+        luci_spostate.append({"nome": p["nome"] + " (abat-jour)", "luci": len(vicine), "a_cm": [round(dentro.x, 1), round(dentro.y, 1), round(dentro.z, 1)]})
     fatti.append({"nome": p["nome"], "asset": scelta["asset"], "scala": [round(sx, 3), round(sy, 3), round(sz, 3)],
                   "centro_cm": [round(o.x, 1), round(o.y, 1), round(o.z - e.z, 1)], "voluto_cm": [round(x, 1), round(y, 1), round(z, 1)],
                   "ingombro_cm": [round(2 * e.x), round(2 * e.y), round(2 * e.z)]})
 
 for n_ in senza_volume: unreal.log_warning(f"AVVISO {n_}: volume parametrico non trovato, resta insieme al modello di libreria")
 luci = sum(len(a.get_components_by_class(unreal.LightComponentBase)) for a in attori.get_all_level_actors())
-esito = {"sostituiti": fatti, "parametrici": parametrici, "scarti_di_misura": scarti, "volumi_non_trovati": senza_volume, "luci_in_scena": luci}
+esito = {"sostituiti": fatti, "parametrici": parametrici, "scarti_di_misura": scarti, "volumi_non_trovati": senza_volume, "luci_in_scena": luci,
+         "luci_nei_paralumi": luci_spostate}
 json.dump(esito, open(os.path.join(MOD, "uscita_blender", "usd", "controllo_arredi.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 unreal.log(f"CONTROLLO arredi: {len(fatti)} di libreria, {len(parametrici)} ancora parametrici, {len(scarti)} scarti di misura")
 for s_ in scarti: unreal.log_warning("AVVISO misura " + s_)

@@ -123,7 +123,10 @@ for a in attori.get_all_level_actors():
 unreal.log(f"CONTROLLO attori {dict(sorted(tipi.items()))}")
 unreal.log(f"CONTROLLO componenti {dict(sorted(comp.items()))}, materiali usati {len(mat)}, triangoli {tri}")
 unreal.log(f"CONTROLLO ingombro mesh cm min ({lo[0]:.0f}, {lo[1]:.0f}, {lo[2]:.0f}) max ({hi[0]:.0f}, {hi[1]:.0f}, {hi[2]:.0f})")
-seq = [d for d in asset_lib.list_assets(RADICE, True, False) if "LevelSequence" in str(asset_lib.find_asset_data(d).asset_class_path.asset_name)]
+# solo la sequenza delle camere importate: LS_viste (cartella Viste) la rifà prepara_render.py, uno scatto per vista. Al
+# rilancio nello stesso progetto il controllo prendeva quella (2026-11-16: fotogrammi [0, 4] invece di [1, 1847])
+seq = [d for d in asset_lib.list_assets(RADICE, True, False) if "LevelSequence" in str(asset_lib.find_asset_data(d).asset_class_path.asset_name)
+       and "/Viste/" not in d]
 controllo = {"luci": {k[:-5]: v for k, v in tipi.items() if k in ("DirectionalLight", "SpotLight", "PointLight", "RectLight")},
              "mesh": comp.get("StaticMeshComponent", 0), "triangoli": tri, "materiali": len(mat),
              "ingombro_cm": [[round(v) for v in lo], [round(v) for v in hi]],

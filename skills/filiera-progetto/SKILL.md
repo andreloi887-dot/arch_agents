@@ -17,7 +17,8 @@ python skills/rilievo-urbano/scripts/filiera.py rilievi/<zona>/modello --villa 1
 
 Passi: `contesto → progetto → finiture → arredi → percorsi → usd → viste → unreal → libreria → prepara → render`
 (gli ultimi due solo con `--fino render` o `--da prepara`: Nanite, luce `--luce giorno|sera --ev N`, materiali, camere,
-Movie Render Queue sulla GPU → `uscita_blender/render_unreal/<camera>.png`) (`--da`, `--fino` per una
+Movie Render Queue sulla GPU → `uscita_blender/render_unreal/<camera>.png`; con `--taratura` l'esposizione di ogni vista
+si tara da sola sulla chiave dell'immagine, `--chiave` giorno 0.20 / sera 0.09, e resta in `uscita_blender/ev_viste_<luce>.json`) (`--da`, `--fino` per una
 parte; dopo `progetto` si rifà tutto). Stampa per ogni passo esito, tempo, avvisi noti e **NUOVO**, i tempi delle
 viste e il confronto Blender ↔ Unreal (luci, triangoli, materiali, ingombro, camere, fps, fotogrammi). Tutto anche in
 `uscita_blender/riepilogo_filiera.json`. **Non cercare nei log a mano**: si leggono solo se un passo è ERR.
@@ -34,7 +35,9 @@ viste e il confronto Blender ↔ Unreal (luci, triangoli, materiali, ingombro, c
 ## Ambiente
 
 - **PC di Andrea** (preferito): Blender 5.2 con Bonsai, UE 5.8, Quadro RTX 6000. Eseguibili trovati da soli
-  (variabili `BLENDER`, `UE_EDITOR`, `UE_PROGETTO` per forzarli). Cycles va su GPU OptiX da solo (`comune.cycles`):
+  (variabili `BLENDER`, `UE_EDITOR`, `UE_PROGETTO` per forzarli). Il progetto Unreal si sceglie con
+  `lotto.json → progetto_ue` (nome della cartella in `Documenti/Unreal Projects`): senza, la filiera ne crea uno vuoto,
+  senza i pacchetti di libreria. Cycles va su GPU OptiX da solo (`comune.cycles`):
   5-10 s a vista contro 23-27 s di CPU. `FILIERA_CPU=1` forza la CPU.
 - **Cloud**: niente Blender, GPU né Unreal. Blender come modulo (`pip install bpy==5.2.4 ...`, PROGRAMMA_INTERNI §2),
   solo passi Blender, viste a ~55 s l'una. Il PC dal cloud non si raggiunge: Unreal si fa solo sul PC.

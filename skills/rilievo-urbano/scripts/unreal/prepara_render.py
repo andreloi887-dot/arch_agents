@@ -6,10 +6,12 @@ Cosa fa (si può rilanciare):
   1. Nanite sulle mesh importate sopra NANITE_DA triangoli (prato, contesto): senza, 62 milioni di triangoli pesano su
      ogni fotogramma.
   2. Luce: "giorno" (predefinito) = solo luce naturale, sole e cielo fisici (sole 100 000 lux, quello esportato da
-     Blender con data e ora del lotto), luci artificiali spente; "sera" = luci artificiali accese, sole com'è. Esposizione fissa: ev=<EV100> (giorno 10,
-     sera 5): più alto = più scuro.
-  2b. Materiali: gres del pavimento con formato e fuga del progetto (dalle UV in metri), legno degli arredi con la
-     venatura di una texture del progetto; gli altri restano le tinte di Blender.
+     Blender con data e ora del lotto), luci artificiali spente; "sera" = luci artificiali accese, sole spento. Esposizione fissa: ev=<EV100> (giorno 10,
+     sera 5): più alto = più scuro. Ogni camera ha la sua esposizione: quella di uscita_blender/ev_viste_<luce>.json
+     (scritto da filiera.py --taratura) se la vista c'è, altrimenti ev.
+  2b. Materiali: gres del pavimento con formato e fuga del progetto (dalle UV in metri), perlinato del soffitto con
+     le doghe di Blender (dalle UV in metri dell'intradosso), vetro traslucido sulle finestre, legno degli arredi con la venatura di una texture del
+     progetto; gli altri restano le tinte di Blender.
   3. Camere fisse dalle viste di <modello>/viste_controllo.txt (le stesse di Blender: nome:x,y,h,tx,ty,th[,focale],
      h sul pavimento, coordinate di Blender in metri) → CineCamera "VISTA_<nome>" nella cartella "Viste".
   4. Level Sequence /Game/Progetto/Viste/LS_viste: un'inquadratura di un fotogramma per camera (la Movie Render Queue
@@ -64,8 +66,9 @@ accese = spente = 0
 for a in attori.get_all_level_actors():
     for c in a.get_components_by_class(unreal.LightComponentBase):
         if isinstance(c, unreal.DirectionalLightComponent):
-            if LUCE == "giorno": c.set_intensity(100000.0)                 # lux: sole pieno; il cielo viene dall'atmosfera
-            c.set_visibility(True); accese += 1
+            # di sera il sole è spento: con i vetri trasparenti (2026-11-16) il sole del giorno entrava e la "sera" era giorno
+            c.set_intensity(100000.0)                                         # lux: sole pieno; il cielo viene dall'atmosfera
+            c.set_visibility(LUCE == "giorno"); accese += LUCE == "giorno"; spente += LUCE != "giorno"
         elif isinstance(c, unreal.SkyLightComponent): c.set_visibility(True); accese += 1
         else:
             c.set_visibility(LUCE == "sera"); accese += LUCE == "sera"; spente += LUCE != "sera"
@@ -144,7 +147,60 @@ if lib.does_asset_exist(T_ALB):
     mel.connect_material_property(fi, "", MP.MP_BASE_COLOR)
     mel.connect_material_property(nodo(m, unreal.MaterialExpressionConstant, 150, 300, r=0.5), "", MP.MP_ROUGHNESS)
     mel.recompile_material(m); lib.save_loaded_asset(m); M_LEGNO = m
-n_gres = n_legno = 0
+# perlinato del soffitto (Andrea, 2026-11-16: "il soffitto lo voglio con le perline"): in Blender è un Brick procedurale
+# sulle UV in metri dell'intradosso (finiture_interni.py: u lungo le doghe, v lungo la pendenza) e in USD arriva come
+# tinta unita. Qui lo stesso disegno: doghe larghe doga_m e continue (Andrea, 2026-11-16: nessuna giunzione trasversale
+# in vista, i tagli stanno nascosti sopra le travi), fuga longitudinale di 4 mm al 70 % della tinta, due toni (1 e 0,96)
+# che cambiano da una doga all'altra.
+SOF = {"colore": "#EFE8D6", "doga_m": 0.12, **LJ.get("progetto_ifc", {}).get("finiture", {}).get("soffitto", {})}
+DW, FU = SOF["doga_m"], 0.004
+m = nuovo_materiale("M_Perlinato"); m.set_editor_property("two_sided", True)
+def k(v, x, y): return nodo(m, unreal.MaterialExpressionConstant, x, y, r=v)
+def op(classe, a, b, x, y):
+    n = nodo(m, classe, x, y); lega(a, n, "A"); lega(b, n, "B"); return n
+def uno(classe, a, x, y):
+    n = nodo(m, classe, x, y); lega(a, n); return n
+uv = nodo(m, unreal.MaterialExpressionTextureCoordinate, -2200, 0)
+vv = maschera(m, uv, -2050, 100, "g")                                                        # v: lungo la pendenza
+vr = op(unreal.MaterialExpressionMultiply, vv, k(1.0 / DW, -2050, 200), -1900, 100)          # v in doghe
+fila = uno(unreal.MaterialExpressionFloor, vr, -1750, 200)
+fr = uno(unreal.MaterialExpressionFrac, vr, -1000, 150)
+mi = op(unreal.MaterialExpressionMin, fr, uno(unreal.MaterialExpressionOneMinus, fr, -900, 230), -800, 150)
+dmin = op(unreal.MaterialExpressionMultiply, mi, k(DW, -800, 250), -650, 150)               # distanza dalla fuga, in metri
+st = nodo(m, unreal.MaterialExpressionStep, -350, 0); lega(k(FU / 2, -500, 120), st, "Y"); lega(dmin, st, "X")   # 1 doga, 0 fuga
+# tono della doga: hash dell'indice della fila → 1 o 0,96
+hx = op(unreal.MaterialExpressionMultiply, fila, k(78.233, -1000, 600), -850, 550)
+sn = nodo(m, unreal.MaterialExpressionSine, -550, 450, period=6.283185); lega(hx, sn)
+hs = uno(unreal.MaterialExpressionFrac, op(unreal.MaterialExpressionMultiply, sn, k(43758.5453, -550, 550), -400, 450), -250, 450)
+tono = nodo(m, unreal.MaterialExpressionLinearInterpolate, -100, 450); lega(k(0.96, -250, 550), tono, "A"); lega(k(1.0, -250, 620), tono, "B")
+sh = nodo(m, unreal.MaterialExpressionStep, -250, 700); lega(k(0.5, -400, 750), sh, "Y"); lega(hs, sh, "X"); lega(sh, tono, "Alpha")
+cp = nodo(m, unreal.MaterialExpressionConstant3Vector, -350, 200, constant=colore(SOF["colore"]))
+cd = op(unreal.MaterialExpressionMultiply, cp, tono, -150, 200)
+cf = op(unreal.MaterialExpressionMultiply, cp, k(0.7, -350, 320), -150, 320)
+le = nodo(m, unreal.MaterialExpressionLinearInterpolate, 50, 100); lega(cf, le, "A"); lega(cd, le, "B"); lega(st, le, "Alpha")
+mel.connect_material_property(le, "", MP.MP_BASE_COLOR)
+mel.connect_material_property(k(0.55, 50, 300), "", MP.MP_ROUGHNESS)
+mel.recompile_material(m); lib.save_loaded_asset(m); M_PERL = m
+# vetro (Andrea, 2026-11-16: in Unreal faceva da specchio). I vetri dell'IFC arrivano come istanze di UsdPreviewSurface
+# con Opacity 0,2, ma il materiale base è opaco e l'opacità si perde: lastra bianca lucida che riflette la stanza.
+# Qui un vetro traslucido vero: quasi incolore, riflesso di Fresnel basso, niente ombra (il sole entra come in Blender).
+m = nuovo_materiale("M_Vetro"); m.set_editor_property("two_sided", True)
+m.set_editor_property("blend_mode", unreal.BlendMode.BLEND_TRANSLUCENT)
+tlm = [k for k in dir(unreal.TranslucencyLightingMode) if "FORWARD" in k.upper()]      # il nome cambia tra versioni
+unreal.log(f"modi di luce del traslucido: {[k for k in dir(unreal.TranslucencyLightingMode) if k.isupper()]}")
+if tlm: m.set_editor_property("translucency_lighting_mode", getattr(unreal.TranslucencyLightingMode, tlm[0]))
+fre = nodo(m, unreal.MaterialExpressionFresnel, -400, 300)
+op_ = nodo(m, unreal.MaterialExpressionLinearInterpolate, -150, 300)
+lega(nodo(m, unreal.MaterialExpressionConstant, -400, 200, r=0.06), op_, "A"); lega(nodo(m, unreal.MaterialExpressionConstant, -400, 420, r=0.5), op_, "B"); lega(fre, op_, "Alpha")
+mel.connect_material_property(op_, "", MP.MP_OPACITY)
+mel.connect_material_property(nodo(m, unreal.MaterialExpressionConstant3Vector, -150, 0, constant=unreal.LinearColor(0.85, 0.9, 0.88, 1)), "", MP.MP_BASE_COLOR)
+mel.connect_material_property(nodo(m, unreal.MaterialExpressionConstant, -150, 120, r=0.02), "", MP.MP_ROUGHNESS)
+mel.connect_material_property(nodo(m, unreal.MaterialExpressionConstant, -150, 180, r=0.5), "", MP.MP_SPECULAR)
+mel.recompile_material(m); lib.save_loaded_asset(m); M_VETRO = m
+def opacita(mm):
+    try: return mel.get_material_instance_scalar_parameter_value(mm, "Opacity") if isinstance(mm, unreal.MaterialInstance) else 1.0
+    except Exception: return 1.0
+n_gres = n_legno = n_perl = n_vetro = 0; vetri_nomi = set(); vuoti = set()
 for a in attori.get_all_level_actors():
     if a.get_class().get_name() != "Actor": continue
     for c in a.get_components_by_class(unreal.StaticMeshComponent):
@@ -152,9 +208,19 @@ for a in attori.get_all_level_actors():
             mm = c.get_material(i); nm = mm.get_name() if mm else ""
             if nm.startswith("MI_Pavimento") or nm == "M_Gres": c.set_material(i, M_GRES); n_gres += 1
             elif M_LEGNO and (nm.startswith("MI_Arredo_legno") or nm == "M_Legno"): c.set_material(i, M_LEGNO); n_legno += 1
-unreal.log(f"CONTROLLO materiali: gres su {n_gres} parti (formato {PAV['formato_m']}, fuga {PAV['fuga_mm']} mm), legno su {n_legno} parti")
+            elif nm.startswith("MI_Perlinato") or nm == "M_Perlinato": c.set_material(i, M_PERL); n_perl += 1
+            elif nm == "M_Vetro" or (nm.startswith("MI_") and 0.0 < opacita(mm) < 0.99): c.set_material(i, M_VETRO); n_vetro += 1; vetri_nomi.add(nm)
+            elif nm.startswith("MI_") and opacita(mm) <= 0.0: vuoti.add(nm)
+unreal.log(f"CONTROLLO materiali: gres su {n_gres} parti (formato {PAV['formato_m']}, fuga {PAV['fuga_mm']} mm), legno su {n_legno} parti, "
+           f"perlinato su {n_perl} parti (doga {DW * 100:.0f} cm), vetro su {n_vetro} parti ({', '.join(sorted(vetri_nomi))})")
+if not n_vetro: unreal.log_warning("AVVISO vetro su 0 parti: le finestre restano opache")
+if vuoti: unreal.log(f"materiali con opacità 0 lasciati come sono: {', '.join(sorted(vuoti))}")
+if not n_perl: unreal.log_warning("AVVISO perlinato su 0 parti: il soffitto resta liscio")
 
 # ------------------------------------------------------------------------------------------------ 3. camere
+f_ev = os.path.join(MOD, "uscita_blender", f"ev_viste_{LUCE}.json")       # scritto da filiera.py --taratura
+EV_VISTE = {k: v for k, v in json.load(open(f_ev, encoding="utf-8")).items() if not k.startswith("_")} if os.path.isfile(f_ev) else {}
+EV_USATI = {}
 z0 = 0.0
 if os.path.isfile(f_pos):   # quota del pavimento: appoggio dei mobili (4 mm sopra il vano)
     zz = [a["centro_m"][2] for a in json.load(open(f_pos, encoding="utf-8"))["arredi"] if a["tipo"] != "lampada" and a["villa"] == 1]
@@ -173,8 +239,17 @@ for r in open(f_viste, encoding="utf-8"):
     fb = cc.get_editor_property("filmback"); fb.sensor_width = 36.0; fb.sensor_height = 20.25; cc.set_editor_property("filmback", fb)
     cc.set_editor_property("current_focal_length", n[6] if len(n) > 6 else 16.0)
     fs = cc.get_editor_property("focus_settings"); fs.focus_method = unreal.CameraFocusMethod.DISABLE; cc.set_editor_property("focus_settings", fs)
+    # esposizione della vista: EV tarato (filiera.py --taratura) se c'è, altrimenti quello generale. La camera vince sul volume
+    ev_c = EV_VISTE.get("VISTA_" + nome, EV); EV_USATI["VISTA_" + nome] = ev_c
+    pp = cc.get_editor_property("post_process_settings")
+    for k, v in (("override_auto_exposure_method", True), ("auto_exposure_method", unreal.AutoExposureMethod.AEM_MANUAL),
+                 ("override_auto_exposure_apply_physical_camera_exposure", True), ("auto_exposure_apply_physical_camera_exposure", False),
+                 ("override_auto_exposure_bias", True), ("auto_exposure_bias", -ev_c)):
+        pp.set_editor_property(k, v)
+    cc.set_editor_property("post_process_settings", pp); cc.set_editor_property("post_process_blend_weight", 1.0)
     camere.append(cam)
-unreal.log(f"CONTROLLO camere: {[c.get_actor_label() for c in camere]} | pavimento a {z0:.3f} m")
+unreal.log(f"CONTROLLO camere: {[c.get_actor_label() for c in camere]} | pavimento a {z0:.3f} m | EV {EV_USATI}"
+           + (f" (tarati da {os.path.basename(f_ev)})" if EV_VISTE else ""))
 
 # ------------------------------------------------------------------------------------------------ 4. sequenza
 cart = RADICE + "/Viste"; p_seq = cart + "/LS_viste"
@@ -191,7 +266,8 @@ lib.save_loaded_asset(seq)
 # ------------------------------------------------------------------------------------------------ 5. Movie Render Queue
 # Configurazione salvata nel progetto: il render parte da riga di comando con -game (usa la scheda grafica e si chiude
 # da solo). -ExecutePythonScript non va bene: l'editor esegue lo script ed esce subito (provato il 2026-11-15).
-USCITA_R = os.path.join(MOD, "uscita_blender", "render_unreal").replace("\\", "/"); os.makedirs(USCITA_R, exist_ok=True)
+# giorno in render_unreal/, sera in render_unreal_sera/: un giro non cancella l'altro
+USCITA_R = os.path.join(MOD, "uscita_blender", "render_unreal" + ("" if LUCE == "giorno" else "_" + LUCE)).replace("\\", "/"); os.makedirs(USCITA_R, exist_ok=True)
 cfg = unreal.MoviePipelinePrimaryConfig()
 out = cfg.find_or_add_setting_by_class(unreal.MoviePipelineOutputSetting)
 out.output_directory = unreal.DirectoryPath(USCITA_R); out.file_name_format = "{camera_name}"
@@ -211,7 +287,7 @@ unreal.MoviePipelineEditorLibrary.export_config_to_asset(cfg, p_cfg, "MRQ_viste"
 if lib.does_asset_exist(RADICE + "/MRQ_viste"): lib.delete_asset(RADICE + "/MRQ_viste")        # avanzo della prima prova
 unreal.log(f"CONTROLLO configurazione render {p_cfg}: {lib.does_asset_exist(p_cfg)} | uscita {USCITA_R}")
 livelli.save_current_level(); unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True, True)
-json.dump({"luce": LUCE, "ev": EV, "gres_parti": n_gres, "legno_parti": n_legno, "nanite_mesh": n_nan, "nanite_triangoli": tri_nan, "luci_accese": int(accese), "luci_spente": int(spente),
+json.dump({"luce": LUCE, "ev": EV, "gres_parti": n_gres, "legno_parti": n_legno, "perlinato_parti": n_perl, "vetro_parti": n_vetro, "ev_viste": EV_USATI, "ev_tarati": bool(EV_VISTE), "nanite_mesh": n_nan, "nanite_triangoli": tri_nan, "luci_accese": int(accese), "luci_spente": int(spente),
            "camere": [c.get_actor_label() for c in camere], "sequenza": p_seq, "configurazione": p_cfg, "uscita": USCITA_R},
           open(os.path.join(MOD, "uscita_blender", "usd", "controllo_render.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 unreal.log("CONTROLLO sequenza " + p_seq + " salvata")

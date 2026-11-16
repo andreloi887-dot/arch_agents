@@ -298,7 +298,8 @@ log("controsoffitti", n_cs, f"a {CS['altezza_m']:.2f} m | faretti LED", n_far, "
 
 # ------------------------------------------------------------------------------------------------ soffitti: perlinato
 S = F["soffitto"]; T = S["travetti"]; INT = T["interasse_m"]
-m_perl = materiale("Perlinato soffitto", S["colore"], 0.55, [4.0, S["doga_m"]], 0.004, scuro=0.7, sfalsato=0.5)
+# doghe continue, senza giunzioni trasversali in vista (Andrea, 2026-11-16: i tagli stanno sopra le travi)
+m_perl = materiale("Perlinato soffitto", S["colore"], 0.55, [1000.0, S["doga_m"]], 0.004, scuro=0.7)
 m_trave = bpy.data.materials.get("Legno travetti") or bpy.data.materials.new("Legno travetti")
 m_trave.use_nodes = True
 bt = next(n for n in m_trave.node_tree.nodes if n.type == "BSDF_PRINCIPLED")

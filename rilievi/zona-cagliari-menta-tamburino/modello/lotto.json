@@ -1047,6 +1047,7 @@
   {"nome": "VISTA_aerea_NE", "occhio": [55, 75, 38], "mira": [0, 15, 2], "fov": 55},
   {"nome": "VISTA_angolo", "occhio": [-12, 4, 2.6], "mira": [2, 16, 2.0], "fov": 75}
  ],
+ "progetto_ue": "ViaDellaMenta",
  "progetto_ifc": {
   "file": "../edificius/progetto.ifc",
   "_nota": "Edificius 2026-11-07, IFC4, non georiferito (sito con lat/long di default): allineato con allinea_ifc.py al perimetro catastale e ai bordi strada; quota dalla strada e dal terreno esistente dell'IFC",

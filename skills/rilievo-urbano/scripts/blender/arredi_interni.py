@@ -17,7 +17,9 @@ Regole: il fronte di un mobile è il lato lungo verso il centro della stanza; la
 il muro; ogni pezzo sta sul pavimento del suo vano. Mobili parametrici, fatti di volumi semplici con spigoli smussati:
 danno misure e proporzioni giuste; sedute e tessili andranno sostituiti con modelli di libreria per i render finali.
 Punti luce ("luci": w_m2, colore): una sospensione per stanza (sul tavolo e sul tavolino in zona giorno), luce sotto i
-pensili in cucina; nessuno dove c'è un controsoffitto con i suoi faretti. I pensili si fermano sotto la trave più bassa.
+pensili in cucina; nessuno dove c'è un controsoffitto con i suoi faretti. I pensili si fermano sotto la trave più bassa;
+gli armadi hanno un'altezza unica sotto il punto più basso del tetto (al massimo 2,40 m); i comodini guardano dove
+guarda il letto accanto.
 Ogni oggetto porta la proprietà "ingombro" (anello in pianta): percorsi_camera.py la usa per non mettere la camera
 dentro i mobili.
 """
@@ -148,6 +150,15 @@ def sedia(p, c, verso):
     for sa in (-0.19, 0.16):
         for sb in (-0.19, 0.16): b(sa, sa + 0.03, sb, sb + 0.03, 0, 0.44, "legno")
     b(-0.22, 0.22, -0.22, 0.22, 0.44, 0.49, "tessuto", "morbido"); b(-0.22, -0.19, -0.21, 0.21, 0.49, 0.84, "legno")
+
+def h_armadio(p, L, W, v, nome, H=2.40):
+    """altezza unica dell'armadio: sotto il punto più basso di travi, travetti e falde sopra il suo ingombro, 2 cm d'aria,
+    al massimo H (Andrea, 2026-11-16). Raggi ogni 5 cm (un travetto è largo 10) partendo da 1 m, sotto ogni trave."""
+    na, nb = max(2, math.ceil(L / 0.05) + 1), max(2, math.ceil(W / 0.05) + 1)
+    zt = min(soffitto(*p.P(-L / 2 + L * i / (na - 1), -W / 2 + W * j / (nb - 1)), v["z0"] + 1.0, 9.0) for i in range(na) for j in range(nb)) - v["z0"] - 0.02
+    if zt < H: log(f"{nome}: alto {zt:.2f} m invece di {H:.2f}, sotto il tetto")
+    if zt < 1.60: log(f"AVVISO {nome}: sotto il tetto c'è posto solo per {zt:.2f} m")
+    return min(H, zt)
 
 def armadio(p, L, W, H=2.40):
     p.scat(-L / 2, L / 2, -W / 2, W / 2 - 0.06, 0, 0.08, "metallo"); p.scat(-L / 2, L / 2, -W / 2, W / 2 - 0.022, 0.08, H, "laccato")
@@ -428,17 +439,32 @@ def zona_giorno(a, v, villa, tv):
     return bool(dist), bool(meglio)
 
 # ------------------------------------------------------------------------------------------------ pezzi
+def verso_comodino(c, u, vv, L, W, v, villa, anello):
+    """il comodino guarda dove guarda il letto accanto, nella stessa stanza (dalla testata ai piedi). Senza un letto entro
+    1,5 m resta com'è."""
+    letti = [q for q in POSATI if q["tipo"] == "letto" and q["villa"] == villa and q.get("verso") and v["pol"].contains(Point(q["centro_m"][:2]))]
+    if not letti: return c, u, vv, L, W
+    b = min(letti, key=lambda q: (Vector(q["centro_m"][:2]) - c).length)
+    if Polygon(anello).distance(Point(b["centro_m"][:2])) > max(b["misure_m"][:2]) / 2 + 1.5: return c, u, vv, L, W
+    f = -Vector(b["verso"]).normalized(); u2 = Vector((-f.y, f.x)); pts = [Vector(q) for q in Polygon(anello).exterior.coords]
+    aa = [(q - c).dot(u2) for q in pts]; bb = [(q - c).dot(f) for q in pts]
+    c2 = c + u2 * (min(aa) + max(aa)) / 2 + f * (min(bb) + max(bb)) / 2
+    return c2, u2, f, max(aa) - min(aa), max(bb) - min(bb)
+
 conta = {}; tele_tv = {}
-for a in A["arredi"]:
+ABAT = []      # abat-jour dei comodini: (punto in pianta, quota del pavimento, nome del comodino, villa, vano)
+for a in sorted(A["arredi"], key=lambda a: a.get("tipo") == "comodino"):     # i comodini dopo i letti: ne prendono il verso
     if not a.get("anello"): continue
     villa = int(a.get("villa", 1)); pol = Polygon(a["anello"]); v = vano_di(villa, pol.representative_point().coords[0])
     if v is None: log("AVVISO: fuori da ogni vano:", a["tipo"], a.get("vano")); continue
     t = a["tipo"]; conta[t] = conta.get(t, 0) + 1; nome = f"{t} {v['nome']} v{villa} {conta[t]}"
     if t == "cucina": cucina(nome, a["anello"], v, villa); continue
-    c, u, vv, L, W = telaio(a["anello"], v); p = Pezzo(c, u, vv, v["z0"])
-    if t == "armadio": armadio(p, L, W)
+    c, u, vv, L, W = telaio(a["anello"], v)
+    if t == "comodino": c, u, vv, L, W = verso_comodino(c, u, vv, L, W, v, villa, a["anello"])
+    p = Pezzo(c, u, vv, v["z0"])
+    if t == "armadio": armadio(p, L, W, h_armadio(p, L, W, v, nome))
     elif t == "letto": letto(p, L, W, v, c, u)
-    elif t == "comodino": comodino(p, L, W)
+    elif t == "comodino": comodino(p, L, W); ABAT.append((Vector(p.P(0, -0.05)), v["z0"], nome, villa, v["nome"]))
     elif t == "madia_tv": madia_tv(p, L, W)
     elif t == "scrivania": scrivania(p, L, W)
     elif t == "parete_tv": parete_tv(p, L, W); tele_tv[(villa, v["nome"])] = (c, u, vv, L, W, nome)
@@ -494,7 +520,13 @@ for v in vani:
             ld.energy = watt * 0.4 / len(muro); ld.color = LU["colore"]
             lo = bpy.data.objects.new(f"Luce sottopensile {v['nome']} v{villa}", ld); m_ = (a_ + b_) / 2 + n_ * 0.2
             lo.location = (m_.x, m_.y, v["z0"] + 1.44); lo.rotation_euler = (0, 0, math.atan2(d_.y, d_.x)); ARR.objects.link(lo); lo["villa"] = villa; lo["punto_luce"] = v["nome"]; n_luci += 1
-log("punti luce:", n_luci, f"| {LU['w_m2']} W/m² per stanza")
+# abat-jour (Andrea, 2026-11-16: di sera le lampade sui comodini non facevano luce): una luce a punto dentro il paralume
+# di comodino() (centro a 0,72 m), potenza abatjour_w; sostituisci_arredi.py la porta nel paralume del modello di libreria
+for q, z0_, nome_c, villa, vano in ABAT:
+    ld = bpy.data.lights.new("Abat-jour " + nome_c, "POINT"); ld.energy = LU.get("abatjour_w", 25.0); ld.color = LU["colore"]; ld.shadow_soft_size = 0.04
+    lo = bpy.data.objects.new("Luce abat-jour " + nome_c, ld); lo.location = (q.x, q.y, z0_ + 0.72); ARR.objects.link(lo)
+    lo["villa"] = villa; lo["punto_luce"] = vano; n_luci += 1
+log("punti luce:", n_luci, f"| {LU['w_m2']} W/m² per stanza | abat-jour", len(ABAT), f"da {LU.get('abatjour_w', 25.0):g} W")
 
 # nessun mobile nello spazio spazzato dalle ante (proprietà "battuta" scritta da finiture_interni.py)
 for o in scn.objects:
