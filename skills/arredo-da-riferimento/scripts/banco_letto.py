@@ -2,7 +2,7 @@
 rende in 1-2 minuti. Uso: blender -b --python banco_letto.py -- [parametro=valore ...] out=<png>
 Valori buoni del 2026-11-17 come predefiniti nel codice o in SKILL.md."""
 import bpy, sys, time
-sys.path.insert(0, r"C:\Users\andre\Desktop\via della menta con claude\arch_agents\skills\rilievo-urbano\scripts\blender")
+import os; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "rilievo-urbano", "scripts", "blender"))
 from mathutils import Vector
 import tessili
 scn = bpy.context.scene
