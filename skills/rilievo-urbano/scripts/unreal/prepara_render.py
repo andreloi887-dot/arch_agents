@@ -173,7 +173,7 @@ def emissivo(nome, tinta, forza):
                                        constant=unreal.LinearColor(c_.r * forza, c_.g * forza, c_.b * forza, 1)), "", MP.MP_EMISSIVE_COLOR)
     mel.recompile_material(m); lib.save_loaded_asset(m); return m
 ACC = 1.0 if LUCE == "sera" else 0.0                      # di giorno le luci artificiali sono spente, anche i LED
-M_LED = emissivo("M_Led", "#FFD9A8", 40.0 * ACC); M_LUME = emissivo("M_LumeDentro", "#E9A65C", 3.0 * ACC)
+M_LED = emissivo("M_Led", "#FFD9A8", 40.0 * ACC); M_LUME = emissivo("M_LumeDentro", "#E2CDAE", 3.0 * ACC)   # gesso caldo; di sera luce ambra
 # marmo del paraschizzi: come in Blender, onde distorte dal rumore → venature sottili sulla tinta
 m = nuovo_materiale("M_Marmo"); m.set_editor_property("two_sided", True)
 wp = nodo(m, unreal.MaterialExpressionWorldPosition, -1400, 0)

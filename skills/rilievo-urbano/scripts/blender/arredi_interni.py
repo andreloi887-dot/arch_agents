@@ -45,7 +45,7 @@ ST = {"legno": "#C8A47A", "laccato": "#EDE7DA", "tessuto": "#D9D0C1", "tessuto_a
       # camere e soggiorno (riferimenti di Andrea, 2026-11-16): vetro fumé bronzo dell'armadio, bouclé avorio del divano,
       # biancheria, gesso dei lampadari a ciottolo con l'interno caldo
       "vetro_fume": "#3B2E24", "boucle": "#E9E4DA", "lenzuolo": "#F1EEE8", "plaid": "#8A8076", "cuscino": "#A39A90", "intonaco": "#E6E1D8",
-      "lume_dentro": "#B8702E", "gesso": "#E3DED5", **A.get("stile", {})}
+      "lume_dentro": "#E2CDAE", "gesso": "#E3DED5", **A.get("stile", {})}
 
 # forza del rilievo delle normali (predefinita 0.8). 0 = niente mappa: l'USD non porta la forza e Unreal la usa piena, sul
 # rovere faceva un legno "martellato" (2026-11-17); la venatura del colore basta
@@ -463,7 +463,7 @@ def tessili_letto(p, v, villa, nome):
     # quanto basta per ricadere sui fianchi
     col = tessili.collisore(scn, pium)
     b0, b1 = L / 2 - 0.62, L / 2 - 0.08
-    fatti.append(tessili.telo(scn, f"{nome} plaid (tessili)", P_((b0 + b1) / 2, 0), us, vv_, b1 - b0, 2 * mw + 0.78, z0 + 0.80,
+    fatti.append(tessili.telo(scn, f"{nome} plaid (tessili)", P_((b0 + b1) / 2, 0), us, vv_, b1 - b0, 2 * mw + (0.78 if W > 1.3 else 0.36), z0 + 0.80,
                               [pavimento], mat("plaid"), TEX["plaid"][1], spessore=0.015, peso=0.8, piega=0.3, fotogrammi=120, passo=0.025, grinze=0.0))
     bpy.data.objects.remove(col, do_unlink=True)
     zz = [q.co.z - z0 for q in fatti[-1].data.vertices]
