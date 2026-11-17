@@ -440,6 +440,158 @@
    "distanza_porte_m": 1.0,
    "_nota": "Andrea, 2026-11-15: tavolo da 4 allungabile, addossato al muro in comune con la camera singola; parete TV, divano e tavolino spostati verso la vetrata di quanto serve; passaggio libero davanti alla porta del disimpegno",
    "tavolo_contro_vano": "Camera Singola"
+  },
+  {
+   "villa": 1,
+   "vano": "Bagno",
+   "tipo": "lavabo",
+   "sostituisce": "Blocco 3D 9518",
+   "_nota": "mobile del bagno della foto bagno.jpg (2026-11-17), ingombro del lavabo IFC",
+   "anello": [
+    [
+     -7.953,
+     24.753
+    ],
+    [
+     -8.253,
+     25.096
+    ],
+    [
+     -7.572,
+     25.691
+    ],
+    [
+     -7.272,
+     25.349
+    ]
+   ]
+  },
+  {
+   "villa": 1,
+   "vano": "Bagno",
+   "tipo": "lavabo",
+   "sostituisce": "Blocco 3D 9522",
+   "_nota": "mobile del bagno della foto bagno.jpg (2026-11-17), ingombro del lavabo IFC",
+   "anello": [
+    [
+     -9.123,
+     26.828
+    ],
+    [
+     -9.805,
+     26.233
+    ],
+    [
+     -10.104,
+     26.575
+    ],
+    [
+     -9.423,
+     27.171
+    ]
+   ]
+  },
+  {
+   "villa": 1,
+   "vano": "Bagno",
+   "tipo": "rubinetto_bidet",
+   "su": "Blocco 3D 9516",
+   "_nota": "miscelatore sul bidet IFC (2026-11-17), abbinato al rubinetto del lavabo",
+   "anello": [
+    [
+     -8.78,
+     26.995
+    ],
+    [
+     -8.509,
+     27.231
+    ],
+    [
+     -8.135,
+     26.802
+    ],
+    [
+     -8.405,
+     26.566
+    ]
+   ]
+  },
+  {
+   "villa": 1,
+   "vano": "Bagno",
+   "tipo": "rubinetto_bidet",
+   "su": "Blocco 3D 9520",
+   "_nota": "miscelatore sul bidet IFC (2026-11-17), abbinato al rubinetto del lavabo",
+   "anello": [
+    [
+     -10.098,
+     28.235
+    ],
+    [
+     -9.827,
+     28.471
+    ],
+    [
+     -9.453,
+     28.043
+    ],
+    [
+     -9.723,
+     27.807
+    ]
+   ]
+  },
+  {
+   "villa": 1,
+   "vano": "Bagno",
+   "tipo": "accessori_wc",
+   "su": "Blocco 3D 9517",
+   "bidet": "Blocco 3D 9516",
+   "_nota": "placca, portarotolo, portascopino, barra con asciugamano (2026-11-17)",
+   "anello": [
+    [
+     -9.28,
+     26.558
+    ],
+    [
+     -9.005,
+     26.798
+    ],
+    [
+     -8.648,
+     26.388
+    ],
+    [
+     -8.923,
+     26.148
+    ]
+   ]
+  },
+  {
+   "villa": 1,
+   "vano": "Bagno",
+   "tipo": "accessori_wc",
+   "su": "Blocco 3D 9521",
+   "bidet": "Blocco 3D 9520",
+   "_nota": "placca, portarotolo, portascopino, barra con asciugamano (2026-11-17)",
+   "anello": [
+    [
+     -10.599,
+     27.798
+    ],
+    [
+     -10.324,
+     28.038
+    ],
+    [
+     -9.966,
+     27.628
+    ],
+    [
+     -10.241,
+     27.388
+    ]
+   ]
   }
  ]
 }

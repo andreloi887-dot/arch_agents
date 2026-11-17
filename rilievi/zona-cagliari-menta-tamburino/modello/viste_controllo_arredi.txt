@@ -1,0 +1,11 @@
+# viste di controllo degli arredi del 2026-11-17 sera (filiera.py --viste): nome:x,y,h,tx,ty,th[,focale]
+mobile_tv:-12.00,29.40,1.30,-10.50,28.40,0.55,20
+comodini_matrimoniale:-10.44,29.57,1.40,-12.30,28.60,0.55
+letto_matrimoniale:-10.71,30.72,1.50,-12.78,28.91,0.80,16
+lampada_matrimoniale:-10.00,29.00,1.40,-11.00,30.00,2.20,18
+letti_singola:-5.10,31.87,1.50,-7.20,31.70,0.60,16
+lampada_singola:-5.50,31.50,1.40,-6.90,32.30,2.00,18
+bagnoA_lavabo:-8.45,26.95,1.45,-7.76,25.25,0.95,16
+bagnoA_doccia:-8.75,26.50,1.45,-6.90,26.20,1.10,16
+bagnoB_lavabo:-10.55,27.55,1.45,-9.61,26.70,0.95,16
+bagnoB_doccia:-9.35,27.75,1.45,-10.80,26.50,1.20,16

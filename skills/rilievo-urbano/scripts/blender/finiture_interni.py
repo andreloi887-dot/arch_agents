@@ -129,6 +129,31 @@ class Volumi:
             for a, b in ((u0, v0), (u1, v0), (u1, v1), (u0, v1)): s.V.append((s.o.x + s.u.x * a + s.v.x * b, s.o.y + s.u.y * a + s.v.y * b, s.o.z + z))
         s.F += [(n, n + 3, n + 2, n + 1), (n + 4, n + 5, n + 6, n + 7), (n, n + 1, n + 5, n + 4), (n + 1, n + 2, n + 6, n + 5), (n + 2, n + 3, n + 7, n + 6), (n + 3, n, n + 4, n + 7)]
         s.M += [s.m.index(mat)] * 6
+    def asta(s, p0, p1, r0, r1, mat, seg=20):
+        """cilindro (anche rastremato) tra due punti (x, y, z) del riferimento locale, in qualsiasi direzione: rosette, leve."""
+        if mat not in s.m: s.m.append(mat)
+        P0 = s.o + Vector((*(s.u * p0[0] + s.v * p0[1]), p0[2])); P1 = s.o + Vector((*(s.u * p1[0] + s.v * p1[1]), p1[2]))
+        ax = (P1 - P0).normalized(); e1 = ax.cross(Vector((0, 0, 1)) if abs(ax.z) < 0.9 else Vector((1, 0, 0))).normalized(); e2 = ax.cross(e1)
+        n = len(s.V)
+        for q, r in ((P0, r0), (P1, r1)):
+            for i in range(seg): t = 2 * math.pi * i / seg; s.V.append(tuple(q + (e1 * math.cos(t) + e2 * math.sin(t)) * r))
+        for i in range(seg): s.F.append((n + i, n + (i + 1) % seg, n + seg + (i + 1) % seg, n + seg + i))
+        s.F += [tuple(n + i for i in reversed(range(seg))), tuple(n + seg + i for i in range(seg))]; s.M += [s.m.index(mat)] * (seg + 2)
+    def tubo(s, punti, raggi, mat, seg=32):
+        """tubo continuo lungo una linea di punti (x, y, z locali) con il raggio che cambia punto per punto: leve delle maniglie
+        (un pezzo solo che curva e si assottiglia, non cilindri accostati). Sezioni orientate con il trasporto parallelo."""
+        if mat not in s.m: s.m.append(mat)
+        P = [s.o + Vector((*(s.u * q[0] + s.v * q[1]), q[2])) for q in punti]; n = len(P)
+        T = [((P[min(i + 1, n - 1)] - P[max(i - 1, 0)]).normalized()) for i in range(n)]
+        e1 = T[0].cross(Vector((0, 0, 1)) if abs(T[0].z) < 0.9 else Vector((1, 0, 0))).normalized(); base = len(s.V)
+        for i in range(n):
+            if i: e1 = (e1 - T[i] * e1.dot(T[i])).normalized()
+            e2 = T[i].cross(e1)
+            for k in range(seg): t = 2 * math.pi * k / seg; s.V.append(tuple(P[i] + (e1 * math.cos(t) + e2 * math.sin(t)) * raggi[i]))
+        for i in range(n - 1):
+            for k in range(seg):
+                a_, b_ = base + i * seg + k, base + i * seg + (k + 1) % seg; s.F.append((a_, b_, b_ + seg, a_ + seg)); s.M.append(s.m.index(mat))
+        s.F += [tuple(base + k for k in reversed(range(seg))), tuple(base + (n - 1) * seg + k for k in range(seg))]; s.M += [s.m.index(mat)] * 2
     def cil(s, a, b, r, z0, z1, mat, seg=24):
         if mat not in s.m: s.m.append(mat)
         n = len(s.V); cx, cy = s.o.x + s.u.x * a + s.v.x * b, s.o.y + s.u.y * a + s.v.y * b
@@ -209,8 +234,179 @@ for v in interni:
     bm.free()
 log("battiscopa", n_bs, f"vani | {BS['altezza_m'] * 100:.0f} cm, materiale del pavimento | esclusi {BS['escludi']}")
 
+# ------------------------------------------------------------------------------------------------ rivestimento dei bagni
+# Andrea, 2026-11-17 sera (riferimento bagno.jpg): lastre di pietra beige opaca a grana fine con fughe sottili fino a 1,50 m da
+# terra, nella doccia fino a 2,10 m; sopra intonaco. Lastre 75 × 75 cm (ipotesi letta sulla foto: lastre quasi quadrate;
+# due file arrivano giuste a 1,50 m), spessore 8 mm, fuga 2 mm color sabbia. La doccia è il blocco IFC alto almeno 1,8 m del
+# bagno. Il rivestimento si ferma alle porte (con il coprifilo), alle portefinestre e alle finestre (anche quella dentro la
+# doccia del secondo bagno) e sotto il soffitto. Solo nelle ville arredate (le altre restano com'erano).
+import random as _rnd
+import materiali_arredo as MA
+_A = json.load(open(os.path.join(MOD, "arredi.json"), encoding="utf-8")) if os.path.isfile(os.path.join(MOD, "arredi.json")) else {"arredi": []}
+MA.configura(_A.get("stile", {}))
+RV = {"vani": ["Bagno"], "altezza_m": 1.50, "doccia_m": 2.10, "modulo_m": [0.75, 0.75], "fuga_m": 0.002, "spessore_m": 0.008, **F.get("rivestimento", {})}
+VILLE_RV = {int(x.get("villa", 1)) for x in _A["arredi"]}
+from mathutils.bvhtree import BVHTree
+_V, _F = [], []
+for ob in scn.objects:
+    if ob.type != "MESH" or "vano" in ob or not (ob.name.startswith(tuple(F["soffitto"]["nomi"])) or ob.get("ifc_classe") in ("IfcRoof", "IfcSlab")): continue
+    n0 = len(_V); _V += [ob.matrix_world @ q.co for q in ob.data.vertices]; _F += [[n0 + i for i in pl.vertices] for pl in ob.data.polygons]
+_TETTO = BVHTree.FromPolygons(_V, _F) if _F else None
+def _soffitto(x, y, z_da):
+    h = _TETTO.ray_cast(Vector((x, y, z_da)), Vector((0, 0, 1)), 12.0) if _TETTO else (None,)
+    return h[0].z if h[0] is not None else z_da + 3.0
+def _togli(r, buchi):
+    """rettangoli (s0, s1, z0, z1) di r che restano togliendo i rettangoli buchi."""
+    pezzi = [r]
+    for b in buchi:
+        nuovi = []
+        for s0, s1, z0, z1 in pezzi:
+            if b[0] >= s1 or b[1] <= s0 or b[2] >= z1 or b[3] <= z0: nuovi.append((s0, s1, z0, z1)); continue
+            if b[0] > s0: nuovi.append((s0, b[0], z0, z1))
+            if b[1] < s1: nuovi.append((b[1], s1, z0, z1))
+            ms0, ms1 = max(s0, b[0]), min(s1, b[1])
+            if b[2] > z0: nuovi.append((ms0, ms1, z0, b[2]))
+            if b[3] < z1: nuovi.append((ms0, ms1, b[3], z1))
+        pezzi = [p_ for p_ in nuovi if p_[1] - p_[0] > 0.005 and p_[3] - p_[2] > 0.005]
+    return pezzi
+# aperture: (impronta in pianta, quota bassa, quota alta, villa, asse lungo in pianta). Le porte interne rifatte si tagliano sul
+# filo esterno del coprifilo (+2 mm): Andrea, 2026-11-17: "fai toccare il rivestimento al coprifilo della porta"
+_CF_ESTERNO = F["porte"]["coprifilo_m"] - F["porte"]["imbotte_m"] + 0.01 + 0.002
+aperture = []
+for pt in porte:
+    if pt["interna"]:
+        aperture.append((pt["rett"](_CF_ESTERNO, 0.35), pt["o"].z, pt["o"].z + pt["H"] + _CF_ESTERNO, pt["villa"], Vector(pt["x"][:2]).normalized()))
+rifatte = {pt["ob"].name for pt in porte if pt["interna"]}
+for ob in scn.objects:
+    if ob.get("ifc_classe") not in ("IfcWindow", "IfcDoor") or ob.type != "MESH" or not ob.data.vertices or ob.name in rifatte: continue
+    W = [ob.matrix_world @ v_.co for v_ in ob.data.vertices]; r_ = MultiPoint([w.xy[:] for w in W]).minimum_rotated_rectangle
+    if r_.geom_type != "Polygon" or r_.length >= 14: continue
+    cc = list(r_.exterior.coords); l1, l2 = Vector(cc[1]) - Vector(cc[0]), Vector(cc[2]) - Vector(cc[1])
+    aperture.append((r_.buffer(0.01, join_style=2), min(w.z for w in W) - 0.01, max(w.z for w in W) + 0.01, int(ob.get("villa", 1)), (l1 if l1.length >= l2.length else l2).normalized()))
+m_riv = MA.mat("pietra_bagno"); m_fuga = tinta("Fuga rivestimento", MA.ST["fuga_bagno"], 0.9)
+n_riv = n_lastre = 0
+for v in interni:
+    if not v["nome"].startswith(tuple(RV["vani"])) or v["villa"] not in VILLE_RV: continue
+    rnd = _rnd.Random(len(v["nome"]) * 7 + round(v["pol"].area * 100))
+    docce = []
+    for ob in scn.objects:
+        if ob.get("ifc_classe") != "IfcBuildingElementProxy" or ob.type != "MESH" or not ob.data.vertices or ob.hide_render: continue
+        W = [ob.matrix_world @ q.co for q in ob.data.vertices]; r_ = MultiPoint([w.xy[:] for w in W]).minimum_rotated_rectangle
+        if v["pol"].contains(r_.centroid) and max(w.z for w in W) - min(w.z for w in W) >= 1.8 and r_.area >= 0.6: docce.append(r_.buffer(0.06, join_style=2))
+    muro = v["pol"].buffer(-0.01, join_style=2); anello = list(muro.exterior.coords)
+    bm = bmesh.new(); uvl = bm.loops.layers.uv.new("UVMap"); bf = bmesh.new()
+    mu, mv = RV["modulo_m"]; fg = RV["fuga_m"]; sp = RV["spessore_m"]
+    def scatola(bm_, a, d, n, s0, s1, z0, z1, t0, t1, uv0=None):
+        vs = []
+        for z in (z0, z1):
+            for s, t in ((s0, t0), (s1, t0), (s1, t1), (s0, t1)): q = a + d * s + n * t; vs.append(bm_.verts.new((q.x, q.y, z)))
+        ff = [bm_.faces.new([vs[i] for i in f]) for f in ((0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7))]
+        if uv0 is not None:
+            for f_ in ff:
+                for lp in f_.loops:
+                    q = Vector(lp.vert.co); s_ = (q.xy - a).dot(d); lp[uvl].uv = ((s_ - s0 + uv0[0]) / 3.0, (q.z - z0 + uv0[1]) / 3.0)
+    for k in range(len(anello) - 1):
+        a, b = Vector(anello[k]), Vector(anello[k + 1]); L = (b - a).length
+        if L < 0.05: continue
+        d = (b - a).normalized(); n = Vector((-d.y, d.x))
+        if not muro.contains(Point(*((a + b) / 2 + n * 0.1))): n = -n
+        riga = LineString([tuple(a), tuple(b)])
+        alti = []                                                # tratti in doccia (s0, s1)
+        for dc in docce:
+            x_ = riga.intersection(dc)
+            for g in ([x_] if x_.geom_type == "LineString" else getattr(x_, "geoms", [])):
+                if g.geom_type == "LineString" and g.length > 0.02:
+                    ss = sorted((Vector(c_) - a).dot(d) for c_ in g.coords); alti.append((ss[0], ss[-1]))
+        buchi = []
+        for imp, zlo, zhi, vl, asse in aperture:
+            # taglia solo le aperture di QUESTO muro: parallele al muro e che lo attraversano per almeno 10 cm (prima tagliava
+            # anche le porte vicine e quelle dei muri perpendicolari vicino all'angolo: nel bagno B mancava il muro della porta)
+            if vl != v["villa"] or abs(asse.dot(d)) < 0.9 or imp.intersection(riga).length < 0.10: continue
+            ss = [(Vector(c_) - a).dot(d) for c_ in imp.exterior.coords]
+            buchi.append((max(0.0, min(ss)), min(L, max(ss)), zlo - v["z0"], zhi - v["z0"]))
+        # tagli verticali: moduli dal capo del muro, più i bordi della doccia (la lastra cambia altezza lì)
+        tagli = sorted(set([min(L, mu * i) for i in range(int(L / mu) + 2)] + [x for t_ in alti for x in t_ if 0 < x < L]))
+        for i in range(len(tagli) - 1):
+            s0, s1 = tagli[i], tagli[i + 1]
+            if s1 - s0 < 0.005: continue
+            sm = (s0 + s1) / 2; doccia = any(t_[0] - 0.01 <= sm <= t_[1] + 0.01 for t_ in alti)
+            q = a + d * sm + n * 0.05; tetto = _soffitto(q.x, q.y, v["z0"] + 1.0) - v["z0"] - 0.005
+            H = min(RV["doccia_m"] if doccia else RV["altezza_m"], tetto)
+            righe = [(mv * j, min(H, mv * (j + 1))) for j in range(int(H / mv) + 1) if mv * j < H - 0.005]
+            for z0r, z1r in righe:
+                for s0_, s1_, z0_, z1_ in _togli((s0, s1, z0r, z1r), buchi):
+                    uv0 = (rnd.uniform(0, 2.0), rnd.uniform(0, 2.0))
+                    # ogni lastra rientra di mezza fuga, tranne a terra, in cima e ai capi del muro
+                    scatola(bm, a, d, n, s0_ + (fg / 2 if s0_ > 1e-6 else 0.0), s1_ - (fg / 2 if s1_ < L - 1e-6 else 0.0),
+                            v["z0"] + z0_ + (fg / 2 if z0_ > 1e-6 else 0.0), v["z0"] + z1_ - (fg / 2 if z1_ < H - 1e-6 else 0.0), 0.002, sp, uv0)
+                    scatola(bf, a, d, n, s0_, s1_, v["z0"] + z0_, v["z0"] + z1_, 0.0, 0.004)          # fuga dietro le lastre
+                    n_lastre += 1
+    for b_, mt_, nm_ in ((bm, m_riv, "lastre"), (bf, m_fuga, "fughe")):
+        bmesh.ops.recalc_face_normals(b_, faces=b_.faces[:])
+        if b_.faces:
+            me = bpy.data.meshes.new(f"Rivestimento {nm_} {v['nome']}"); b_.to_mesh(me); me.materials.append(mt_)
+            if not me.uv_layers: me.uv_layers.new(name="UVMap")
+            nuovo_oggetto(f"Rivestimento {nm_} {v['nome']} v{v['villa']}", me, v["villa"], "rivestimento")
+        b_.free()
+    n_riv += 1
+    log(f"rivestimento {v['nome']} v{v['villa']}: docce {len(docce)}, fino a {RV['altezza_m']:.2f} m (doccia {RV['doccia_m']:.2f} m)")
+log("rivestimento bagni", n_riv, "vani |", n_lastre, f"lastre {RV['modulo_m'][0] * 100:.0f}×{RV['modulo_m'][1] * 100:.0f} cm")
+
+# doccia (Andrea, 2026-11-17 sera): vetro temperato chiaro e montanti in acciaio lucido. La doccia dell'IFC è un blocco solo:
+# si divide in parti connesse; le lastre (sottili, alte) diventano vetro chiaro, il piatto resta com'è, il resto (montanti,
+# profili, rubinetteria) acciaio lucido. In Unreal il vetro (opacità < 1) diventa M_Vetro da solo (prepara_render.py)
+m_vd = bpy.data.materials.get("Vetro doccia") or bpy.data.materials.new("Vetro doccia"); m_vd.use_nodes = True
+_b = next(n for n in m_vd.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
+_b.inputs["Base Color"].default_value = (0.93, 0.95, 0.95, 1); _b.inputs["Roughness"].default_value = 0.0; _b.inputs["Alpha"].default_value = 0.12
+if "Transmission Weight" in _b.inputs: _b.inputs["Transmission Weight"].default_value = 1.0
+try: m_vd.surface_render_method = "BLENDED"
+except Exception: m_vd.blend_method = "BLEND"
+m_acc = tinta("Acciaio lucido", "#D9D9D7", 0.06, metallo=1.0); n_doc = 0
+for ob in scn.objects:
+    if ob.get("ifc_classe") != "IfcBuildingElementProxy" or ob.type != "MESH" or not ob.data.vertices or ob.hide_render or int(ob.get("villa", 1)) not in VILLE_RV: continue
+    W = [ob.matrix_world @ q.co for q in ob.data.vertices]; r_ = MultiPoint([w.xy[:] for w in W]).minimum_rotated_rectangle
+    if not (max(w.z for w in W) - min(w.z for w in W) >= 1.8 and r_.area >= 0.6 and any(v["pol"].contains(r_.centroid) and v["nome"].startswith(tuple(RV["vani"])) for v in interni)): continue
+    me = ob.data
+    for m_ in (m_vd, m_acc):
+        if m_.name not in [x.name for x in me.materials if x]: me.materials.append(m_)
+    i_vd = [x.name if x else "" for x in me.materials].index(m_vd.name); i_acc = [x.name if x else "" for x in me.materials].index(m_acc.name)
+    bm = bmesh.new(); bm.from_mesh(me); bm.faces.ensure_lookup_table(); visti = set(); n_v = n_a = 0
+    for f0 in bm.faces:
+        if f0.index in visti: continue
+        comp = []; pila = [f0]
+        while pila:
+            x = pila.pop()
+            if x.index in visti: continue
+            visti.add(x.index); comp.append(x)
+            for e in x.edges:
+                for y in e.link_faces:
+                    if y.index not in visti: pila.append(y)
+        P = [ob.matrix_world @ q.co for f_ in comp for q in f_.verts]; zs_ = max(q.z for q in P) - min(q.z for q in P)
+        rr = MultiPoint([q.xy[:] for q in P]).minimum_rotated_rectangle
+        lati = sorted(Vector(rr.exterior.coords[k + 1]).__sub__(Vector(rr.exterior.coords[k])).length for k in range(2)) if rr.geom_type == "Polygon" else [0.0, 0.0]
+        if zs_ < 0.06 and lati[1] > 0.5: continue                                       # piatto doccia
+        # lastra = scatola semplice (12-13 facce), sottile e alta; i telai dei montanti sono sottili ma fatti di più facce (28)
+        lastra = lati[0] < 0.02 and zs_ > 1.0 and len(comp) <= 16
+        for f_ in comp: f_.material_index = i_vd if lastra else i_acc
+        if lastra: n_v += 1
+        else: n_a += 1
+    bm.to_mesh(me); bm.free(); n_doc += 1
+    # via gli slot dei materiali IFC rimasti senza facce: l'USD li esporterebbe e il controllo in Unreal (materiali usati)
+    # non tornerebbe più (101 attesi, 100 trovati, 2026-11-17)
+    idx = [0] * len(me.polygons); me.polygons.foreach_get("material_index", idx); usati = sorted(set(idx))
+    if len(usati) < len(me.materials):
+        tenuti = [me.materials[i] for i in usati]; mappa_ = {o_: n_ for n_, o_ in enumerate(usati)}
+        me.materials.clear()
+        for m_ in tenuti: me.materials.append(m_)
+        me.polygons.foreach_set("material_index", [mappa_[i] for i in idx]); me.update()
+    log(f"doccia {ob.name}: {n_v} lastre di vetro chiaro, {n_a} parti in acciaio lucido")
+log("docce rifinite", n_doc)
+
 # porte interne: l'oggetto dell'IFC si nasconde (resta per i percorsi di camera), al suo posto imbotte, coprifili e anta aperta
-PP = F["porte"]; m_porta = tinta("Porta laccata", PP["colore"], 0.35); m_man = tinta("Maniglia", PP["maniglia"], 0.3, metallo=1.0)
+PP = F["porte"]; m_porta = tinta("Porta laccata", PP["colore"], 0.35)
+# maniglia in acciaio satinato e bocchetta della chiave con il foro scuro (Andrea, 2026-11-17: "maniglie più vere, ogni porta
+# con la sua toppa per la chiave")
+m_man = tinta("Maniglia", "#B9B7B2", 0.22, metallo=1.0); m_foro = tinta("Foro chiave", "#0C0C0C", 0.6)
 TI, CF, TA = PP["imbotte_m"], PP["coprifilo_m"], PP["anta_m"]; n_bat = n_sco = 0
 for pt in porte:
     if not pt["interna"]: continue
@@ -237,14 +433,35 @@ for pt in porte:
     zero = pt["zero"]; sg = 1 if zero else -1; xh = TI + 0.003 if zero else Wd - TI - 0.003; La = Wd - 2 * TI - 0.006
     a = Volumi(pt["o"], pt["x"]); xa, xb = sorted((xh, xh + sg * La))
     a.scat(xa, xb, y1 - TA, y1, 0.006, H - TI - 0.003, m_porta)
-    xm = xh + sg * (La - 0.065)                                        # maniglia quadra sulle due facce
-    for ya, yb, yc in ((y1, y1 + 0.008, y1 + 0.045), (y1 - TA - 0.008, y1 - TA, y1 - TA - 0.045)):
-        a.scat(xm - 0.026, xm + 0.026, ya, yb, 1.0 - 0.026, 1.0 + 0.026, m_man)
-        a.scat(xm - 0.008, xm + 0.008, min(ya, yc), max(yb, yc), 1.0 - 0.008, 1.0 + 0.008, m_man)
-        a.scat(*sorted((xm + sg * 0.008, xm - sg * 0.125)), *sorted((yc, yc + (0.012 if yc > y1 else -0.012))), 1.0 - 0.01, 1.0 + 0.01, m_man)
+    # maniglia e bocchetta in un oggetto a parte, liscio e con più segmenti (Andrea, 2026-11-17: "maniglie non ben definite":
+    # dentro l'anta prendevano lo smusso e le facce piatte, i cilindri piccoli sembravano sfaccettati)
+    h = Volumi(pt["o"], pt["x"])
+    xm = xh + sg * (La - 0.065)                                        # maniglia e bocchetta sulle due facce
+    zm = 1.0; zk = zm - 0.075                                          # leva a 1 m, bocchetta 7,5 cm sotto
+    for yf, dy in ((y1, 1), (y1 - TA, -1)):
+        h.asta((xm, yf, zm), (xm, yf + dy * 0.009, zm), 0.026, 0.025, m_man, seg=48)                    # rosetta tonda
+        # leva in un pezzo: collo che esce dalla rosetta, curva morbida (raggio 2 cm), leva che si assottiglia, punta arrotondata
+        pts, rr = [], []
+        for k in range(5): pts.append((xm, yf + dy * (0.008 + 0.006 * k), zm)); rr.append(0.0098)
+        for k in range(1, 9):
+            th = math.pi / 2 * k / 8
+            pts.append((xm - sg * 0.02 * (1 - math.cos(th)), yf + dy * (0.032 + 0.02 * math.sin(th)), zm)); rr.append(0.0098 - 0.0006 * k / 8)
+        for k in range(1, 9):
+            pts.append((xm - sg * (0.02 + 0.10 * k / 8), yf + dy * (0.052 + 0.004 * k / 8), zm - 0.005 * k / 8)); rr.append(0.0092 - 0.0014 * k / 8)
+        for k in range(1, 5):
+            th = math.pi / 2 * k / 4; pts.append((xm - sg * (0.12 + 0.0078 * math.sin(th)), yf + dy * 0.056, zm - 0.005)); rr.append(max(0.0012, 0.0078 * math.cos(th)))
+        h.tubo(pts, rr, m_man, seg=32)
+        h.asta((xm, yf, zk), (xm, yf + dy * 0.007, zk), 0.020, 0.019, m_man, seg=48)                    # bocchetta
+        h.asta((xm, yf + dy * 0.0065, zk + 0.003), (xm, yf + dy * 0.0078, zk + 0.003), 0.0042, 0.0042, m_foro, seg=16)   # foro
+        h.scat(xm - 0.0016, xm + 0.0016, *sorted((yf + dy * 0.0065, yf + dy * 0.0078)), zk - 0.007, zk + 0.002, m_foro)
     cern = Vector((*(pt["o"].xy + pt["x"] * xh + pt["y"] * y1), pt["o"].z)); ap = math.radians(PP["apertura_gradi"]) * sg
     oa = a.fine(f"Anta {ob.name}", pt["villa"], "anta", smusso=0.0015, locale=(cern, ang_x))
     oa.matrix_world = Matrix.Translation(cern) @ Matrix.Rotation(ang_x + ap, 4, "Z"); oa["apertura_gradi"] = math.degrees(ap)
+    oh = h.fine(f"Maniglia {ob.name}", pt["villa"], "maniglia", smusso=0.0, locale=(cern, ang_x))
+    oh.matrix_world = oa.matrix_world.copy()
+    for pl in oh.data.polygons: pl.use_smooth = True
+    try: oh.data.set_sharp_from_angle(angle=math.radians(40))
+    except Exception: pass
     # spazio spazzato dall'anta: arredi_interni.py controlla che nessun mobile ci cada dentro
     arco = [cern.xy + (Matrix.Rotation(ang_x + ap * k / 8, 2) @ Vector((sg * La, 0))) for k in range(9)]
     oa["battuta"] = [c_ for q in [cern.xy] + arco for c_ in q]; n_bat += 1
@@ -304,6 +521,42 @@ m_trave = bpy.data.materials.get("Legno travetti") or bpy.data.materials.new("Le
 m_trave.use_nodes = True
 bt = next(n for n in m_trave.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
 bt.inputs["Base Color"].default_value = lin(S["colore"]); bt.inputs["Roughness"].default_value = 0.5
+# legno pitturato (Andrea, 2026-11-17): sotto la pittura grossa una venatura appena visibile e un nodino ogni tanto, nelle
+# perline e nelle travi. Immagini ripetibili di legno_dipinto.py (fattore × tinta, più il rilievo); Unreal usa le stesse
+# (prepara_render.py: M_Perlinato e M_Travetti). Ogni fila di doghe è spostata lungo la fibra di una quantità a caso (hash
+# della fila, la stessa formula di Unreal), così i nodi non si ripetono allineati.
+import legno_dipinto
+LIBMAT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "libreria_materiali"))
+F_LD, N_LD, (LU_LD, LV_LD) = legno_dipinto.genera(os.path.join(LIBMAT, "legno_dipinto"), S["doga_m"])
+def _legno_pitturato(m, colore_sock, uv_sock, sposta_file):
+    nt = m.node_tree; b = next(n for n in nt.nodes if n.type == "BSDF_PRINCIPLED")
+    def mn(op, a, b_=None, v=None):
+        n = nt.nodes.new("ShaderNodeMath"); n.operation = op; nt.links.new(a, n.inputs[0])
+        if b_ is not None: nt.links.new(b_, n.inputs[1])
+        elif v is not None: n.inputs[1].default_value = v
+        return n.outputs[0]
+    sep = nt.nodes.new("ShaderNodeSeparateXYZ"); nt.links.new(uv_sock, sep.inputs[0]); u_, v_ = sep.outputs[0], sep.outputs[1]
+    if sposta_file:
+        fila = mn("FLOOR", mn("DIVIDE", v_, v=S["doga_m"]))
+        hs = mn("FRACT", mn("MULTIPLY", mn("SINE", mn("MULTIPLY", fila, v=78.233)), v=43758.5453))
+        u_ = mn("ADD", u_, mn("MULTIPLY", hs, v=LU_LD))
+    cmb = nt.nodes.new("ShaderNodeCombineXYZ"); nt.links.new(mn("DIVIDE", u_, v=LU_LD), cmb.inputs[0]); nt.links.new(mn("DIVIDE", v_, v=LV_LD), cmb.inputs[1])
+    tf = nt.nodes.new("ShaderNodeTexImage"); tf.image = bpy.data.images.load(F_LD, check_existing=True); tf.image.colorspace_settings.name = "Non-Color"
+    tn = nt.nodes.new("ShaderNodeTexImage"); tn.image = bpy.data.images.load(N_LD, check_existing=True); tn.image.colorspace_settings.name = "Non-Color"
+    for t_ in (tf, tn): nt.links.new(cmb.outputs[0], t_.inputs["Vector"])
+    x2 = nt.nodes.new("ShaderNodeVectorMath"); x2.operation = "MULTIPLY_ADD"; nt.links.new(tf.outputs["Color"], x2.inputs[0])   # f = 0,875 + t / 4
+    x2.inputs[1].default_value = (0.25, 0.25, 0.25); x2.inputs[2].default_value = (0.875, 0.875, 0.875)
+    mu = nt.nodes.new("ShaderNodeVectorMath"); mu.operation = "MULTIPLY"; nt.links.new(colore_sock, mu.inputs[0]); nt.links.new(x2.outputs[0], mu.inputs[1])
+    nt.links.new(mu.outputs[0], b.inputs["Base Color"])
+    nm = nt.nodes.new("ShaderNodeNormalMap"); nt.links.new(tn.outputs["Color"], nm.inputs["Color"]); nt.links.new(nm.outputs["Normal"], b.inputs["Normal"])
+br_ = next(n for n in m_perl.node_tree.nodes if n.type == "TEX_BRICK"); uv_ = next(n for n in m_perl.node_tree.nodes if n.type == "TEX_COORD")
+_legno_pitturato(m_perl, br_.outputs["Color"], uv_.outputs["UV"], True)
+m_trave.node_tree.nodes.clear()
+_bo = m_trave.node_tree.nodes.new("ShaderNodeOutputMaterial"); _bt = m_trave.node_tree.nodes.new("ShaderNodeBsdfPrincipled"); m_trave.node_tree.links.new(_bt.outputs[0], _bo.inputs[0])
+_bt.inputs["Roughness"].default_value = 0.5
+_rgb = m_trave.node_tree.nodes.new("ShaderNodeRGB"); _rgb.outputs[0].default_value = lin(S["colore"])
+_tc = m_trave.node_tree.nodes.new("ShaderNodeTexCoord")
+_legno_pitturato(m_trave, _rgb.outputs[0], _tc.outputs["UV"], False)
 falde = []
 for ob in list(scn.objects):
     if ob.type != "MESH" or "vano" in ob or not ob.name.startswith(tuple(S["nomi"])) or ob.get("finitura"): continue
@@ -492,7 +745,6 @@ for villa, DV in VILLE.items():
     for ob in scn.objects:
         if ob.get("ifc_classe") not in ("IfcWindow", "IfcDoor") or ob.type != "MESH" or int(ob.get("villa", 1)) != villa or not ob.data.vertices: continue
         W = [ob.matrix_world @ v_.co for v_ in ob.data.vertices]
-        from shapely.geometry import MultiPoint
         infissi.append({"nome": ob.name, "pol": MultiPoint([w.xy[:] for w in W]).minimum_rotated_rectangle.buffer(0.03), "z1": max(w.z for w in W)})
     for f in FV:
         fermati = {}
@@ -529,6 +781,13 @@ for villa, DV in VILLE.items():
 for villa, (V, Fc) in travi.items():
     mt = bpy.data.meshes.new(f"Orditura tetto villa {villa}"); mt.from_pydata(V, [], Fc); mt.materials.append(m_trave)
     bm = bmesh.new(); bm.from_mesh(mt); bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:]); bm.to_mesh(mt); bm.free()
+    # UV in metri con la U lungo la trave (fibra del legno pitturato): su ogni faccia, U lungo il suo lato più lungo
+    uvl = mt.uv_layers.new(name="UVMap")
+    for pl in mt.polygons:
+        q = [Vector(mt.vertices[i].co) for i in pl.vertices]; lati = [(q[(k + 1) % len(q)] - q[k]) for k in range(len(q))]
+        e = max(lati, key=lambda x: x.length).normalized(); w = pl.normal.cross(e).normalized()
+        for li in pl.loop_indices:
+            c_ = mt.vertices[mt.loops[li].vertex_index].co; uvl.data[li].uv = (c_.dot(e), c_.dot(w))
     ot = bpy.data.objects.new(f"Orditura tetto villa {villa}", mt); ot["villa"] = villa; ot["finitura"] = "orditura"; FIN.objects.link(ot)
 log("falde con perlinato", len(falde), "| travi d'incontro (colmi, displuvi, compluvi)", n_giunti, f"{BD * 100:.0f}×{HD * 100:.0f} cm",
     "| travetti", n_trav, f"{B_ * 100:.0f}×{H_ * 100:.0f} cm a {INT * 100:.1f} cm", "| travi perpendicolari sopra gli infissi", n_camb, "| travetti portanti aggiunti", n_port, "| travetti doppi scartati", n_doppi)

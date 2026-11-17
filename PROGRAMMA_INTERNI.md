@@ -320,6 +320,38 @@ con `strumenti/materiali/`), viste di controllo in Full HD (`filiera.py --scala 
 Metodo, scelte dei materiali e lezioni: skill [arredo-da-riferimento](skills/arredo-da-riferimento/SKILL.md). In Unreal
 `arredi_unreal.json` non usa più la libreria per letti, comodini e lampadari del soggiorno.
 
+**Secondo giudizio di Andrea (2026-11-17): rifiniture.** Tessuti e cuscini del letto e cuscini del divano "troppo rigidi e
+tutti uguali"; camicie morbide appese nell'armadio della matrimoniale; legno dei letti "plasticoso"; nella matrimoniale le
+sospensioni sottili del riferimento al posto delle abat-jour; nodi e venatura leggerissimi nel legno pitturato del soffitto.
+Fatto: ricette dei tessili condivise tra filiera e banco (`blender/ricette_arredo.py`, materiali in `blender/materiali_arredo.py`)
+e banco in scena (`skills/arredo-da-riferimento/scripts/banco_scena.py`); cuscini a bordo cucito, ognuno diverso, assestati
+con la gravità; camicie simulate su grucce (`tessili.camicia`); rovere opaco (ruvidità 0,70 nel file) con la fibra lungo il
+lato lungo; due sospensioni sfalsate sopra il comodino di destra, come nel riferimento (tipo `lampada_letto`, lampadina
+emissiva in Unreal); legno pitturato del soffitto da `blender/legno_dipinto.py` (venatura ±1,5-2 %, un nodo ogni 3 m di doga
+circa, rilievo leggero), stessa immagine in Blender e in Unreal (`M_Perlinato`, `M_Travetti`). Il soffitto è comune a
+tutte le ville, come il perlinato del 2026-11-16. Lezioni nella skill. Poi plaid e piumone: plaid che cade da vicino con poco attrito
+e piega di un plaid in maglia, piumone meno gonfio e senza bozze. Verificato in Unreal di giorno e di sera (confronti
+`uscita_blender/confronti/rifinito_*.jpg`; viste ravvicinate aggiunte a `viste_controllo.txt`, viste solo Blender in
+`viste_controllo_arredi.txt`). Aperti: plaid dei letti singoli accartocciato, chiave della cache incompleta (skill).
+
 Prossimi passi in Unreal, in ordine: divano, tavolo con sedie e scrivanie di libreria; materiali per tessuti, laccati
 e intonaco; EV per vista; alberi come istanze; viste verso le vetrate e dall'esterno; poi il video (percorso interno,
 Sequencer) e il montaggio con FFmpeg. Ogni cosa imparata va scritta qui.
+
+**Arredi del 2026-11-17 sera (foto di Andrea in `riferimenti_arredo/`).** Mobile TV della matrimoniale come `mobile_tv.jpg`
+(cassettiera laccata greige, due colonne × tre file, estremo libero arrotondato; la TV e la parete restano com'erano);
+sospensione a tre paralumi neri (`sospensione_camere.webp`) in tutte le camere, al posto della plafoniera in rattan; abat-jour in
+travertino con tamburo in lino (`abatjour_travertino.jpg`) nelle singole e a sinistra nella matrimoniale; due globi in vetro fumé
+(`sospensioni_letto_vetro.jpg`) a destra; nei due bagni mobile in noce, piano in pietra, catino da appoggio, rubinetto a parete,
+specchio con LED (`bagno.jpg`) al posto del lavabo IFC, e rivestimento in lastre di pietra beige 75 × 75 cm fino a 1,50 m, nella
+doccia fino a 2,10 m (`finiture_interni.py`). Il vetro della doccia resta quello dell'IFC (lo sceglie Andrea).
+Poi (Andrea, stessa sera): mobile TV con la curva dal lato della porta, allungato fino al muro del comodino e 10 cm meno
+profondo, TV da 55" appesa al muro con lo schermo lucido; doccia con vetro temperato chiaro e montanti in acciaio lucido (il
+blocco IFC si divide in parti: lastre semplici e sottili = vetro, il resto = acciaio, il piatto resta); maniglie delle porte
+interne in acciaio satinato (rosetta tonda, leva cilindrica) con la bocchetta della chiave sulle due facce. La porta d'ingresso
+è quella dell'IFC e non ha ancora maniglia e bocchetta nuove.
+Ultimi ritocchi ai bagni (stessa sera): pietra del rivestimento ricavata dalla foto (`strumenti/materiali/pietra_sabbia.py`),
+rivestimento su tutto il perimetro fino al coprifilo delle porte; catino dal lato della doccia e specchio dentro il mobile;
+miscelatore sul bidet, placca di scarico, portarotolo e portascopino a muro (sul muro laterale se accanto al wc non c'è posto),
+barra con asciugamano in spugna simulato sopra il bidet (`tessili.asciugamano`); maniglie delle porte in un oggetto liscio a
+parte. Tutto dichiarato in `arredi.json` (tipi `lavabo`, `rubinetto_bidet`, `accessori_wc`, con il blocco IFC di riferimento).

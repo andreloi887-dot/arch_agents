@@ -7,7 +7,8 @@ Dopo finiture_interni.py e prima di percorsi_camera.py. Riscrive contesto_proget
 Legge <modello>/arredi.json:
   stile    colori (hex) di legno, laccato, tessuto, tessuto_accento, piano_cucina, metallo, nero, tappeto
   arredi   elenco di pezzi: villa, vano, tipo, anello [[x, y], ...] in coordinate locali del contesto (l'ingombro in pianta)
-Tipi: armadio, letto, comodino, madia_tv, scrivania (con sedia), parete_tv, cucina (ingombro in linea, a L o a C, diviso
+Tipi: armadio, letto, comodino, madia_tv, scrivania (con sedia), parete_tv, lavabo (mobile del bagno al posto del blocco IFC
+indicato in "sostituisce", che resta nel file nascosto), cucina (ingombro in linea, a L o a C, diviso
 in moduli da 60 cm: frigo e colonna forno-microonde in fondo a una schiera, lavello e lavastoviglie sulla schiera più
 libera, piano cottura con cappa su un'altra, basi, piano, paraschizzi, pensili dove non c'è una finestra), zona_giorno (senza anello: divano, tavolino e tappeto di
 fronte alla parete TV, tavolo con posti_tavolo sedie vicino alla cucina, con distanza_porte_m liberi davanti alle porte
@@ -24,135 +25,22 @@ Ogni oggetto porta la proprietà "ingombro" (anello in pianta): percorsi_camera.
 dentro i mobili.
 """
 import bmesh, bpy, json, math, os, sys
-import numpy as np
 from mathutils import Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from comune import avvio, lin, svuota
+from comune import avvio, svuota
 import tessili
-from shapely.geometry import MultiPoint, Point, Polygon
+from shapely.geometry import LineString, MultiPoint, Point, Polygon
 from shapely.ops import unary_union
 from shapely.prepared import prep
 
 argv, opt, MOD, USCITA, log, scn = avvio("arredi_interni.log")
 tessili.CACHE = os.path.join(USCITA, "cache_tessili")      # stessi ingressi → stesso tessile (la simulazione non è ripetibile)
 A = json.load(open(os.path.join(MOD, "arredi.json"), encoding="utf-8"))
-ST = {"legno": "#C8A47A", "laccato": "#EDE7DA", "tessuto": "#D9D0C1", "tessuto_accento": "#B98466", "piano_cucina": "#DAD5CC",
-      "metallo": "#3A3632", "nero": "#141414", "tappeto": "#CFC4B2", "inox": "#C4C4C0",
-      # cucina e tavolo nello stile del riferimento di Andrea (2026-11-16): rovere chiaro, laccato greige opaco, piano in pietra
-      # chiara sottile, paraschizzi in marmo chiaro venato, sedie a scocca imbottita color sabbia, LED sotto i pensili
-      "rovere": "#C6B093", "laccato_pensili": "#CEC5B8", "pietra": "#E7E1D7", "marmo": "#E4DDD2", "vena": "#CEC5B8",
-      "sabbia": "#CBBBA3", "led": "#FFD9A8",
-      # camere e soggiorno (riferimenti di Andrea, 2026-11-16): vetro fumé bronzo dell'armadio, bouclé avorio del divano,
-      # biancheria, gesso dei lampadari a ciottolo con l'interno caldo
-      "vetro_fume": "#3B2E24", "boucle": "#E9E4DA", "lenzuolo": "#F1EEE8", "plaid": "#8A8076", "cuscino": "#A39A90", "intonaco": "#E6E1D8",
-      "lume_dentro": "#E2CDAE", "gesso": "#E3DED5", **A.get("stile", {})}
-
-# forza del rilievo delle normali (predefinita 0.8). 0 = niente mappa: l'USD non porta la forza e Unreal la usa piena, sul
-# rovere faceva un legno "martellato" (2026-11-17); la venatura del colore basta
-NORMALE = {"gesso": 2.5, "boucle": 1.2, "tappeto": 1.2, "rovere": 0.0, "legno": 0.0, "marmo": 0.0, "pietra": 0.0,
-           "sabbia": 0.0, "lenzuolo": 0.3, "cuscino": 0.4}                # stoffe lisce: in Unreal la trama piena faceva bolle
-RUV = {"legno": 0.45, "laccato": 0.35, "tessuto": 0.95, "tessuto_accento": 0.95, "piano_cucina": 0.3, "metallo": 0.4, "nero": 0.25, "tappeto": 1.0, "inox": 0.3,
-       "rovere": 0.5, "laccato_pensili": 0.6, "pietra": 0.35, "marmo": 0.22, "sabbia": 0.95, "led": 0.5,
-       "vetro_fume": 0.05, "gesso": 0.95, "boucle": 1.0, "lenzuolo": 0.9, "plaid": 1.0, "cuscino": 0.95, "intonaco": 0.95, "lume_dentro": 0.8}
-MATS = {}
-# Materiali con texture vere (2026-11-16, dopo il giudizio di Andrea: "materiali e consistenze come nei riferimenti"). Texture CC0
-# di Poly Haven e ambientCG in <repo>/libreria_materiali/ (strumenti/materiali/scarica_*.py). Ogni texture si ritinge con la
-# tinta del progetto (luminanza della foto × tinta, in lineare) in un file nuovo, così Blender, l'USD e Unreal vedono la stessa
-# immagine; le UV dei pezzi sono in metri diviso la misura reale della texture (fine() di Pezzo).
-# chiave → (id della texture, misura reale del lato in m, contrasto del disegno, venatura: la U della texture è la fibra)
-LIBMAT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "libreria_materiali"))
-# rovere: oak_veneer_03 (fibra fine e dritta con fiamme leggere, il più vicino ai riferimenti; scelto il 2026-11-17 sul mosaico
-# dei candidati, prima washed_grey_oak_veneer aveva la fibra ondulata), contrasto 1,3 perché la venatura si legga
-TEX = {"rovere": ("oak_veneer_03", 1.0, 1.3, True), "legno": ("oak_veneer_03", 1.0, 1.3, True),
-       "marmo": ("Marble018", 1.6, 1.0, False),            # misura reale non dichiarata da ambientCG: 1,6 m è un'ipotesi
-       "pietra": ("Marble025", 1.6, 1.0, False), "boucle": ("curly_teddy_natural", 0.336, 1.0, False),
-       "sabbia": ("terlenka", 0.266, 1.0, False), "lenzuolo": ("terlenka", 0.266, 0.6, False), "cuscino": ("rough_linen", 0.271, 1.0, False),
-       "plaid": ("knitted_fleece", 0.27, 1.0, False), "intonaco": ("white_stucco", 2.0, 1.0, False), "gesso": ("white_stucco", 0.45, 1.2, False), "tappeto": ("curly_teddy_natural", 0.336, 0.8, False)}
-TINTA_DI = {"legno": "rovere"}                               # il legno degli altri mobili prende il rovere chiaro dei riferimenti
-def mappa(tid, nome):
-    d = os.path.join(LIBMAT, tid)
-    f = next((x for x in sorted(os.listdir(d)) if x.startswith(nome + ".")), None) if os.path.isdir(d) else None
-    return os.path.join(d, f) if f else None
-def ritinta(tid, hexc, contrasto):
-    """colore della texture ritinto: luminanza normalizzata alla media, elevata al contrasto, per la tinta (in lineare)."""
-    src = mappa(tid, "colore"); out = os.path.join(LIBMAT, tid, "tinte", f"colore_{hexc.strip('#')}_{contrasto:g}.jpg")
-    if not src: return None
-    if os.path.isfile(out): return out
-    os.makedirs(os.path.dirname(out), exist_ok=True)
-    im = bpy.data.images.load(src); w, h = im.size; px = np.empty(w * h * 4, np.float32); im.pixels.foreach_get(px); px = px.reshape(-1, 4)
-    li = np.where(px[:, :3] <= 0.04045, px[:, :3] / 12.92, ((px[:, :3] + 0.055) / 1.055) ** 2.4)
-    L = li @ np.array([0.2126, 0.7152, 0.0722], np.float32); f = (L / max(float(L.mean()), 1e-4)) ** contrasto
-    t = np.array(lin(hexc)[:3], np.float32); o = np.clip(f[:, None] * t[None, :], 0, 1)
-    o = np.where(o <= 0.0031308, o * 12.92, 1.055 * o ** (1 / 2.4) - 0.055)
-    nu = bpy.data.images.new("tinta " + os.path.basename(out), w, h); nu.pixels.foreach_set(np.concatenate([o, px[:, 3:]], 1).ravel())
-    nu.filepath_raw = out; nu.file_format = "JPEG"; nu.save(); bpy.data.images.remove(nu); bpy.data.images.remove(im)
-    return out
-def normali_attenuate(tid, forza):
-    """mappa delle normali attenuata nel file (mescolata con la normale piatta 0.5, 0.5, 1): l'USD non porta la forza del nodo
-    e Unreal la usa piena; così Blender e Unreal vedono lo stesso rilievo."""
-    src = mappa(tid, "normali")
-    if not src or forza >= 0.999: return src
-    out = os.path.join(LIBMAT, tid, "tinte", f"normali_{forza:g}.jpg")
-    if os.path.isfile(out): return out
-    os.makedirs(os.path.dirname(out), exist_ok=True)
-    im = bpy.data.images.load(src); im.colorspace_settings.name = "Non-Color"; w, h = im.size
-    px = np.empty(w * h * 4, np.float32); im.pixels.foreach_get(px); px = px.reshape(-1, 4)
-    piatta = np.array([0.5, 0.5, 1.0], np.float32); px[:, :3] = piatta + (px[:, :3] - piatta) * forza
-    nu = bpy.data.images.new("normali " + os.path.basename(out), w, h); nu.colorspace_settings.name = "Non-Color"
-    nu.pixels.foreach_set(px.ravel()); nu.filepath_raw = out; nu.file_format = "JPEG"; nu.save()
-    bpy.data.images.remove(nu); bpy.data.images.remove(im)
-    return out
-def mat_texture(k):
-    tid, lato, contrasto, _ = TEX[k]; col = ritinta(tid, ST[TINTA_DI.get(k, k)], contrasto)
-    if not col: return None
-    m = bpy.data.materials.get("Arredo " + k) or bpy.data.materials.new("Arredo " + k); m.use_nodes = True; nt = m.node_tree; nt.nodes.clear()
-    out = nt.nodes.new("ShaderNodeOutputMaterial"); b = nt.nodes.new("ShaderNodeBsdfPrincipled"); nt.links.new(b.outputs[0], out.inputs[0])
-    tc = nt.nodes.new("ShaderNodeTexImage"); tc.image = bpy.data.images.load(col, check_existing=True); nt.links.new(tc.outputs["Color"], b.inputs["Base Color"])
-    # stoffe: ruvidità costante opaca; la mappa delle foto le faceva lucide come pelle in Unreal (sedie, 2026-11-17)
-    r_ = mappa(tid, "ruvidita") if k not in ("sabbia", "lenzuolo", "cuscino", "plaid", "boucle", "tappeto") else None
-    if r_:
-        tr = nt.nodes.new("ShaderNodeTexImage"); tr.image = bpy.data.images.load(r_, check_existing=True); tr.image.colorspace_settings.name = "Non-Color"
-        nt.links.new(tr.outputs["Color"], b.inputs["Roughness"])
-    else: b.inputs["Roughness"].default_value = RUV[k]
-    if k in ("sabbia", "lenzuolo", "cuscino", "plaid", "boucle", "tappeto") and "Sheen Weight" in b.inputs:
-        b.inputs["Sheen Weight"].default_value = 0.5                 # velo delle stoffe (solo Blender)
-    n_ = normali_attenuate(tid, min(1.0, NORMALE.get(k, 0.8))) if NORMALE.get(k, 0.8) > 0 else None
-    if n_:
-        tn = nt.nodes.new("ShaderNodeTexImage"); tn.image = bpy.data.images.load(n_, check_existing=True); tn.image.colorspace_settings.name = "Non-Color"
-        nm = nt.nodes.new("ShaderNodeNormalMap"); nm.inputs["Strength"].default_value = max(1.0, NORMALE.get(k, 0.8))   # sotto 1 è già nel file
-        nt.links.new(tn.outputs["Color"], nm.inputs["Color"]); nt.links.new(nm.outputs["Normal"], b.inputs["Normal"])
-    return m
-def mat(k):
-    if k not in MATS and k in TEX:
-        mt = mat_texture(k)
-        if mt: MATS[k] = mt; return mt
-    if k not in MATS:
-        m = bpy.data.materials.get("Arredo " + k) or bpy.data.materials.new("Arredo " + k); m.use_nodes = True
-        b = next(n for n in m.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
-        b.inputs["Base Color"].default_value = lin(ST[k]); b.inputs["Roughness"].default_value = RUV[k]
-        b.inputs["Metallic"].default_value = 1.0 if k in ("metallo", "inox") else 0.0; MATS[k] = m
-        if k in ("lampadina", "led", "lume_dentro"):
-            b.inputs["Emission Color"].default_value = lin(ST[k]); b.inputs["Emission Strength"].default_value = 0.08 if k == "lume_dentro" else 8.0
-        if k == "vetro_fume":                                # trasparente: in Unreal diventa M_VetroFume (prepara_render.py)
-            b.inputs["Alpha"].default_value = 0.38
-            try: m.surface_render_method = "BLENDED"
-            except Exception: m.blend_method = "BLEND"
-        if k == "rovere":                                    # fibra verticale sottile: rumore stirato lungo z (in Unreal M_Rovere)
-            nt = m.node_tree; tc = nt.nodes.new("ShaderNodeTexCoord"); mp = nt.nodes.new("ShaderNodeMapping")
-            mp.inputs["Scale"].default_value = (70.0, 70.0, 1.5); nt.links.new(tc.outputs["Object"], mp.inputs["Vector"])
-            nz = nt.nodes.new("ShaderNodeTexNoise"); nz.inputs["Scale"].default_value = 1.0; nz.inputs["Detail"].default_value = 4.0
-            nt.links.new(mp.outputs["Vector"], nz.inputs["Vector"])
-            cr = nt.nodes.new("ShaderNodeValToRGB"); c0 = lin(ST[k]); cr.color_ramp.elements[0].position = 0.35; cr.color_ramp.elements[1].position = 0.65
-            cr.color_ramp.elements[0].color = [x * 0.88 for x in c0[:3]] + [1]; cr.color_ramp.elements[1].color = [min(1, x * 1.04) for x in c0[:3]] + [1]
-            nt.links.new(nz.outputs["Fac"], cr.inputs["Fac"]); nt.links.new(cr.outputs["Color"], b.inputs["Base Color"])
-        if k == "marmo":                                     # venature: onde distorte dal rumore, sottili e chiare
-            nt = m.node_tree; tc = nt.nodes.new("ShaderNodeTexCoord"); wv = nt.nodes.new("ShaderNodeTexWave")
-            wv.inputs["Scale"].default_value = 1.6; wv.inputs["Distortion"].default_value = 14.0; wv.inputs["Detail"].default_value = 6.0
-            wv.inputs["Detail Scale"].default_value = 1.5; nt.links.new(tc.outputs["Object"], wv.inputs["Vector"])
-            cr = nt.nodes.new("ShaderNodeValToRGB"); cr.color_ramp.elements[0].position = 0.0; cr.color_ramp.elements[0].color = lin(ST["vena"])
-            cr.color_ramp.elements[1].position = 0.035; cr.color_ramp.elements[1].color = lin(ST["marmo"])
-            nt.links.new(wv.outputs["Fac"], cr.inputs["Fac"]); nt.links.new(cr.outputs["Color"], b.inputs["Base Color"])
-    return MATS[k]
+import materiali_arredo as MA
+MA.configura(A.get("stile", {}))
+from materiali_arredo import ST, RUV, TEX, mat
+import ricette_arredo
+tessili.LOG = log                                          # controlli automatici dei tessili nel log della filiera
 
 radice = bpy.data.collections.get("PROGETTO") or scn.collection
 ARR = bpy.data.collections.get("PRG_Arredi")
@@ -194,7 +82,7 @@ def soffitto(x, y, z_da, pred=2.7):
 POSATI = []   # un record per mobile o lampada: scritto in arredi_posati.json
 class Pezzo:
     """un mobile: volumi rigidi (spigolo smussato 4 mm) e volumi morbidi (cuscini, materassi: smusso largo)."""
-    def __init__(s, o, u, v, z0): s.o, s.u, s.v, s.z0 = Vector(o), Vector(u), Vector(v), z0; s.b = {"duro": ([], [], []), "morbido": ([], [], []), "liscio": ([], [], [])}; s.m = []
+    def __init__(s, o, u, v, z0): s.o, s.u, s.v, s.z0 = Vector(o), Vector(u), Vector(v), z0; s.b = {"duro": ([], [], []), "morbido": ([], [], []), "liscio": ([], [], []), "tondo": ([], [], [])}; s.m = []
     def _m(s, k):
         if k not in s.m: s.m.append(k)
         return s.m.index(k)
@@ -228,6 +116,19 @@ class Pezzo:
         for i in range(seg):
             j = (i + 1) % seg; F.append((n + i, n + j, n + seg + j, n + seg + i)); M.append(s._m(k))
         F += [tuple(n + i for i in reversed(range(seg))), tuple(n + seg + i for i in range(seg))]; M += [s._m(k)] * 2
+    def tornio(s, a0, b0, prof, ks, seg=48, tipo="tondo"):
+        """solido di rotazione attorno all'asse verticale in (a0, b0): prof = sezione chiusa [(r, z), ...] percorsa in un verso,
+        ks = materiale di ogni lato della sezione (paralumi, globi, catino, piedi). Parte "tondo": liscia, senza smusso. Le r
+        devono restare > 0 (niente punti sull'asse: facce degeneri)."""
+        n = len(prof); pts = []; fac = []; mats = []
+        for j in range(seg):
+            t = 2 * math.pi * j / seg
+            for r, z in prof: pts.append((a0 + r * math.cos(t), b0 + r * math.sin(t), z))
+        for j in range(seg):
+            j2 = (j + 1) % seg
+            for i in range(n):
+                i2 = (i + 1) % n; fac.append((j * n + i, j * n + i2, j2 * n + i2, j2 * n + i)); mats.append(ks[i] if isinstance(ks, list) else ks)
+        s.grezzo(pts, fac, mats, tipo)
     def cil(s, a, b, r0, r1, z0, z1, k, seg=20):
         V, F, M = s.b["duro"]; n = len(V); cx, cy = s.P(a, b)
         for z, r in ((s.z0 + z0, r0), (s.z0 + z1, r1)):
@@ -257,18 +158,28 @@ class Pezzo:
             for pl in me.polygons:
                 k_ = s.m[M[pl.index]]; lato, venato = (TEX[k_][1], TEX[k_][3]) if k_ in TEX else (1.0, False); nn = pl.normal
                 th = Vector((-nn.y, nn.x)); th = th.normalized() if th.length > 1e-6 else s.u
+                # fibra lungo il lato lungo della faccia (2026-11-17): verticale sulle ante, orizzontale sulla fascia del letto,
+                # sulla testata larga e bassa, sui frontali dei cassetti (prima era verticale su ogni faccia verticale)
+                qq = [Vector(V[me.loops[li].vertex_index]) for li in pl.loop_indices]
+                lungo_or = (max(q.xy.dot(th) for q in qq) - min(q.xy.dot(th) for q in qq)) > (max(q.z for q in qq) - min(q.z for q in qq))
+                if k_ in MA.FIBRA_VERTICALE: lungo_or = False                    # noce del bagno: fibra verticale come nella foto
                 for li in pl.loop_indices:
                     q = Vector(V[me.loops[li].vertex_index])
                     if abs(nn.z) > 0.7: uv = (q.xy.dot(s.u), q.xy.dot(s.v))
-                    elif venato: uv = (q.z, q.xy.dot(th))
+                    elif venato and not lungo_or: uv = (q.z, q.xy.dot(th))
                     else: uv = (q.xy.dot(th), q.z)
                     uvl.data[li].uv = (uv[0] / lato, uv[1] / lato)
             usati = sorted(set(M)); per = {k_: i_ for i_, k_ in enumerate(usati)}
             for k_ in usati: me.materials.append(mat(s.m[k_]))
             me.polygons.foreach_set("material_index", [per[x] for x in M]); me.update()
-            ob = bpy.data.objects.new(nome + {"duro": "", "morbido": " (tessili)", "liscio": " (liscio)"}[parte], me); ARR.objects.link(ob)
+            ob = bpy.data.objects.new(nome + {"duro": "", "morbido": " (tessili)", "liscio": " (liscio)", "tondo": " (tondo)"}[parte], me); ARR.objects.link(ob)
             if POSATI and POSATI[-1]["nome"] is None: POSATI[-1]["nome"] = ob.name     # il nome vero (Blender aggiunge .001 ai doppi)
             ob["villa"] = villa; ob["arredo"] = tipo; ob["ingombro"] = [c for q in ingombro.exterior.coords[:-1] for c in q]
+            if parte == "tondo":                                   # curve lisce senza smusso (paralumi, globi, catino, mobile curvo)
+                for pl in me.polygons: pl.use_smooth = True
+                try: me.set_sharp_from_angle(angle=math.radians(35))
+                except Exception: pass
+                continue
             if parte == "liscio":                                  # imbottiti e forme organiche: gabbia + suddivisione
                 sd = ob.modifiers.new("Liscio", "SUBSURF"); sd.levels = 2; sd.render_levels = 3
                 for pl in me.polygons: pl.use_smooth = True
@@ -387,9 +298,17 @@ def armadio(p, L, W, H=2.40, vetro=False):
         ripiani = [zr for zr in (H - 0.32, H - 0.62) if zr > za + 0.12]
         for zr in ripiani: p.scat(ga + 0.01, gb - 0.01, -W / 2 + 0.02, fr - 0.03, zr, zr + 0.022, "rovere")         # ripiani
         p.scat(ga + 0.02, gb - 0.02, -0.012, 0.012, za - 0.02, za, "nero")                          # asta appendiabiti
-        for uc in [ga + (gb - ga) * x for x in (0.45, 0.56, 0.64)]:                                  # camicie appese
-            scatola_liscia(p, lambda a_, b_: (a_, b_), [uc - 0.012, uc - 0.006, uc + 0.006, uc + 0.012], [-0.21, -0.17, 0.17, 0.21],
-                           [za - 0.74, za - 0.70, za - 0.10, za - 0.03], "lenzuolo")
+        # camicie appese su grucce sottili nere (Andrea, 2026-11-17): qui le grucce; le camicie sono stoffa simulata
+        # (ricette_arredo.armadio) dopo p.fine. Spalle della gruccia inclinate come quelle della camicia (tessili.camicia)
+        p.camicie = [ga + (gb - ga) * x for x in (0.30, 0.38, 0.465, 0.55, 0.63)]
+        for uc in p.camicie:
+            zg = za - 0.075
+            p.asta(uc, 0, zg, uc, 0, za + 0.004, 0.0022, 0.0022, "nero", seg=8)                              # gancio
+            for sb in (-1, 1):
+                p.asta(uc, sb * 0.05, zg, uc, sb * 0.20, zg - 0.22 * 0.14, 0.004, 0.004, "nero", seg=8)       # braccio
+            p.asta(uc, -0.05, zg, uc, 0.05, zg, 0.004, 0.004, "nero", seg=8)
+            p.asta(uc, -0.20, zg - 0.031, uc, 0.20, zg - 0.031, 0.0025, 0.0025, "nero", seg=8)             # barra
+        p.za = za
         for ul in (ga + 0.012, gb - 0.022):                                                          # LED verticali ai lati
             p.scat(ul, ul + 0.01, fr - 0.05, fr - 0.035, 0.12, H - 0.04, "led")
         for zr in ripiani:                                                                          # biancheria piegata sui ripiani
@@ -427,9 +346,20 @@ def letto(p, L, W, v, c, u, villa):
         if v["pol"].buffer(-0.05).contains(ret):
             scatola_liscia(p, lambda a_, b_: (s * a_, b_), [-L / 2 + 0.35, -L / 2 + 0.37, L / 2 + sp_ + 0.08, L / 2 + sp_ + 0.1],
                            [-W / 2 - sp_, -W / 2 - sp_ + 0.02, W / 2 + sp_ - 0.02, W / 2 + sp_], [0.0, 0.003, 0.012, 0.015], "tappeto"); break
-    p.scat(*U(-L / 2 + 0.05, L / 2), -W / 2, W / 2, 0.12, 0.25, "rovere")
-    m0, m1, mw = -L / 2 + 0.08, L / 2 - 0.16, W / 2 - 0.14
-    p.scat(*U(m0, m1), -mw, mw, 0.25, 0.45, "lenzuolo", "morbido")                                    # materasso
+    imb = W <= 1.3 and villa in {int(x.get("villa", 1)) for x in A["arredi"]}
+    if imb:
+        # letto singolo tutto imbottito (Andrea, 2026-11-17: "il materasso è troppo piccolo, togli la cornice e fallo tutto il
+        # letto, con la morbidezza dei tessuti"): base in tessuto e materasso a tutta larghezza, niente piattaforma in rovere
+        p.scat(*U(-L / 2 + 0.05, L / 2), -W / 2, W / 2, 0.08, 0.27, "tessuto_letto", "morbido")         # base imbottita
+        m0, m1, mw = -L / 2 + 0.06, L / 2 - 0.01, W / 2 - 0.01
+        p.scat(*U(m0, m1), -mw, mw, 0.28, 0.48, "lenzuolo", "morbido")                                # materasso
+        p.zm, p.zb = [0.28, 0.48], [0.08, 0.27]
+    else:
+        p.scat(*U(-L / 2 + 0.05, L / 2), -W / 2, W / 2, 0.12, 0.25, "rovere")
+        m0, m1, mw = -L / 2 + 0.08, L / 2 - 0.16, W / 2 - 0.14
+        p.scat(*U(m0, m1), -mw, mw, 0.25, 0.45, "lenzuolo", "morbido")                                    # materasso
+        p.zm, p.zb = [0.25, 0.45], [0.12, 0.24]
+    p.imbottito = imb
     # piumone, guanciali, cuscini e plaid: simulati come tessuti veri dopo p.fine (tessili_letto, modulo tessili.py)
     p.letto = (s, m0, m1, mw, L, W)
     # testata: la più larga che sta nella stanza senza toccare gli armadi
@@ -443,50 +373,33 @@ def letto(p, L, W, v, c, u, villa):
     p.testata = (s, hw)
 
 def tessili_letto(p, v, villa, nome):
-    """piumone che cade sul materasso e si appoggia sul bordo della piattaforma, guanciali gonfiati, cuscini decorativi
-    appoggiati, plaid di traverso ai piedi (Andrea, 2026-11-16: tessuti morbidi come nel riferimento, non scatole)."""
-    s, m0, m1, mw, L, W = p.letto; z0 = v["z0"]
-    def P_(a, b): return Vector(p.P(s * a, b))
-    us, vv_ = Vector(p.u[:2]) * s, Vector(p.v[:2])
-    materasso = (P_((m0 + m1) / 2, 0), us, vv_, m1 - m0, 2 * mw, z0 + 0.25, z0 + 0.45)
-    piatta = (P_(0.025, 0), us, vv_, L - 0.05, W, z0 + 0.12, z0 + 0.24)          # 1 cm sotto il materasso: niente facce coincidenti
-    fatti = []
-    pavimento = (P_(0, 0), us, vv_, L + 1.5, W + 1.5, z0 - 0.05, z0)
-    # piumone vero (banco di prova del 2026-11-17): involucro gonfiato con la pressione che cade sul materasso e sulla
-    # piattaforma, bordi tondi e pieghe sui fianchi
-    a0, a1 = m0 + 0.42, L / 2 - 0.03
-    pium = tessili.trapunta(scn, f"{nome} piumone (tessili)", P_((a0 + a1) / 2, 0), us, vv_, a1 - a0, W - 0.04, z0 + 0.50,
-                            [materasso, piatta, pavimento], mat("lenzuolo"), TEX["lenzuolo"][1], spessore=0.06, pressione=2.5, piega=0.05,
-                            grinze=0.007, tensione=6.0)                  # pieghe morbide (banco di prova del 2026-11-17)
-    fatti.append(pium)
-    # plaid: cade sul piumone stesso (collisore), che copre materasso e bordo della piattaforma; più spesso e pesante, largo
-    # quanto basta per ricadere sui fianchi
-    col = tessili.collisore(scn, pium)
-    b0, b1 = L / 2 - 0.62, L / 2 - 0.08
-    fatti.append(tessili.telo(scn, f"{nome} plaid (tessili)", P_((b0 + b1) / 2, 0), us, vv_, b1 - b0, 2 * mw + (0.78 if W > 1.3 else 0.36), z0 + 0.80,
-                              [pavimento], mat("plaid"), TEX["plaid"][1], spessore=0.015, peso=0.8, piega=0.3, fotogrammi=120, passo=0.025, grinze=0.0))
-    bpy.data.objects.remove(col, do_unlink=True)
-    zz = [q.co.z - z0 for q in fatti[-1].data.vertices]
-    log(f"{nome}: plaid da {min(zz):.2f} a {max(zz):.2f} m sul pavimento" + ("" if min(zz) > 0.1 else " — AVVISO: è caduto oltre il letto"))
-    # guanciali in piedi contro la testata, cuscini tortora davanti (riferimento)
-    n = 2 if W > 1.3 else 1; lc = min(0.68, 2 * mw / n - 0.06)
-    perp = Vector((-vv_.y, vv_.x)); sg = 1 if perp.dot(-us) > 0 else -1                    # +perp(vv_ × sg) = verso la testata
-    for i in range(n):
-        cv = -mw + (i + 0.5) * 2 * mw / n
-        fatti.append(tessili.cuscino(scn, f"{nome} guanciale {i + 1} (tessili)", (*P_(m0 + 0.07, cv), z0 + 0.45), vv_ * sg, lc, 0.50, 0.17,
-                                     mat("lenzuolo"), TEX["lenzuolo"][1], in_piedi=0.55))
-        fatti.append(tessili.cuscino(scn, f"{nome} cuscino {i + 1} (tessili)", (*P_(m0 + 0.31, cv), z0 + 0.47), vv_ * sg, lc - 0.16, 0.40, 0.13,
-                                     mat("cuscino"), TEX["cuscino"][1], in_piedi=0.40))
+    """piumone, plaid, guanciali e cuscini simulati come tessuti veri (ricette_arredo.letto, la stessa del banco di prova).
+    La geometria della ricetta resta sull'oggetto del letto (proprieta' "ricetta") per banco_scena.py."""
+    s, m0, m1, mw, L, W = p.letto
+    R = {"tipo": "letto", "nome": nome, "villa": villa, "o": list(p.o[:2]), "us": list((p.u * s)[:2]), "vv": list(p.v[:2]), "m0": m0, "m1": m1, "mw": mw,
+         "L": L, "W": W, "z0": v["z0"], "hw": p.testata[1], "zm": p.zm, "zb": p.zb, "imbottito": p.imbottito}
+    ob_l = bpy.data.objects.get(nome)
+    if ob_l: ob_l["ricetta"] = json.dumps(R)
+    fatti, righe = ricette_arredo.letto(scn, R)
+    for r_ in righe: log(r_)
     for ob in fatti:
         for c_ in list(ob.users_collection): c_.objects.unlink(ob)
         ARR.objects.link(ob); ob["villa"] = villa; ob["arredo"] = "letto"; ob["ingombro"] = []
-    log(f"{nome}: tessili simulati {len(fatti)} (piumone, {n} guanciali, {n} cuscini, plaid)")
 
-def comodino(p, L, W):
-    """comodino sospeso in rovere (riferimento del letto, 2026-11-16) con un cassetto e una lampada piccola in ceramica."""
+def comodino(p, L, W, lume=True):
+    """comodino sospeso in rovere (riferimento del letto, 2026-11-16) con un cassetto e una lampada piccola in ceramica.
+    lume=False: senza abat-jour (camera matrimoniale: sospensioni sottili accanto al letto, 2026-11-17)."""
     p.scat(-L / 2, L / 2, -W / 2, W / 2, 0.30, 0.46, "rovere"); p.scat(-L / 2 + 0.01, L / 2 - 0.01, W / 2, W / 2 + 0.003, 0.315, 0.445, "rovere")
+    if not lume: return
     p.cil(0, -0.05, 0.06, 0.045, 0.46, 0.60, "intonaco"); p.cil(0, -0.05, 0.006, 0.006, 0.60, 0.66, "metallo")
     p.cil(0, -0.05, 0.12, 0.095, 0.62, 0.82, "lenzuolo")
+
+def lato_destro(c, villa, v):
+    """True se il punto c sta alla destra del letto più vicino guardando dai piedi verso la testata."""
+    letti = [q for q in POSATI if q["tipo"] == "letto" and q["villa"] == villa and q.get("verso") and v["pol"].contains(Point(q["centro_m"][:2]))]
+    if not letti: return False
+    b = min(letti, key=lambda q: (Vector(q["centro_m"][:2]) - c).length); f = Vector(b["verso"]).normalized()
+    return (c - Vector(b["centro_m"][:2])).dot(Vector((f.y, -f.x))) > 0
 
 def madia_tv(p, L, W):
     for su in (-L / 2 + 0.06, L / 2 - 0.09):
@@ -650,7 +563,7 @@ def zona_giorno(a, v, villa, tv):
     cucine = [x["pol"] for x in vani if x["villa"] == villa and x["nome"].startswith("Cucina")]
     verso_cucina = min(sue, key=lambda q: min(q.distance(k_) for k_ in cucine)) if sue and cucine else None
     interne = [q for q in sue if any(q.equals(k_) for k_ in interne_)]; altre = [q for q in sue if q not in interne]
-    d_porte = float(a.get("distanza_porte_m", 0.9)); porte = Polygon(); n_p = int(a.get("posti_tavolo", 6)); lt = max(1.4, 0.6 * (n_p // 2)); wt = 0.45 if n_p > 4 else 0.40; x0, y0, x1, y1 = v["pol"].bounds
+    d_porte = float(a.get("distanza_porte_m", 0.9)); n_p = int(a.get("posti_tavolo", 6)); lt = max(1.4, 0.6 * (n_p // 2)); wt = 0.45 if n_p > 4 else 0.40; x0, y0, x1, y1 = v["pol"].bounds
     # il divano sta di fronte alla TV a distanza d e può scostarsi di lato di sh (lo schermo resta davanti al divano)
     def divano_a(d, sh=0.0): return Polygon([tuple(c + vv * (W / 2 + d + sv) + u * (su + sh)) for su, sv in ((-1.15, -0.475), (1.15, -0.475), (1.15, 0.475), (-1.15, 0.475))])
     def zona_tv(d, sh=0.0): return MultiPoint([tuple(c + u * su) for su in (-0.75, 0.75)] + list(divano_a(d, sh).exterior.coords)).convex_hull
@@ -742,34 +655,25 @@ def zona_giorno(a, v, villa, tv):
         p.scat(-1.15, 1.15, -0.475, -0.26, 0.30, 0.60, "boucle", "morbido")                          # schienale basso
         for sd in bracci:
             a0, a1 = sorted((sd * 1.15, sd * 0.93)); p.scat(a0, a1, -0.475, 0.475, 0.30, 0.56, "boucle", "morbido")
-        sx0 = -0.93 if -1 in bracci else -1.15; sx1 = 0.93 if 1 in bracci else 1.15; mid = (sx0 + sx1) / 2
+        sx0 = -0.93 if -1 in bracci else -1.15; sx1 = 0.93 if 1 in bracci else 1.15
         if lato:
             a0, a1 = sorted((lato * 1.15, lato * 0.30))
             p.scat(a0 + 0.03, a1 - 0.03, 0.42, 1.10, 0, 0.05, "nero")
             p.scat(a0, a1, 0.475, 1.15, 0.05, 0.30, "boucle", "morbido")
-        # cuscini gonfiati come tessuti veri (tessili.cuscino), non blocchi (2026-11-17): seduta, chaise, schienale, decorativi
-        nb = 3; wb = (sx1 - sx0) / nb; cz = v["z0"]
-        def W_(a_, b_): q = cs + u * a_ - vv * b_; return (q.x, q.y)
-        perp = Vector((-u.y, u.x)); sg = 1 if perp.dot(vv) > 0 else -1          # verso lo schienale nel riferimento del cuscino
-        # (nome, punto, quota, lungo, largo, alto, inclinazione, materiale, pressione, a scatola)
-        cus = [("seduta 1", W_((sx0 + mid) / 2, 0.105), 0.285, mid - sx0 - 0.01, 0.72, 0.13, 0.0, "boucle", 0.35, True),
-               ("seduta 2", W_((mid + sx1) / 2, 0.105), 0.285, sx1 - mid - 0.01, 0.72, 0.13, 0.0, "boucle", 0.35, True)]
-        if lato: cus.append(("chaise", W_((a0 + a1) / 2, 0.81), 0.285, abs(a1 - a0) - 0.02, 0.66, 0.13, 0.0, "boucle", 0.35, True))
-        # in piedi contro il blocco dello schienale (faccia davanti a b = -0.26), inclinati indietro di 12° e 18°
-        cus += [(f"schienale {i + 1}", W_(sx0 + (i + 0.5) * wb, -0.265), 0.40, wb - 0.03, 0.40, 0.22, math.radians(22), "boucle", 4.0, False) for i in range(nb)]
-        cus += [(f"cuscino {k + 1}", W_(a_, -0.12), 0.42, 0.40, 0.40, 0.10, math.radians(18), "sabbia", 5.0, False) for k, a_ in enumerate((sx0 + 0.26, sx1 - 0.26))]
-        cus_ob = []
-        for nome_c, q_, zq, lu_, lv_, h_, inc, mt, pr, sc in cus:
-            in_p = nome_c.startswith(("schienale", "cuscino")); uc = Vector(u[:2]) * (sg if in_p else 1)   # +perp(uc) = verso lo schienale
-            ob = tessili.cuscino(scn, f"Divano v{villa} {nome_c} (tessili)", (q_[0], q_[1], cz + zq), uc, lu_, lv_, h_, mat(mt), TEX[mt][1],
-                                 pressione=pr, scatolato=sc, in_piedi=inc if in_p else None,
-                                 morbido=1.6 if sc else 6.0 if nome_c.startswith("schienale") else 3.0)   # banco di prova del 2026-11-17
+        # cuscini gonfiati come tessuti veri (ricette_arredo.divano, la stessa del banco di prova): sedute, chaise, schienali,
+        # decorativi a bordo cucito che si appoggiano con la gravita' (2026-11-17)
+        R_div = {"tipo": "divano", "villa": villa, "cs": list(cs[:2]), "u": list(u[:2]), "vv": list(vv[:2]), "sx0": sx0, "sx1": sx1,
+                 "lato": lato, "a0": a0 if lato else None, "a1": a1 if lato else None, "cz": v["z0"]}
+        cus_ob, righe = ricette_arredo.divano(scn, R_div)
+        for r_ in righe: log(r_)
+        for ob in cus_ob:
             for c_ in list(ob.users_collection): c_.objects.unlink(ob)
-            ARR.objects.link(ob); ob["villa"] = villa; ob["arredo"] = "divano"; ob["ingombro"] = []; cus_ob.append(ob)
+            ARR.objects.link(ob); ob["villa"] = villa; ob["arredo"] = "divano"; ob["ingombro"] = []
         ing = Polygon([tuple(cs + u * su - vv * sv) for su, sv in ((-1.15, -0.475), (1.15, -0.475), (1.15, 0.475), (-1.15, 0.475))])
         if lato: ing = unary_union([ing, chaise(lato)])
         if ing.geom_type != "Polygon": ing = ing.convex_hull
         p.fine(f"Divano v{villa}", villa, "divano", ing); fatti.append(ing)
+        if bpy.data.objects.get(f"Divano v{villa}"): bpy.data.objects[f"Divano v{villa}"]["ricetta"] = json.dumps(R_div)
         log(f"divano villa {villa}: " + (f"chaise longue dal lato {'+' if lato > 0 else '-'}" if lato else "senza chaise longue, non c'è posto"))
         # tavolino tondo in rovere su un piede pieno (riferimento del divano)
         p = Pezzo(ct, u, vv, v["z0"])
@@ -794,6 +698,235 @@ def zona_giorno(a, v, villa, tv):
     return bool(dist), bool(meglio)
 
 # ------------------------------------------------------------------------------------------------ pezzi
+# ------------------------------------------------------------------------------------------------ pezzi del 2026-11-17 sera
+# Riferimenti di Andrea in modello/riferimenti_arredo/: mobile_tv.jpg, sospensione_camere.webp, abatjour_travertino.jpg,
+# sospensioni_letto_vetro.jpg, bagno.jpg. Solo nelle ville arredate.
+def _contorno_tondo(L, W, sl, R):
+    """rettangolo L × W (fronte a +W/2) con l'angolo fronte-estremo sl (±1) arrotondato di raggio R: punti in senso antiorario."""
+    from shapely.geometry import box as sbox
+    from shapely.geometry.polygon import orient
+    cx, cy = sl * (L / 2 - R), W / 2 - R
+    angolo = sbox(cx if sl > 0 else -L / 2, cy, L / 2 if sl > 0 else cx, W / 2)
+    pol = sbox(-L / 2, -W / 2, L / 2, W / 2).difference(angolo).union(Point(cx, cy).buffer(R, 24).intersection(angolo))
+    return orient(pol.simplify(0.0005), 1.0)
+
+def _prismi(p, pol, z0, z1, k, tipo="tondo"):
+    """prisma di un poligono convesso (shapely, coordinate del pezzo)."""
+    from shapely.geometry.polygon import orient
+    if pol.is_empty: return
+    for g in ([pol] if pol.geom_type == "Polygon" else list(pol.geoms)):
+        if g.area < 1e-6: continue
+        p.poli(list(orient(g, 1.0).exterior.coords)[:-1], z0, z1, k, tipo)
+
+def madia_tv_curva(p, L, W, v):
+    """mobile TV della camera matrimoniale (riferimento mobile_tv.jpg, 2026-11-17): cassettiera bassa laccata greige opaca,
+    due colonne per tre file di cassetti senza maniglie, fughe sottili scure, zoccolo arretrato in ombra; un capo ha l'angolo sul
+    fronte arrotondato (le file girano attorno alla curva). Andrea, 2026-11-17 sera: la curva dal lato della porta d'ingresso,
+    il capo dritto allungato fino al muro (lato del comodino), 10 cm meno profondo (il retro resta al muro), la TV appesa al muro
+    con lo schermo lucido. Alto 0,76 m come prima."""
+    from shapely.geometry import box as sbox
+    from shapely import affinity
+    # capo con la curva: quello più vicino a una porta della stanza
+    def d_porta(sgn):
+        q = Point(*p.P(sgn * L / 2, 0)); return min([r_.distance(q) for r_ in porte_ if r_.distance(q) < 2.5] or [9.0])
+    sl = 1 if d_porta(1) <= d_porta(-1) else -1
+    # capo dritto fino al muro: distanza dal capo al bordo del vano lungo l'asse del mobile (a metà profondità)
+    q0 = Vector(p.P(-sl * L / 2, -W / 2 + 0.2)); dirz = Vector(p.P(-sl, 0)) - Vector(p.P(0, 0)); dirz.normalize()
+    raggio = LineString([tuple(q0), tuple(q0 + dirz * 3.0)]); x_ = raggio.intersection(v["pol"].buffer(-0.012, join_style=2).exterior)
+    pts_ = [Vector(g.coords[0]) for g in ([x_] if x_.geom_type == "Point" else getattr(x_, "geoms", [])) if g.geom_type == "Point"]
+    allunga = min(((q - q0).length for q in pts_), default=0.0)
+    if allunga > 1.2: allunga = 0.0                                     # nessun muro vicino: resta com'era
+    W2 = W - 0.10; a0, a1 = (-L / 2, L / 2 + allunga) if sl < 0 else (-L / 2 - allunga, L / 2); ac, bc = (a0 + a1) / 2, -W / 2 + W2 / 2
+    L2 = a1 - a0; R = min(0.24, W2 * 0.45, L2 * 0.25); g = 0.004
+    pol = affinity.translate(_contorno_tondo(L2, W2, sl, R), ac, bc)
+    _prismi(p, pol.buffer(-0.045, join_style=2), 0.0, 0.06, "nero", "duro")                    # zoccolo arretrato
+    _prismi(p, pol.buffer(-0.012, join_style=2), 0.06, 0.755, "nero")                          # anima scura dietro le fughe (sotto il piano)
+    file_ = [(0.06, 0.33), (0.33 + g, 0.60), (0.60 + g, 0.76)]                                 # cassetti: due alti, uno basso in cima
+    for z0_, z1_ in file_:
+        for meta in (sbox(-9, -9, ac - g / 2, 9), sbox(ac + g / 2, -9, 9, 9)):
+            _prismi(p, pol.intersection(meta), z0_, z1_, "laccato_tv")
+    # TV da 55" appesa al muro sopra il mobile: cornice sottile nera e schermo nero lucido
+    wt, ht, zt = 1.23, 0.71, 1.02; bw = -W / 2
+    p.scat(ac - wt / 2, ac + wt / 2, bw + 0.004, bw + 0.034, zt, zt + ht, "nero")
+    p.scat(ac - wt / 2 + 0.008, ac + wt / 2 - 0.008, bw + 0.034, bw + 0.036, zt + 0.008, zt + ht - 0.008, "schermo")
+    log(f"mobile TV della matrimoniale: lungo {L2:.2f} m (allungato di {allunga:.2f} fino al muro), profondo {W2:.2f}, curva dal lato {'+' if sl > 0 else '-'}")
+
+def sospensione_camera(p, zb, zs):
+    """sospensione delle camere (riferimento sospensione_camere.webp, 2026-11-17): tre paralumi metallici neri opachi a cupola,
+    bianchi dentro, sovrapposti (grande 40 cm in alto, medio, piccolo cilindrico in basso), cannotto nero, cavo e rosone neri."""
+    t = 0.003
+    def cupola(r0, r1, z0, z1, esp, n=10):
+        est = [(r0 + (r1 - r0) * i / n, z0 - (z0 - z1) * (i / n) ** esp) for i in range(n + 1)]
+        inn = [(r, z - t) for r, z in reversed(est)]
+        prof = est + inn; ks = ["nero"] * n + ["nero"] + ["interno_bianco"] * n + ["nero"]
+        p.tornio(0, 0, [(r, zb + z) for r, z in prof], ks, seg=64)
+    cupola(0.035, 0.200, 0.215, 0.120, 1.7)              # grande
+    cupola(0.040, 0.135, 0.150, 0.070, 1.5)              # medio
+    cupola(0.068, 0.082, 0.072, 0.000, 1.0, n=4)         # piccolo, quasi cilindrico
+    p.tornio(0, 0, [(0.004, zb + 0.20), (0.030, zb + 0.20), (0.030, zb + 0.33), (0.004, zb + 0.33)], "nero", seg=32)   # cannotto
+    p.tornio(0, 0, [(0.004, zb + 0.085), (0.028, zb + 0.085), (0.028, zb + 0.125), (0.004, zb + 0.125)], "lampadina", seg=24)
+    p.cil(0, 0, 0.002, 0.002, zb + 0.33, zs - 0.015, "nero", seg=8); p.cil(0, 0, 0.05, 0.05, zs - 0.02, zs, "nero", seg=32)
+    return zb + 0.10                                      # quota della luce, sotto il paralume grande
+
+def abatjour_travertino(p, a, b, z):
+    """abat-jour del riferimento abatjour_travertino.jpg (2026-11-17): fusto cilindrico in travertino (Ø 11, alto 22 cm),
+    paralume a tamburo in lino chiaro (Ø 29, alto 15) che di sera si accende, cappello in travertino. Restituisce la quota della luce."""
+    p.tornio(a, b, [(0.004, z), (0.055, z), (0.055, z + 0.22), (0.004, z + 0.22)], "travertino", seg=40)
+    p.tornio(a, b, [(0.142, z + 0.155), (0.145, z + 0.155), (0.145, z + 0.305), (0.142, z + 0.305)], "paralume", seg=64)
+    p.tornio(a, b, [(0.004, z + 0.295), (0.045, z + 0.295), (0.045, z + 0.32), (0.004, z + 0.32)], "travertino", seg=40)
+    return z + 0.23
+
+def globo_vetro(p, a, b, zc, R, zs):
+    """sospensione piccola del riferimento sospensioni_letto_vetro.jpg (2026-11-17): globo in vetro fumé con la lampadina
+    dentro, cannotto nero lungo sopra il globo, cavo e rosone neri."""
+    t = 0.003; n = 16; f0, f1 = 0.16 * math.pi, 0.985 * math.pi
+    est = [(R * math.sin(f0 + (f1 - f0) * i / n), zc + R * math.cos(f0 + (f1 - f0) * i / n)) for i in range(n + 1)]
+    inn = [((R - t) * math.sin(f0 + (f1 - f0) * i / n), zc + (R - t) * math.cos(f0 + (f1 - f0) * i / n)) for i in reversed(range(n + 1))]
+    p.tornio(a, b, est + inn, "vetro_globo", seg=48)        # fumé chiaro: con il vetro dell'armadio era un disco scuro in Unreal
+    p.tornio(a, b, [(0.004, zc - 0.022), (0.016, zc - 0.012), (0.018, zc + 0.012), (0.004, zc + 0.03)], "lampadina", seg=24)
+    zt = zc + R * math.cos(f0)
+    p.tornio(a, b, [(0.003, zt - 0.01), (0.011, zt - 0.01), (0.011, zt + 0.13), (0.003, zt + 0.13)], "nero", seg=24)   # cannotto
+    p.cil(a, b, 0.0016, 0.0016, zt + 0.13, zs - 0.012, "nero", seg=6); p.cil(a, b, 0.035, 0.035, zs - 0.012, zs, "nero", seg=24)
+
+LUCI_SPECCHIO = []    # LED sotto gli specchi dei bagni: (punto, asse lungo, larghezza, quota, villa, vano)
+def lavabo(p, L, W, v, villa, nome):
+    """mobile del bagno (riferimento bagno.jpg, 2026-11-17) al posto del lavabo IFC: cassettone sospeso in noce scuro a fibra
+    verticale fine con due frontali senza maniglia, piano spesso in pietra beige, catino tondo da appoggio opaco, rubinetto a
+    parete in bronzo scuro con la leva a parte, specchio con cornice scura sottile e LED dietro il bordo basso.
+    Ingombro del lavabo IFC (90 × 45 cm); il catino sta sul lato destro guardando il muro, come nella foto."""
+    zp = 0.855; bw = -W / 2                                             # piano; muro
+    p.scat(-L / 2 + 0.005, L / 2 - 0.005, bw, W / 2 - 0.02, 0.40, 0.80, "noce")
+    sa = -L / 2 + 0.62 * L
+    for u0, u1 in ((-L / 2 + 0.006, sa - 0.0015), (sa + 0.0015, L / 2 - 0.006)):
+        p.scat(u0, u1, W / 2 - 0.02, W / 2, 0.402, 0.798, "noce")
+    p.scat(-L / 2 + 0.03, L / 2 - 0.03, bw, W / 2 - 0.05, 0.80, 0.806, "nero")                 # ombra sotto il piano
+    p.scat(-L / 2 - 0.01, L / 2 + 0.01, bw, W / 2 + 0.025, 0.806, zp, "piano_bagno")
+    # catino dal lato della doccia (Andrea, 2026-11-17: "il lavabo più vicino alla doccia, il mobile specchiato")
+    lato_d = 1.0
+    for ob_d in scn.objects:
+        if ob_d.get("ifc_classe") != "IfcBuildingElementProxy" or ob_d.type != "MESH" or not ob_d.data.vertices or ob_d.hide_render: continue
+        W_ = [ob_d.matrix_world @ q_.co for q_ in ob_d.data.vertices]; r_ = MultiPoint([w.xy[:] for w in W_]).minimum_rotated_rectangle
+        if v["pol"].contains(r_.centroid) and max(w.z for w in W_) - min(w.z for w in W_) >= 1.8 and r_.area >= 0.6:
+            lato_d = 1.0 if (Vector(r_.centroid.coords[0]) - p.o).dot(p.u) >= 0 else -1.0
+    ab = lato_d * (L / 2 - 0.25) if L > 0.75 else 0.0; bb = 0.015
+    cat = [(0.012, zp + 0.002), (0.17, zp + 0.002), (0.193, zp + 0.016), (0.201, zp + 0.075), (0.199, zp + 0.135), (0.193, zp + 0.142),
+           (0.187, zp + 0.135), (0.180, zp + 0.085), (0.150, zp + 0.045), (0.080, zp + 0.027), (0.012, zp + 0.024)]
+    p.tornio(ab, bb, cat, "catino", seg=64)
+    zr = zp + 0.215; w0 = bw + 0.009                                      # rubinetto a parete, sopra il rivestimento
+    p.asta(ab, w0, zr, ab, w0 + 0.012, zr, 0.03, 0.03, "rubinetto", seg=24)
+    p.asta(ab, w0 + 0.012, zr, ab, w0 + 0.165, zr, 0.011, 0.011, "rubinetto", seg=16)
+    p.asta(ab, w0 + 0.160, zr + 0.004, ab, w0 + 0.168, zr - 0.04, 0.011, 0.0095, "rubinetto", seg=16)
+    ah = ab - lato_d * 0.14                                               # leva verso il centro del mobile
+    p.asta(ah, w0, zr, ah, w0 + 0.012, zr, 0.028, 0.028, "rubinetto", seg=24)
+    p.asta(ah, w0 + 0.012, zr, ah, w0 + 0.07, zr - 0.004, 0.006, 0.005, "rubinetto", seg=12)
+    # specchio con cornice scura, sotto il soffitto (bagno B: falda a 2,0 m)
+    q = Vector(p.P(ab, bw)); zt = min(1.18 + 0.82, soffitto(q.x, q.y, v["z0"] + 1.0) - v["z0"] - 0.10); zb_ = 1.18; wm = 0.62
+    # specchio sopra il catino ma dentro la larghezza del mobile: centrato sul catino sporgeva oltre il mobile e toccava il muro
+    a0, a1 = max(-L / 2, ab - wm / 2), min(L / 2, ab + wm / 2)
+    if a1 - a0 < wm: a0, a1 = (a1 - wm, a1) if lato_d < 0 else (a0, a0 + wm)
+    a0, a1 = max(-L / 2, a0), min(L / 2, a1)
+    p.scat(a0, a1, w0, w0 + 0.024, zb_, zt, "nero")
+    p.scat(a0 + 0.008, a1 - 0.008, w0 + 0.024, w0 + 0.028, zb_ + 0.008, zt - 0.008, "specchio")
+    p.scat(a0 + 0.03, a1 - 0.03, w0 + 0.004, w0 + 0.02, zb_ - 0.004, zb_, "led")                  # luce radente sotto lo specchio
+    LUCI_SPECCHIO.append((Vector(p.P(ab, w0 + 0.012)), Vector(p.u[:2]), wm - 0.06, v["z0"] + zb_ - 0.01, villa, v["nome"]))
+
+def rubinetto_bidet(ob_b, v, villa, nome):
+    """miscelatore monocomando sul bordo del bidet, abbinato al rubinetto del lavabo (bronzo scuro, Andrea 2026-11-17: "manca la
+    rubinetteria nel bidet, cerca qualcosa di abbinato"): corpo cilindrico, bocca corta in avanti, leva sottile sopra."""
+    W_ = [ob_b.matrix_world @ q_.co for q_ in ob_b.data.vertices]; r_ = MultiPoint([w.xy[:] for w in W_]).minimum_rotated_rectangle
+    cc = [Vector(c_) for c_ in list(r_.exterior.coords)[:4]]
+    lati = sorted(((cc[k], cc[(k + 1) % 4]) for k in range(4)), key=lambda e: v["pol"].exterior.distance(Point(*((e[0] + e[1]) / 2))))
+    a_, b_ = lati[0]; mid = (a_ + b_) / 2; u_ = (b_ - a_).normalized(); n_ = Vector((-u_.y, u_.x))
+    if (Vector(r_.centroid.coords[0]) - mid).dot(n_) < 0: n_ = -n_                     # verso il davanti del bidet
+    q = mid + n_ * 0.075; zt = max([w.z for w in W_ if (w.xy - q).length < 0.05] or [max(w.z for w in W_)]) - v["z0"]
+    p = Pezzo(q, u_, n_, v["z0"])
+    p.tornio(0, 0, [(0.004, zt - 0.002), (0.025, zt - 0.002), (0.025, zt + 0.062), (0.021, zt + 0.072), (0.004, zt + 0.074)], "rubinetto", seg=32)
+    p.asta(0, 0.0, zt + 0.05, 0, 0.10, zt + 0.045, 0.0085, 0.0078, "rubinetto", seg=16)                # bocca
+    p.asta(0, 0.095, zt + 0.047, 0, 0.102, zt + 0.032, 0.008, 0.0075, "rubinetto", seg=16)
+    # leva sopra il corpo, rivolta in avanti in posizione neutra (Andrea, 2026-11-17: "la levetta sul davanti")
+    p.asta(0, 0.0, zt + 0.074, 0, 0.012, zt + 0.084, 0.010, 0.008, "rubinetto", seg=16)
+    p.asta(0, 0.012, zt + 0.084, 0, 0.068, zt + 0.092, 0.0055, 0.0045, "rubinetto", seg=12)
+    p.fine(nome, villa, "rubinetto", Point(q.x, q.y).buffer(0.03))
+    for o_ in ARR.objects:
+        if o_.name.startswith(nome): o_["ingombro"] = []
+
+def _retro(ob_, v):
+    """lato del sanitario contro il muro: (centro del lato, asse lungo il muro, verso la stanza, rettangolo)."""
+    W_ = [ob_.matrix_world @ q_.co for q_ in ob_.data.vertices]; r_ = MultiPoint([w.xy[:] for w in W_]).minimum_rotated_rectangle
+    cc = [Vector(c_) for c_ in list(r_.exterior.coords)[:4]]
+    a_, b_ = min(((cc[k], cc[(k + 1) % 4]) for k in range(4)), key=lambda e: v["pol"].exterior.distance(Point(*((e[0] + e[1]) / 2))))
+    mid = (a_ + b_) / 2; u_ = (b_ - a_).normalized(); n_ = Vector((-u_.y, u_.x))
+    if (Vector(r_.centroid.coords[0]) - mid).dot(n_) < 0: n_ = -n_
+    return mid, u_, n_, r_
+
+def accessori_wc(ob_wc, ob_bid, v, villa, nome):
+    """accessori del bagno (Andrea, 2026-11-17: "placca dello scarico a muro, portascopino, portarotolo, portasciugamani vicino
+    al wc: dettagli che rendano la casa vissuta"), nel bronzo scuro della rubinetteria. Placca sopra il wc; portarotolo e
+    portascopino a muro dal lato opposto al bidet (o oltre il bidet se lì non c'è posto); barra con l'asciugamano sopra il bidet.
+    A 9 mm dal muro: sopra il rivestimento."""
+    mid, u_, n_, r_ = _retro(ob_wc, v); w0 = 0.009
+    p = Pezzo(mid, u_, n_, v["z0"])
+    p.scat(-0.12, 0.12, w0, w0 + 0.008, 0.98, 1.14, "rubinetto")                                         # placca di scarico
+    p.scat(-0.110, -0.003, w0 + 0.008, w0 + 0.011, 0.99, 1.13, "rubinetto"); p.scat(0.003, 0.110, w0 + 0.008, w0 + 0.011, 0.99, 1.13, "rubinetto")
+    p.scat(-0.002, 0.002, w0 + 0.008, w0 + 0.010, 0.99, 1.13, "nero")                                   # fessura tra i due tasti
+    # lato degli accessori: quello opposto al bidet. Se lì il wc è a ridosso di un muro (meno di 30 cm liberi), portarotolo e
+    # portascopino vanno sul muro laterale, a 30 e 15 cm dal muro di fondo (2026-11-17: finivano tra wc e bidet)
+    lato = 1.0
+    if ob_bid: lato = -1.0 if (_retro(ob_bid, v)[0] - mid).dot(u_) > 0 else 1.0
+    cen_w = Vector(r_.centroid.coords[0]); raggio = LineString([tuple(cen_w), tuple(cen_w + u_ * lato * 3.0)])
+    bordi = [v["pol"].buffer(-0.01, join_style=2).exterior]
+    for ob_d in scn.objects:                                              # anche la doccia è un ostacolo (bagno B: era dietro il vetro)
+        if ob_d.get("ifc_classe") != "IfcBuildingElementProxy" or ob_d.type != "MESH" or not ob_d.data.vertices or ob_d.hide_render: continue
+        W_ = [ob_d.matrix_world @ q_.co for q_ in ob_d.data.vertices]; rd = MultiPoint([w.xy[:] for w in W_]).minimum_rotated_rectangle
+        if v["pol"].contains(rd.centroid) and max(w.z for w in W_) - min(w.z for w in W_) >= 1.8 and rd.area >= 0.6: bordi.append(rd.exterior)
+    pts_ = []
+    for bd in bordi:
+        x_ = raggio.intersection(bd)
+        pts_ += [Vector(g_.coords[0]) for g_ in ([x_] if x_.geom_type == "Point" else getattr(x_, "geoms", [])) if g_.geom_type == "Point"]
+    dist = min(((q_ - cen_w).length for q_ in pts_), default=3.0); semi = 0.19
+    if dist - semi >= 0.30:
+        s = lato * min(0.38, semi + (dist - semi) / 2); acc = [(p, s, w0, lato)]           # il rotolo si allunga verso fuori
+    else:                                                                 # muro laterale: origine all'angolo, asse lungo il muro
+        angolo = cen_w + u_ * lato * (dist - 0.0) - n_ * (cen_w - mid).dot(n_)
+        q2 = Pezzo(angolo, n_, -u_ * lato, v["z0"]); acc = [(q2, 0.30, w0, -1.0)]
+    for pz, s, w0_, dir_ in acc:
+        # portarotolo: rosetta, braccio a L, rotolo di carta
+        pz.asta(s, w0_, 0.72, s, w0_ + 0.008, 0.72, 0.022, 0.022, "rubinetto", seg=24)
+        pz.asta(s, w0_ + 0.008, 0.72, s, 0.075, 0.72, 0.0055, 0.0055, "rubinetto", seg=12)
+        pz.asta(s, 0.075, 0.72, s + dir_ * 0.13, 0.075, 0.72, 0.0055, 0.0055, "rubinetto", seg=12)
+        # rotolo vero (2026-11-17: "sembra un cilindro bianco"): carta, anima in cartone e foro ai lati, lembo che pende davanti
+        pz.asta(s + dir_ * 0.016, 0.075, 0.72, s + dir_ * 0.114, 0.075, 0.72, 0.055, 0.055, "carta", seg=48)
+        for xe in (s + dir_ * 0.0155, s + dir_ * 0.1145):
+            pz.asta(xe - dir_ * 0.0004, 0.075, 0.72, xe + dir_ * 0.0004, 0.075, 0.72, 0.022, 0.022, "cartone", seg=32)
+            pz.asta(xe - dir_ * 0.0008, 0.075, 0.72, xe + dir_ * 0.0008, 0.075, 0.72, 0.018, 0.018, "nero", seg=32)
+        pz.scat(*sorted((s + dir_ * 0.018, s + dir_ * 0.112)), 0.129, 0.1305, 0.62, 0.72, "carta")             # lembo libero
+        # portascopino a muro, 15 cm più verso il fondo (o verso il wc): staffa, coppa, manico dello scopino
+        sb = s - dir_ * 0.15 if pz is not p else s
+        pz.scat(sb - 0.02, sb + 0.02, w0_, w0_ + 0.004, 0.36, 0.46, "rubinetto")
+        pz.asta(sb, w0_ + 0.004, 0.42, sb, 0.07, 0.42, 0.006, 0.006, "rubinetto", seg=12)
+        pz.tornio(sb, 0.085, [(0.040, 0.30), (0.045, 0.30), (0.045, 0.43), (0.040, 0.43)], "rubinetto", seg=32)
+        pz.tornio(sb, 0.085, [(0.004, 0.30), (0.045, 0.30), (0.045, 0.305), (0.004, 0.305)], "rubinetto", seg=32)
+        pz.asta(sb, 0.085, 0.43, sb, 0.085, 0.66, 0.007, 0.007, "nero", seg=12); pz.asta(sb, 0.085, 0.43, sb, 0.085, 0.436, 0.034, 0.034, "rubinetto", seg=24)
+        if pz is not p:
+            pz.fine(nome + " a muro", villa, "accessori_bagno", Point(*pz.P(s, 0.05)).buffer(0.05))
+            for o_ in ARR.objects:
+                if o_.name.startswith(nome + " a muro"): o_["ingombro"] = []
+    p.fine(nome, villa, "accessori_bagno", r_)
+    for o_ in ARR.objects:
+        if o_.name.startswith(nome): o_["ingombro"] = []
+    if ob_bid:                                                            # barra con l'asciugamano sopra il bidet
+        mb, ub, nb_, _ = _retro(ob_bid, v); q = Pezzo(mb, ub, nb_, v["z0"]); zb = 0.97; lb = 0.46
+        for sx in (-lb / 2, lb / 2): q.asta(sx, w0, zb, sx, 0.06, zb, 0.008, 0.008, "rubinetto", seg=16)
+        q.asta(-lb / 2 - 0.01, 0.06, zb, lb / 2 + 0.01, 0.06, zb, 0.009, 0.009, "rubinetto", seg=20)
+        nome_b = nome + " barra asciugamano"; q.fine(nome_b, villa, "accessori_bagno", Point(mb.x, mb.y).buffer(0.02))
+        for o_ in ARR.objects:
+            if o_.name.startswith(nome_b): o_["ingombro"] = []
+        cen = Vector((*q.P(0, 0.06), v["z0"] + zb))
+        tw = tessili.asciugamano(scn, f"{nome} asciugamano (tessili)", cen, ub, nb_, 0.40, 0.42, 0.36, mat("spugna"), TEX["spugna"][1],
+                                 r_barra=0.009, muro=0.06 - w0, seme=len(nome))
+        for c_ in list(tw.users_collection): c_.objects.unlink(tw)
+        ARR.objects.link(tw); tw["villa"] = villa; tw["arredo"] = "accessori_bagno"; tw["ingombro"] = []
+
 def verso_comodino(c, u, vv, L, W, v, villa, anello):
     """il comodino guarda dove guarda il letto accanto, nella stessa stanza (dalla testata ai piedi). Senza un letto entro
     1,5 m resta com'è."""
@@ -808,6 +941,7 @@ def verso_comodino(c, u, vv, L, W, v, villa, anello):
 
 conta = {}; tele_tv = {}
 LED_TESTATE = []   # LED sopra le testate: (punto, asse lungo la testata, lunghezza, quota del pavimento, nome, villa, vano)
+SOSP_LETTO = []  # sospensioni sottili accanto al letto matrimoniale: (centro del comodino, assi, vano, villa, nome)
 ABAT = []      # abat-jour dei comodini: (punto in pianta, quota del pavimento, nome del comodino, villa, vano)
 for a in sorted(A["arredi"], key=lambda a: a.get("tipo") == "comodino"):     # i comodini dopo i letti: ne prendono il verso
     if not a.get("anello"): continue
@@ -822,13 +956,50 @@ for a in sorted(A["arredi"], key=lambda a: a.get("tipo") == "comodino"):     # i
     elif t == "letto":
         letto(p, L, W, v, c, u, villa); s_, hw_ = p.testata
         LED_TESTATE.append((Vector(p.P(s_ * (-L / 2 + 0.01), 0)), Vector(p.P(0, 1)) - Vector(p.P(0, 0)), 2 * hw_, v["z0"], nome, villa, v["nome"]))
-    elif t == "comodino": comodino(p, L, W); ABAT.append((Vector(p.P(0, -0.05)), v["z0"], nome, villa, v["nome"]))
-    elif t == "madia_tv": madia_tv(p, L, W)
+    elif t == "comodino":
+        # ville arredate (Andrea, 2026-11-17 sera): abat-jour in travertino con il tamburo in lino sui comodini delle camere
+        # singole e sul comodino di sinistra della matrimoniale; sopra quello di destra due globi in vetro fumé appesi
+        arr = villa in {int(x.get("villa", 1)) for x in A["arredi"]}
+        globi = arr and v["nome"].startswith("Camera Matrimoniale") and lato_destro(c, villa, v)
+        comodino(p, L, W, lume=not arr)
+        if not arr: ABAT.append((Vector(p.P(0, -0.05)), v["z0"], nome, villa, v["nome"], 0.72))
+        elif not globi: ABAT.append((Vector(p.P(0, -0.05)), v["z0"], nome, villa, v["nome"], abatjour_travertino(p, 0, -0.05, 0.46)))
+        else: SOSP_LETTO.append((Vector(c), Vector(u), Vector(vv), v, villa, nome))
+    elif t == "madia_tv":
+        if v["nome"].startswith("Camera Matrimoniale") and villa in {int(x.get("villa", 1)) for x in A["arredi"]}: madia_tv_curva(p, L, W, v)
+        else: madia_tv(p, L, W)
+    elif t == "accessori_wc":
+        ob_w = bpy.data.objects.get(a.get("su", "")); ob_b = bpy.data.objects.get(a.get("bidet", ""))
+        if ob_w: accessori_wc(ob_w, ob_b, v, villa, nome)
+        else: log(f"AVVISO {nome}: non trovo il wc {a.get('su')}")
+        continue
+    elif t == "rubinetto_bidet":
+        ob_b = bpy.data.objects.get(a.get("su", ""))
+        if ob_b: rubinetto_bidet(ob_b, v, villa, nome)
+        else: log(f"AVVISO {nome}: non trovo il bidet {a.get('su')}")
+        continue
+    elif t == "lavabo":
+        # mobile del bagno al posto del lavabo IFC ("sostituisce" in arredi.json): il blocco IFC resta nel file ma nascosto
+        for nome_s in ([a["sostituisce"]] if isinstance(a.get("sostituisce"), str) else a.get("sostituisce", [])):
+            ob_s = bpy.data.objects.get(nome_s)
+            if ob_s: ob_s.hide_render = True; ob_s.hide_viewport = True; ob_s["sostituita"] = True
+            else: log(f"AVVISO {nome}: non trovo {nome_s} da sostituire")
+        lavabo(p, L, W, v, villa, nome)
     elif t == "scrivania": scrivania(p, L, W)
     elif t == "parete_tv": parete_tv(p, L, W); tele_tv[(villa, v["nome"])] = (c, u, vv, L, W, nome)
     else: log("AVVISO: tipo non previsto:", t); continue
     p.fine(nome, villa, t, pol)
     if t == "letto": tessili_letto(p, v, villa, nome)
+    if t == "armadio" and getattr(p, "camicie", None):
+        ga_, gb_, fr_, H_ = p.luce_interna
+        R = {"tipo": "armadio", "nome": nome, "villa": villa, "o": list(p.o[:2]), "u": list(p.u[:2]), "v": list(p.v[:2]), "z0": v["z0"],
+             "za": p.za, "posti": p.camicie, "ga": ga_, "gb": gb_, "W": W, "fr": fr_}
+        if bpy.data.objects.get(nome): bpy.data.objects[nome]["ricetta"] = json.dumps(R)
+        fatti_, righe_ = ricette_arredo.armadio(scn, R)
+        for r_ in righe_: log(r_)
+        for ob in fatti_:
+            for c_ in list(ob.users_collection): c_.objects.unlink(ob)
+            ARR.objects.link(ob); ob["villa"] = villa; ob["arredo"] = "armadio"; ob["ingombro"] = []
     if t == "armadio" and getattr(p, "luce_interna", None):
         ga, gb, fr, H_ = p.luce_interna; q = Vector(p.P((ga + gb) / 2, (fr - W / 2) / 2))
         ld = bpy.data.lights.new("Luce interna " + nome, "AREA"); ld.shape = "RECTANGLE"; ld.size = gb - ga - 0.06; ld.size_y = W - 0.12
@@ -887,6 +1058,17 @@ def sospensione(v, villa, q, z_sotto, nome_l, watt, raggio=0.19):
     lampadari a ciottolo (Andrea, 2026-11-16)."""
     global n_luci
     zs = soffitto(q.x, q.y, v["z0"] + 1.9) - v["z0"]; p = Pezzo(q, Vector((1, 0)), Vector((0, 1)), v["z0"])
+    if v["nome"].startswith("Camera") and villa in VILLE_ARREDATE:
+        # camere: sospensione a tre paralumi neri (Andrea, 2026-11-17 sera, al posto della plafoniera in rattan di libreria che
+        # di sera faceva ombre brutte); tipo "lampada_camera": sostituisci_arredi.py non la scambia
+        zb_ = min(z_sotto, zs - 0.55); z_luce = sospensione_camera(p, zb_, zs)
+        p.fine(nome_l, villa, "lampada_camera", Point(q.x, q.y).buffer(0.01))
+        for o_ in ARR.objects:
+            if o_.name.startswith(nome_l): o_["ingombro"] = []
+        ld = bpy.data.lights.new(nome_l, "POINT"); ld.energy = watt; ld.color = LU["colore"]; ld.shadow_soft_size = 0.05
+        lo = bpy.data.objects.new("Luce " + nome_l, ld); lo.location = (q.x, q.y, v["z0"] + z_luce); ARR.objects.link(lo)
+        lo["villa"] = villa; lo["punto_luce"] = v["nome"]; n_luci += 1
+        return
     if v["nome"].startswith("Soggiorno") and villa in VILLE_ARREDATE:      # le ville non arredate restano com'erano
         k_ = int(nome_l.split()[-1]); z_luce = ciottolo(p, z_sotto, zs, 0.30 if k_ == 1 else 0.24, 0.7 + 1.9 * k_)
         p.rilievo = (0.010, 0.012)                                 # gesso grezzo, come nel riferimento
@@ -909,7 +1091,7 @@ ST["lampadina"] = "#FFF0D8"; RUV["lampadina"] = 0.5
 for v in vani:
     c_ = v["pol"].representative_point()
     if v["nome"].startswith(tuple(LU["esterni"])) or any(q.contains(c_) for q in ribassati): continue
-    villa = v["villa"]; watt = LU["w_m2"] * v["pol"].area; qui = [o_ for o_ in ARR.objects if o_.get("villa") == villa and len(o_.get("ingombro", [])) >= 6 and "(tessili)" not in o_.name and "(liscio)" not in o_.name
+    villa = v["villa"]; watt = LU["w_m2"] * v["pol"].area; qui = [o_ for o_ in ARR.objects if o_.get("villa") == villa and len(o_.get("ingombro", [])) >= 6 and "(tessili)" not in o_.name and "(liscio)" not in o_.name and "(tondo)" not in o_.name
                                                                and v["pol"].contains(Point(sum(list(o_["ingombro"])[0::2]) / (len(o_["ingombro"]) / 2), sum(list(o_["ingombro"])[1::2]) / (len(o_["ingombro"]) / 2)))]
     def centro_di(o_): i_ = list(o_["ingombro"]); return Vector((sum(i_[0::2]) / (len(i_) / 2), sum(i_[1::2]) / (len(i_) / 2)))
     punti = [(centro_di(o_), 1.50, 0.22) for o_ in qui if o_["arredo"] == "tavolo"] + [(centro_di(o_), 2.05, 0.19) for o_ in qui if o_["arredo"] == "tavolino"]
@@ -930,10 +1112,31 @@ for v in vani:
             lo.location = (m_.x, m_.y, v["z0"] + 1.44); lo.rotation_euler = (0, 0, math.atan2(d_.y, d_.x)); ARR.objects.link(lo); lo["villa"] = villa; lo["punto_luce"] = v["nome"]; n_luci += 1
 # abat-jour (Andrea, 2026-11-16: di sera le lampade sui comodini non facevano luce): una luce a punto dentro il paralume
 # di comodino() (centro a 0,72 m), potenza abatjour_w; sostituisci_arredi.py la porta nel paralume del modello di libreria
-for q, z0_, nome_c, villa, vano in ABAT:
+for q, z0_, nome_c, villa, vano, zl in ABAT:                 # zl = quota della luce, dentro il paralume
     ld = bpy.data.lights.new("Abat-jour " + nome_c, "POINT"); ld.energy = LU.get("abatjour_w", 25.0); ld.color = LU["colore"]; ld.shadow_soft_size = 0.04
-    lo = bpy.data.objects.new("Luce abat-jour " + nome_c, ld); lo.location = (q.x, q.y, z0_ + 0.72); ARR.objects.link(lo)
+    lo = bpy.data.objects.new("Luce abat-jour " + nome_c, ld); lo.location = (q.x, q.y, z0_ + zl); ARR.objects.link(lo)
     lo["villa"] = villa; lo["punto_luce"] = vano; n_luci += 1
+# sospensioni sottili accanto al letto (riferimento del letto, 2026-11-17): filo nero dal soffitto, calotta nera piccola,
+# lampadina allungata calda; due, sfalsate in quota (1,45 e 1,30 m) e in pianta, sopra il comodino. Tipo "lampada_letto":
+# sostituisci_arredi.py non le scambia con la plafoniera di libreria
+for c_, u_, vv_, v, villa, nome_c in SOSP_LETTO:
+    # globi in vetro fumé del riferimento sospensioni_letto_vetro.jpg (2026-11-17 sera): grande in alto, piccolo più in basso
+    for k, (sa, sb, zb, rg) in enumerate(((-0.07, 0.02, 1.50, 0.085), (0.08, -0.04, 1.26, 0.068))):
+        p = Pezzo(c_, u_, vv_, v["z0"]); q = Vector(p.P(sa, sb)); zs = soffitto(q.x, q.y, v["z0"] + 1.9) - v["z0"]
+        globo_vetro(p, sa, sb, zb, rg, zs)
+        nome_l = f"Sospensione letto {v['nome']} v{villa} {k + 1}"
+        p.fine(nome_l, villa, "lampada_letto", Point(q.x, q.y).buffer(0.01))
+        for o_ in ARR.objects:
+            if o_.name.startswith(nome_l): o_["ingombro"] = []
+        ld = bpy.data.lights.new(nome_l, "POINT"); ld.energy = LU.get("abatjour_w", 25.0) * 0.6; ld.color = LU["colore"]; ld.shadow_soft_size = 0.015
+        lo = bpy.data.objects.new("Luce " + nome_l, ld); lo.location = (q.x, q.y, v["z0"] + zb); ARR.objects.link(lo)
+        lo["villa"] = villa; lo["punto_luce"] = v["nome"]; n_luci += 1
+    log(f"sospensioni accanto al letto: 2 sopra {nome_c}")
+for q, ax, lg, zl, villa, vano in LUCI_SPECCHIO:            # LED sotto gli specchi dei bagni: luce radente verso il basso
+    ld = bpy.data.lights.new("LED specchio " + vano, "AREA"); ld.shape = "RECTANGLE"; ld.size = lg; ld.size_y = 0.02
+    ld.energy = 5.0 * lg; ld.color = LU["colore"]
+    lo = bpy.data.objects.new(f"Luce LED specchio {vano} v{villa}", ld); lo.location = (q.x, q.y, zl)
+    lo.rotation_euler = (0, 0, math.atan2(ax.y, ax.x)); ARR.objects.link(lo); lo["villa"] = villa; lo["punto_luce"] = vano; n_luci += 1
 for q, ax, lg, z0_, nome_l, villa, vano in LED_TESTATE:   # luce radente verso l'alto sul muro dietro la testata
     ld = bpy.data.lights.new("LED testata " + nome_l, "AREA"); ld.shape = "RECTANGLE"; ld.size = lg - 0.04; ld.size_y = 0.02
     ld.energy = 6.0 * lg; ld.color = LU["colore"]
@@ -949,7 +1152,7 @@ for o in scn.objects:
     for m_ in ARR.objects:
         if len(m_.get("ingombro", [])) < 6: continue
         ing = Polygon(list(zip(list(m_["ingombro"])[0::2], list(m_["ingombro"])[1::2]))).buffer(0)
-        if int(m_.get("villa", 1)) == int(o.get("villa", 1)) and ing.intersects(bt) and not m_.name.endswith(("(tessili)", "(liscio)")):
+        if int(m_.get("villa", 1)) == int(o.get("villa", 1)) and ing.intersects(bt) and not m_.name.endswith(("(tessili)", "(liscio)", "(tondo)")):
             log(f"AVVISO: {o.name} aprendosi urta {m_.name} ({ing.intersection(bt).area:.2f} m² di sovrapposizione)")
 log("arredi:", json.dumps(conta, ensure_ascii=False), "| oggetti", len(ARR.objects))
 json.dump({"_nota": "mobili e lampade posati da arredi_interni.py, coordinate locali del contesto in metri (x Est, y Nord, z quota). "
