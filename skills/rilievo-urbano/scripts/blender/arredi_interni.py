@@ -107,11 +107,14 @@ def mat_texture(k):
     m = bpy.data.materials.get("Arredo " + k) or bpy.data.materials.new("Arredo " + k); m.use_nodes = True; nt = m.node_tree; nt.nodes.clear()
     out = nt.nodes.new("ShaderNodeOutputMaterial"); b = nt.nodes.new("ShaderNodeBsdfPrincipled"); nt.links.new(b.outputs[0], out.inputs[0])
     tc = nt.nodes.new("ShaderNodeTexImage"); tc.image = bpy.data.images.load(col, check_existing=True); nt.links.new(tc.outputs["Color"], b.inputs["Base Color"])
-    r_ = mappa(tid, "ruvidita")
+    # stoffe: ruvidità costante opaca; la mappa delle foto le faceva lucide come pelle in Unreal (sedie, 2026-11-17)
+    r_ = mappa(tid, "ruvidita") if k not in ("sabbia", "lenzuolo", "cuscino", "plaid", "boucle", "tappeto") else None
     if r_:
         tr = nt.nodes.new("ShaderNodeTexImage"); tr.image = bpy.data.images.load(r_, check_existing=True); tr.image.colorspace_settings.name = "Non-Color"
         nt.links.new(tr.outputs["Color"], b.inputs["Roughness"])
     else: b.inputs["Roughness"].default_value = RUV[k]
+    if k in ("sabbia", "lenzuolo", "cuscino", "plaid", "boucle", "tappeto") and "Sheen Weight" in b.inputs:
+        b.inputs["Sheen Weight"].default_value = 0.5                 # velo delle stoffe (solo Blender)
     n_ = normali_attenuate(tid, min(1.0, NORMALE.get(k, 0.8))) if NORMALE.get(k, 0.8) > 0 else None
     if n_:
         tn = nt.nodes.new("ShaderNodeTexImage"); tn.image = bpy.data.images.load(n_, check_existing=True); tn.image.colorspace_settings.name = "Non-Color"
