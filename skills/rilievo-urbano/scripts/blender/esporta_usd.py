@@ -29,7 +29,9 @@ f_scena = os.path.join(USD, "scena.usdc")
 bpy.ops.wm.usd_export(filepath=f_scena, export_animation=False, export_cameras=False, export_lights=True,
                       export_materials=True, generate_preview_surface=True, export_textures_mode="NEW",
                       overwrite_textures=True, use_instancing=True, export_normals=True, export_uvmaps=True,
-                      convert_world_material=False, **COMUNI)
+                      convert_world_material=False, export_subdivision="TESSELLATE", **COMUNI)
+# export_subdivision TESSELLATE (2026-11-16): le superfici lisce degli arredi (suddivisione come ultimo modificatore) escono
+# già suddivise, la stessa forma che rende Blender, invece della gabbia da suddividere in Unreal
 log("scritto", f_scena, f"{os.path.getsize(f_scena) / 1e6:.1f} MB")
 
 f_camere = None

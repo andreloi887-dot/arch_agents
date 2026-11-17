@@ -130,10 +130,12 @@ lega(nodo(m, unreal.MaterialExpressionConstant, -150, 450, r=0.9), ru, "A"); leg
 mel.connect_material_property(ru, "", MP.MP_ROUGHNESS)
 mel.recompile_material(m); lib.save_loaded_asset(m); M_GRES = m
 
-M_LEGNO = None
+ROVERE = {"rovere": "#CBB495", **AJ.get("stile", {})}["rovere"]
+MARMO, VENA = ({"marmo": "#E4DDD2", "vena": "#B9AE9F", **AJ.get("stile", {})}[k] for k in ("marmo", "vena"))
 T_ALB = "/Game/JapaneseFurniture_Modern/Materials/Textures/T_Wooden_Albedo"
-if lib.does_asset_exist(T_ALB):
-    m = nuovo_materiale("M_Legno"); m.set_editor_property("two_sided", True)
+def legno(nome, tinta):
+    """venatura di una texture del progetto proiettata nello spazio (i mobili parametrici non hanno UV), sulla tinta."""
+    m = nuovo_materiale(nome); m.set_editor_property("two_sided", True)
     wp = nodo(m, unreal.MaterialExpressionWorldPosition, -1300, 0)
     # proiezione semplice, adatta a un mobile: (x + y) di traverso alla venatura, z lungo; una texture ogni 1,2 m
     su = nodo(m, unreal.MaterialExpressionAdd, -800, -70); lega(maschera(m, wp, -1000, -120, "r"), su, "A"); lega(maschera(m, wp, -1000, -20, "g"), su, "B")
@@ -143,10 +145,52 @@ if lib.does_asset_exist(T_ALB):
     ds = nodo(m, unreal.MaterialExpressionDesaturation, -150, 0); lega(tx, ds, "", "RGB")
     # la venatura in grigio, portata attorno a 1, moltiplica la tinta del progetto
     g2 = nodo(m, unreal.MaterialExpressionMultiply, 0, 0); lega(ds, g2, "A"); lega(nodo(m, unreal.MaterialExpressionConstant, -150, 120, r=2.2), g2, "B")
-    fi = nodo(m, unreal.MaterialExpressionMultiply, 150, 100); lega(g2, fi, "A"); lega(nodo(m, unreal.MaterialExpressionConstant3Vector, 0, 200, constant=colore(LEGNO)), fi, "B")
+    fi = nodo(m, unreal.MaterialExpressionMultiply, 150, 100); lega(g2, fi, "A"); lega(nodo(m, unreal.MaterialExpressionConstant3Vector, 0, 200, constant=colore(tinta)), fi, "B")
     mel.connect_material_property(fi, "", MP.MP_BASE_COLOR)
     mel.connect_material_property(nodo(m, unreal.MaterialExpressionConstant, 150, 300, r=0.5), "", MP.MP_ROUGHNESS)
-    mel.recompile_material(m); lib.save_loaded_asset(m); M_LEGNO = m
+    mel.recompile_material(m); lib.save_loaded_asset(m); return m
+M_LEGNO = legno("M_Legno", LEGNO) if lib.does_asset_exist(T_ALB) else None
+# rovere di cucina, tavolo, letti, comodini e armadi (Andrea, 2026-11-16): come in Blender, fibra verticale sottile da un rumore
+# stirato lungo z (la texture della libreria dava nodi grandi, venatura orizzontale e una cucitura a 1,2 m)
+m = nuovo_materiale("M_Rovere"); m.set_editor_property("two_sided", True)
+wp = nodo(m, unreal.MaterialExpressionWorldPosition, -1300, 0)
+st_ = nodo(m, unreal.MaterialExpressionMultiply, -1100, 0); lega(wp, st_, "A")
+lega(nodo(m, unreal.MaterialExpressionConstant3Vector, -1300, 150, constant=unreal.LinearColor(0.7, 0.7, 0.015, 1)), st_, "B")
+nz = nodo(m, unreal.MaterialExpressionNoise, -900, 0, scale=1.0, levels=4, output_min=0.0, output_max=1.0); lega(st_, nz, "Position")
+c0 = colore(ROVERE)
+cr = nodo(m, unreal.MaterialExpressionLinearInterpolate, -600, 0)
+lega(nodo(m, unreal.MaterialExpressionConstant3Vector, -800, -100, constant=unreal.LinearColor(c0.r * 0.88, c0.g * 0.88, c0.b * 0.88, 1)), cr, "A")
+lega(nodo(m, unreal.MaterialExpressionConstant3Vector, -800, 100, constant=unreal.LinearColor(min(1, c0.r * 1.04), min(1, c0.g * 1.04), min(1, c0.b * 1.04), 1)), cr, "B")
+lega(nz, cr, "Alpha")
+mel.connect_material_property(cr, "", MP.MP_BASE_COLOR)
+mel.connect_material_property(nodo(m, unreal.MaterialExpressionConstant, -600, 200, r=0.5), "", MP.MP_ROUGHNESS)
+mel.recompile_material(m); lib.save_loaded_asset(m); M_ROVERE = m
+# LED e interno dei lampadari: emissivi anche in Unreal (in Blender hanno l'emissione, dall'USD arrivava solo la tinta)
+def emissivo(nome, tinta, forza):
+    m = nuovo_materiale(nome); m.set_editor_property("two_sided", True)
+    c_ = colore(tinta); mel.connect_material_property(nodo(m, unreal.MaterialExpressionConstant3Vector, -300, 0, constant=c_), "", MP.MP_BASE_COLOR)
+    mel.connect_material_property(nodo(m, unreal.MaterialExpressionConstant3Vector, -300, 150,
+                                       constant=unreal.LinearColor(c_.r * forza, c_.g * forza, c_.b * forza, 1)), "", MP.MP_EMISSIVE_COLOR)
+    mel.recompile_material(m); lib.save_loaded_asset(m); return m
+ACC = 1.0 if LUCE == "sera" else 0.0                      # di giorno le luci artificiali sono spente, anche i LED
+M_LED = emissivo("M_Led", "#FFF1DC", 40.0 * ACC); M_LUME = emissivo("M_LumeDentro", "#E9A65C", 3.0 * ACC)
+# marmo del paraschizzi: come in Blender, onde distorte dal rumore → venature sottili sulla tinta
+m = nuovo_materiale("M_Marmo"); m.set_editor_property("two_sided", True)
+wp = nodo(m, unreal.MaterialExpressionWorldPosition, -1400, 0)
+ns = nodo(m, unreal.MaterialExpressionNoise, -1150, 150, scale=0.006, levels=6, output_min=-1.0, output_max=1.0); lega(wp, ns, "Position")
+lin_ = nodo(m, unreal.MaterialExpressionAdd, -1000, -50); lega(maschera(m, wp, -1200, -100, "r"), lin_, "A"); lega(maschera(m, wp, -1200, 0, "b"), lin_, "B")
+t1 = nodo(m, unreal.MaterialExpressionMultiply, -1000, 60); lega(lin_, t1, "A"); lega(nodo(m, unreal.MaterialExpressionConstant, -1150, 60, r=0.045), t1, "B")
+t2 = nodo(m, unreal.MaterialExpressionMultiply, -1000, 200); lega(ns, t2, "A"); lega(nodo(m, unreal.MaterialExpressionConstant, -1150, 260, r=1.4), t2, "B")
+fase = nodo(m, unreal.MaterialExpressionAdd, -850, 100); lega(t1, fase, "A"); lega(t2, fase, "B")
+sn = nodo(m, unreal.MaterialExpressionSine, -700, 100, period=6.283185); lega(fase, sn)
+ab = nodo(m, unreal.MaterialExpressionAbs, -580, 100); lega(sn, ab)
+ve = nodo(m, unreal.MaterialExpressionMultiply, -460, 100); lega(ab, ve, "A"); lega(nodo(m, unreal.MaterialExpressionConstant, -580, 180, r=22.0), ve, "B")
+sa = nodo(m, unreal.MaterialExpressionSaturate, -340, 100); lega(ve, sa)
+cm = nodo(m, unreal.MaterialExpressionLinearInterpolate, -180, 100)
+lega(nodo(m, unreal.MaterialExpressionConstant3Vector, -340, 0, constant=colore(VENA)), cm, "A"); lega(nodo(m, unreal.MaterialExpressionConstant3Vector, -340, 220, constant=colore(MARMO)), cm, "B"); lega(sa, cm, "Alpha")
+mel.connect_material_property(cm, "", MP.MP_BASE_COLOR)
+mel.connect_material_property(nodo(m, unreal.MaterialExpressionConstant, -180, 300, r=0.22), "", MP.MP_ROUGHNESS)
+mel.recompile_material(m); lib.save_loaded_asset(m); M_MARMO = m
 # perlinato del soffitto (Andrea, 2026-11-16: "il soffitto lo voglio con le perline"): in Blender è un Brick procedurale
 # sulle UV in metri dell'intradosso (finiture_interni.py: u lungo le doghe, v lungo la pendenza) e in USD arriva come
 # tinta unita. Qui lo stesso disegno: doghe larghe doga_m e continue (Andrea, 2026-11-16: nessuna giunzione trasversale
@@ -197,22 +241,40 @@ mel.connect_material_property(nodo(m, unreal.MaterialExpressionConstant3Vector, 
 mel.connect_material_property(nodo(m, unreal.MaterialExpressionConstant, -150, 120, r=0.02), "", MP.MP_ROUGHNESS)
 mel.connect_material_property(nodo(m, unreal.MaterialExpressionConstant, -150, 180, r=0.5), "", MP.MP_SPECULAR)
 mel.recompile_material(m); lib.save_loaded_asset(m); M_VETRO = m
+# vetro fumé bronzo dell'armadio della matrimoniale (riferimento di Andrea, 2026-11-16): traslucido scuro, riflesso medio
+m = nuovo_materiale("M_VetroFume"); m.set_editor_property("two_sided", True)
+m.set_editor_property("blend_mode", unreal.BlendMode.BLEND_TRANSLUCENT)
+if tlm: m.set_editor_property("translucency_lighting_mode", getattr(unreal.TranslucencyLightingMode, tlm[0]))
+mel.connect_material_property(nodo(m, unreal.MaterialExpressionConstant3Vector, -150, 0, constant=colore("#5A4535")), "", MP.MP_BASE_COLOR)
+mel.connect_material_property(nodo(m, unreal.MaterialExpressionConstant, -150, 100, r=0.42), "", MP.MP_OPACITY)
+mel.connect_material_property(nodo(m, unreal.MaterialExpressionConstant, -150, 160, r=0.05), "", MP.MP_ROUGHNESS)
+mel.recompile_material(m); lib.save_loaded_asset(m); M_FUME = m
+def con_texture(mm):
+    """istanza USD con la texture del colore (materiali con texture vere di arredi_interni.py, 2026-11-17): si lascia com'è."""
+    try: return isinstance(mm, unreal.MaterialInstance) and mel.get_material_instance_scalar_parameter_value(mm, "UseBaseColorTexture") > 0.5
+    except Exception: return False
 def opacita(mm):
     try: return mel.get_material_instance_scalar_parameter_value(mm, "Opacity") if isinstance(mm, unreal.MaterialInstance) else 1.0
     except Exception: return 1.0
-n_gres = n_legno = n_perl = n_vetro = 0; vetri_nomi = set(); vuoti = set()
+n_gres = n_legno = n_perl = n_vetro = n_rovere = n_marmo = n_fume = n_led = n_tex = 0; vetri_nomi = set(); vuoti = set()
 for a in attori.get_all_level_actors():
     if a.get_class().get_name() != "Actor": continue
     for c in a.get_components_by_class(unreal.StaticMeshComponent):
         for i in range(c.get_num_materials()):
             mm = c.get_material(i); nm = mm.get_name() if mm else ""
             if nm.startswith("MI_Pavimento") or nm == "M_Gres": c.set_material(i, M_GRES); n_gres += 1
+            elif nm.startswith(("MI_Arredo_legno", "MI_Arredo_rovere", "MI_Arredo_marmo")) and con_texture(mm): n_tex += 1
             elif M_LEGNO and (nm.startswith("MI_Arredo_legno") or nm == "M_Legno"): c.set_material(i, M_LEGNO); n_legno += 1
+            elif M_ROVERE and (nm.startswith("MI_Arredo_rovere") or nm == "M_Rovere"): c.set_material(i, M_ROVERE); n_rovere += 1
+            elif nm.startswith("MI_Arredo_marmo") or nm == "M_Marmo": c.set_material(i, M_MARMO); n_marmo += 1
+            elif nm.startswith("MI_Arredo_led") or nm == "M_Led": c.set_material(i, M_LED); n_led += 1
+            elif nm.startswith("MI_Arredo_lume_dentro") or nm == "M_LumeDentro": c.set_material(i, M_LUME); n_led += 1
             elif nm.startswith("MI_Perlinato") or nm == "M_Perlinato": c.set_material(i, M_PERL); n_perl += 1
+            elif nm.startswith("MI_Arredo_vetro_fume") or nm == "M_VetroFume": c.set_material(i, M_FUME); n_fume += 1
             elif nm == "M_Vetro" or (nm.startswith("MI_") and 0.0 < opacita(mm) < 0.99): c.set_material(i, M_VETRO); n_vetro += 1; vetri_nomi.add(nm)
             elif nm.startswith("MI_") and opacita(mm) <= 0.0: vuoti.add(nm)
 unreal.log(f"CONTROLLO materiali: gres su {n_gres} parti (formato {PAV['formato_m']}, fuga {PAV['fuga_mm']} mm), legno su {n_legno} parti, "
-           f"perlinato su {n_perl} parti (doga {DW * 100:.0f} cm), vetro su {n_vetro} parti ({', '.join(sorted(vetri_nomi))})")
+           f"con texture dall'USD {n_tex}, rovere procedurale su {n_rovere}, marmo procedurale su {n_marmo}, vetro fumé su {n_fume}, luminosi su {n_led}, perlinato su {n_perl} parti (doga {DW * 100:.0f} cm), vetro su {n_vetro} parti ({', '.join(sorted(vetri_nomi))})")
 if not n_vetro: unreal.log_warning("AVVISO vetro su 0 parti: le finestre restano opache")
 if vuoti: unreal.log(f"materiali con opacità 0 lasciati come sono: {', '.join(sorted(vuoti))}")
 if not n_perl: unreal.log_warning("AVVISO perlinato su 0 parti: il soffitto resta liscio")
@@ -287,7 +349,7 @@ unreal.MoviePipelineEditorLibrary.export_config_to_asset(cfg, p_cfg, "MRQ_viste"
 if lib.does_asset_exist(RADICE + "/MRQ_viste"): lib.delete_asset(RADICE + "/MRQ_viste")        # avanzo della prima prova
 unreal.log(f"CONTROLLO configurazione render {p_cfg}: {lib.does_asset_exist(p_cfg)} | uscita {USCITA_R}")
 livelli.save_current_level(); unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True, True)
-json.dump({"luce": LUCE, "ev": EV, "gres_parti": n_gres, "legno_parti": n_legno, "perlinato_parti": n_perl, "vetro_parti": n_vetro, "ev_viste": EV_USATI, "ev_tarati": bool(EV_VISTE), "nanite_mesh": n_nan, "nanite_triangoli": tri_nan, "luci_accese": int(accese), "luci_spente": int(spente),
+json.dump({"luce": LUCE, "ev": EV, "gres_parti": n_gres, "legno_parti": n_legno, "perlinato_parti": n_perl, "vetro_parti": n_vetro, "rovere_parti": n_rovere, "marmo_parti": n_marmo, "fume_parti": n_fume, "texture_usd_parti": n_tex, "luminosi_parti": n_led, "ev_viste": EV_USATI, "ev_tarati": bool(EV_VISTE), "nanite_mesh": n_nan, "nanite_triangoli": tri_nan, "luci_accese": int(accese), "luci_spente": int(spente),
            "camere": [c.get_actor_label() for c in camere], "sequenza": p_seq, "configurazione": p_cfg, "uscita": USCITA_R},
           open(os.path.join(MOD, "uscita_blender", "usd", "controllo_render.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 unreal.log("CONTROLLO sequenza " + p_seq + " salvata")

@@ -2,6 +2,7 @@
 
 Rispondi in italiano. Procedimento di progetto: [PROCEDIMENTO.md](PROCEDIMENTO.md).
 Interni (finiture, porte, arredi, viste): [PROGRAMMA_INTERNI.md](PROGRAMMA_INTERNI.md).
+Arredi da riprodurre sulle foto di Andrea (forme, tessuti simulati, texture vere): skill [arredo-da-riferimento](skills/arredo-da-riferimento/SKILL.md).
 Filiera Blender → Unreal: skill [filiera-progetto](skills/filiera-progetto/SKILL.md), agente `filiera-progetto`, un comando:
 `python skills/rilievo-urbano/scripts/filiera.py rilievi/<zona>/modello` (riepilogo compatto, niente ricerche nei log).
 

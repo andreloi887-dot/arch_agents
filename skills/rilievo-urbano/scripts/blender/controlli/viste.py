@@ -13,7 +13,7 @@ arg = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:]
 blend, out, samples = arg[0], arg[1], int(arg[2])
 bpy.ops.wm.open_mainfile(filepath=os.path.abspath(blend)); scn = bpy.context.scene
 cycles(bpy, scn, samples)
-scn.render.resolution_x, scn.render.resolution_y = 1920, 1080; scn.render.resolution_percentage = 50
+scn.render.resolution_x, scn.render.resolution_y = 1920, 1080; scn.render.resolution_percentage = int(os.environ.get('VISTE_SCALA', 50))   # filiera.py --scala
 scn.render.image_settings.file_format = 'PNG'; scn.view_settings.exposure = float(os.environ.get('ESP', 0.6))
 bg = next((n for n in scn.world.node_tree.nodes if n.type == 'BACKGROUND'), None)
 if bg: bg.inputs['Strength'].default_value = 1.0

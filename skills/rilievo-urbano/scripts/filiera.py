@@ -1,7 +1,7 @@
 """Filiera Blender → Unreal in un comando, con riepilogo compatto (fasi 3-5 di PROCEDIMENTO.md).
 
   python skills/rilievo-urbano/scripts/filiera.py <cartella modello> [--da finiture] [--fino usd] [--villa 1]
-         [--progetto-ue <file.uproject>] [--viste viste.txt] [--campioni 32] [--prova]
+         [--progetto-ue <file.uproject>] [--viste viste.txt] [--campioni 32] [--scala 50 (viste in % di 1920×1080)] [--prova]
   (--prova: il passo libreria non salva il livello, per controllare posizioni e misure di una scelta di asset)
 
 Passi, in ordine (--da / --fino per farne solo una parte; dopo "progetto" vanno rifatti tutti quelli dopo):
@@ -178,7 +178,7 @@ def main(argv):
         for f in {"usd": [f_rif, f_ue], "unreal": [f_ue]}.get(p, []):     # mai confrontare file di un giro prima
             if os.path.isfile(f): os.remove(f)
         r = subprocess.run(comandi[p], capture_output=True, text=True, encoding="utf-8", errors="replace",
-                           env=dict(os.environ, VILLA=villa))
+                           env=dict(os.environ, VILLA=villa, VISTE_SCALA=opzione(argv, "--scala", "50")))
         dt = time.time() - t0
         if p == "unreal": open(os.path.join(U, "unreal.log"), "w", encoding="utf-8").write(r.stdout + r.stderr)
         uscita = r.stdout + r.stderr

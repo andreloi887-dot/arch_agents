@@ -53,8 +53,8 @@ for c in MESH:                                                     # rilancio: t
 fatti, parametrici, scarti, senza_volume, luci_spostate = [], [], [], [], []
 LUCI = [l for a in tutti for l in a.get_components_by_class(unreal.PointLightComponent)]    # anche le spot: sottoclasse
 for p in POSATI:
-    scelta = MAPPA.get(p["nome"]) or MAPPA.get(p["tipo"])
-    if not scelta: parametrici.append(p["nome"]); continue
+    scelta = MAPPA[p["nome"]] if p["nome"] in MAPPA else MAPPA.get(p["tipo"])   # il nome vince, anche con asset null
+    if not scelta or not scelta.get("asset"): parametrici.append(p["nome"]); continue
     sm = unreal.EditorAssetLibrary.load_asset(scelta["asset"]) if unreal.EditorAssetLibrary.does_asset_exist(scelta["asset"]) else None
     if not isinstance(sm, unreal.StaticMesh):
         unreal.log_warning(f"AVVISO {p['nome']}: asset {scelta['asset']} non trovato o non è uno Static Mesh"); parametrici.append(p["nome"]); continue

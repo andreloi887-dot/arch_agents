@@ -312,6 +312,14 @@ Lumen, Nanite (in `Config/DefaultEngine.ini`; `filiera.py` crea così anche un p
   acceso (da 9,7 a 11,2) erano sbagliate e sono state cancellate. Di sera, con poca luce, Lumen lascia macchie sui muri: da
   affinare (qualità di Lumen o più campioni).
 
+**Arredo sui riferimenti di Andrea (2026-11-16/17).** Cucina, tavolo e sedie, divano, lampadari a ciottolo, letti, comodini e
+armadi (due versioni) modellati in `arredi_interni.py` sulle sue foto (`modello/riferimenti_arredo/`, fuori da git), senza
+modelli di libreria. Dopo il suo giudizio ("tutto squadrato, lontano dai riferimenti"): tessuti simulati (`tessili.py`: piumone,
+guanciali, plaid, cuscini del divano), superfici lisce per sedie e lampadari, texture CC0 vere (`libreria_materiali/`, scaricate
+con `strumenti/materiali/`), viste di controllo in Full HD (`filiera.py --scala 100`) e confronto affiancato col riferimento.
+Metodo, scelte dei materiali e lezioni: skill [arredo-da-riferimento](skills/arredo-da-riferimento/SKILL.md). In Unreal
+`arredi_unreal.json` non usa più la libreria per letti, comodini e lampadari del soggiorno.
+
 Prossimi passi in Unreal, in ordine: divano, tavolo con sedie e scrivanie di libreria; materiali per tessuti, laccati
 e intonaco; EV per vista; alberi come istanze; viste verso le vetrate e dall'esterno; poi il video (percorso interno,
 Sequencer) e il montaggio con FFmpeg. Ogni cosa imparata va scritta qui.

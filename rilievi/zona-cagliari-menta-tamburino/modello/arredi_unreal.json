@@ -1,11 +1,16 @@
 {
  "_nota": "Scelta dei modelli di libreria in Unreal al posto dei mobili e delle lampade parametrici (skills/rilievo-urbano/scripts/unreal/sostituisci_arredi.py). Chiave = tipo (divano, letto, armadio, comodino, scrivania, madia_tv, parete_tv, tavolo, tavolino, cucina, lampada) oppure nome esatto del pezzo in uscita_blender/arredi_posati.json (il nome vince). Campi: asset, adatta (uniforme|esatta|nessuna|altezza), ruota_gradi, appoggio (basso|alto), con [{asset, z_cm}].",
  "_fonte": "Modern Japanese Furniture Pack di Nimikko, da Fab, licenza Standard livello Personale (gratis: studio sotto i 100.000 dollari di ricavi negli ultimi 12 mesi, confermato da Andrea il 2026-11-15). Cartella del progetto Unreal: Content/JapaneseFurniture_Modern (194 MB, fuori da git).",
- "letto": {"asset": "/Game/JapaneseFurniture_Modern/Assets/Bed/SM_Bed_01_100_Single", "adatta": "nessuna", "ruota_gradi": 90,
-           "con": [{"asset": "/Game/JapaneseFurniture_Modern/Assets/Bed/SM_Mattress_100", "z_cm": 20}]},
- "letto Camera Matrimoniale v1 1": {"asset": "/Game/JapaneseFurniture_Modern/Assets/Bed/SM_Bed_01_170_Queen", "adatta": "nessuna", "ruota_gradi": 90,
-           "con": [{"asset": "/Game/JapaneseFurniture_Modern/Assets/Bed/SM_Mattress_170", "z_cm": 20}]},
- "comodino": {"asset": "/Game/JapaneseFurniture_Modern/Assets/StorageShelves/SM_Nightstand_01", "adatta": "nessuna",
-           "con": [{"asset": "/Game/JapaneseFurniture_Modern/Assets/Light/SM_Tablelamp_01", "z_cm": 40}]},
- "lampada": {"asset": "/Game/JapaneseFurniture_Modern/Assets/Light/SM_CeilingLight_01", "adatta": "altezza", "appoggio": "alto"}
+ "lampada": {
+  "asset": "/Game/JapaneseFurniture_Modern/Assets/Light/SM_CeilingLight_01",
+  "adatta": "altezza",
+  "appoggio": "alto"
+ },
+ "_nota_2026_11_16": "Andrea, 2026-11-16: letti, comodini, armadi, cucina, tavolo, sedie, divano e lampadari del soggiorno modellati in arredi_interni.py sui suoi riferimenti: niente modelli di libreria. Un nome con asset null resta parametrico anche se il suo tipo ha un asset.",
+ "Sospensione Soggiorno v1 1": {
+  "asset": null
+ },
+ "Sospensione Soggiorno v1 2": {
+  "asset": null
+ }
 }

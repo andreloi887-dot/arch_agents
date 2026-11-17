@@ -15,3 +15,8 @@ libreria/*/
 
 # Chiavi dei modelli gratuiti (mai in git)
 strumenti/llm_gratis/.env
+
+# Immagini di riferimento dell arredo date da Andrea: solo locali (diritti di terzi)
+rilievi/*/modello/riferimenti_arredo/
+# Texture CC0 scaricate (Poly Haven, ambientCG): si riscaricano con lo script
+libreria_materiali/
