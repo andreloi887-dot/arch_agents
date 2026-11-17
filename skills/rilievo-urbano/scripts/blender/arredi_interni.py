@@ -40,7 +40,7 @@ ST = {"legno": "#C8A47A", "laccato": "#EDE7DA", "tessuto": "#D9D0C1", "tessuto_a
       # cucina e tavolo nello stile del riferimento di Andrea (2026-11-16): rovere chiaro, laccato greige opaco, piano in pietra
       # chiara sottile, paraschizzi in marmo chiaro venato, sedie a scocca imbottita color sabbia, LED sotto i pensili
       "rovere": "#C6B093", "laccato_pensili": "#CEC5B8", "pietra": "#E7E1D7", "marmo": "#E4DDD2", "vena": "#CEC5B8",
-      "sabbia": "#CBBBA3", "led": "#FFF1DC",
+      "sabbia": "#CBBBA3", "led": "#FFD9A8",
       # camere e soggiorno (riferimenti di Andrea, 2026-11-16): vetro fumé bronzo dell'armadio, bouclé avorio del divano,
       # biancheria, gesso dei lampadari a ciottolo con l'interno caldo
       "vetro_fume": "#3B2E24", "boucle": "#E9E4DA", "lenzuolo": "#F1EEE8", "plaid": "#8A8076", "cuscino": "#A39A90", "intonaco": "#E6E1D8",
@@ -250,6 +250,11 @@ class Pezzo:
             if parte == "liscio":                                  # imbottiti e forme organiche: gabbia + suddivisione
                 sd = ob.modifiers.new("Liscio", "SUBSURF"); sd.levels = 2; sd.render_levels = 3
                 for pl in me.polygons: pl.use_smooth = True
+                if getattr(s, "rilievo", None):                   # superficie irregolare vera (gesso dei ciottoli): rumore di 2-3 mm
+                    forza, grana = s.rilievo
+                    tx = bpy.data.textures.get("Rilievo gesso") or bpy.data.textures.new("Rilievo gesso", "CLOUDS")
+                    tx.noise_scale = grana; tx.noise_depth = 2
+                    dp = ob.modifiers.new("Rilievo", "DISPLACE"); dp.texture = tx; dp.strength = forza; dp.mid_level = 0.5
                 continue
             bv = ob.modifiers.new("Smusso", "BEVEL"); bv.limit_method = "ANGLE"
             bv.width, bv.segments = (0.004, 2) if parte == "duro" else (0.035, 4)
@@ -861,10 +866,11 @@ def sospensione(v, villa, q, z_sotto, nome_l, watt, raggio=0.19):
     zs = soffitto(q.x, q.y, v["z0"] + 1.9) - v["z0"]; p = Pezzo(q, Vector((1, 0)), Vector((0, 1)), v["z0"])
     if v["nome"].startswith("Soggiorno") and villa in VILLE_ARREDATE:      # le ville non arredate restano com'erano
         k_ = int(nome_l.split()[-1]); z_luce = ciottolo(p, z_sotto, zs, 0.30 if k_ == 1 else 0.24, 0.7 + 1.9 * k_)
+        p.rilievo = (0.010, 0.012)                                 # gesso grezzo, come nel riferimento
         p.fine(nome_l, villa, "lampada", Point(q.x, q.y).buffer(0.01))
         for o_ in ARR.objects:
             if o_.name.startswith(nome_l): o_["ingombro"] = []
-        ld = bpy.data.lights.new(nome_l, "POINT"); ld.energy = watt; ld.color = (1.0, 0.74, 0.46); ld.shadow_soft_size = 0.08
+        ld = bpy.data.lights.new(nome_l, "POINT"); ld.energy = watt; ld.color = (1.0, 0.62, 0.30); ld.shadow_soft_size = 0.08
         lo = bpy.data.objects.new("Luce " + nome_l, ld); lo.location = (q.x, q.y, v["z0"] + z_luce); ARR.objects.link(lo)
         lo["villa"] = villa; lo["punto_luce"] = v["nome"]; n_luci += 1
         return

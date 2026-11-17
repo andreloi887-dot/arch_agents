@@ -173,7 +173,7 @@ def emissivo(nome, tinta, forza):
                                        constant=unreal.LinearColor(c_.r * forza, c_.g * forza, c_.b * forza, 1)), "", MP.MP_EMISSIVE_COLOR)
     mel.recompile_material(m); lib.save_loaded_asset(m); return m
 ACC = 1.0 if LUCE == "sera" else 0.0                      # di giorno le luci artificiali sono spente, anche i LED
-M_LED = emissivo("M_Led", "#FFF1DC", 40.0 * ACC); M_LUME = emissivo("M_LumeDentro", "#E9A65C", 3.0 * ACC)
+M_LED = emissivo("M_Led", "#FFD9A8", 40.0 * ACC); M_LUME = emissivo("M_LumeDentro", "#E9A65C", 3.0 * ACC)
 # marmo del paraschizzi: come in Blender, onde distorte dal rumore → venature sottili sulla tinta
 m = nuovo_materiale("M_Marmo"); m.set_editor_property("two_sided", True)
 wp = nodo(m, unreal.MaterialExpressionWorldPosition, -1400, 0)
@@ -245,9 +245,11 @@ mel.recompile_material(m); lib.save_loaded_asset(m); M_VETRO = m
 m = nuovo_materiale("M_VetroFume"); m.set_editor_property("two_sided", True)
 m.set_editor_property("blend_mode", unreal.BlendMode.BLEND_TRANSLUCENT)
 if tlm: m.set_editor_property("translucency_lighting_mode", getattr(unreal.TranslucencyLightingMode, tlm[0]))
-mel.connect_material_property(nodo(m, unreal.MaterialExpressionConstant3Vector, -150, 0, constant=colore("#5A4535")), "", MP.MP_BASE_COLOR)
-mel.connect_material_property(nodo(m, unreal.MaterialExpressionConstant, -150, 100, r=0.42), "", MP.MP_OPACITY)
-mel.connect_material_property(nodo(m, unreal.MaterialExpressionConstant, -150, 160, r=0.05), "", MP.MP_ROUGHNESS)
+mel.connect_material_property(nodo(m, unreal.MaterialExpressionConstant3Vector, -150, 0, constant=colore("#3E2C1F")), "", MP.MP_BASE_COLOR)
+# bronzo che si vede (2026-11-17: con 0,42 il vetro spariva e l'armadio sembrava aperto) e riflesso pieno del vetro
+mel.connect_material_property(nodo(m, unreal.MaterialExpressionConstant, -150, 100, r=0.62), "", MP.MP_OPACITY)
+mel.connect_material_property(nodo(m, unreal.MaterialExpressionConstant, -150, 160, r=0.03), "", MP.MP_ROUGHNESS)
+mel.connect_material_property(nodo(m, unreal.MaterialExpressionConstant, -150, 220, r=0.8), "", MP.MP_SPECULAR)
 mel.recompile_material(m); lib.save_loaded_asset(m); M_FUME = m
 def con_texture(mm):
     """istanza USD con la texture del colore (materiali con texture vere di arredi_interni.py, 2026-11-17): si lascia com'è."""
