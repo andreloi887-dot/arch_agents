@@ -34,6 +34,7 @@ from shapely.ops import unary_union
 from shapely.prepared import prep
 
 argv, opt, MOD, USCITA, log, scn = avvio("arredi_interni.log")
+tessili.CACHE = os.path.join(USCITA, "cache_tessili")      # stessi ingressi → stesso tessile (la simulazione non è ripetibile)
 A = json.load(open(os.path.join(MOD, "arredi.json"), encoding="utf-8"))
 ST = {"legno": "#C8A47A", "laccato": "#EDE7DA", "tessuto": "#D9D0C1", "tessuto_accento": "#B98466", "piano_cucina": "#DAD5CC",
       "metallo": "#3A3632", "nero": "#141414", "tappeto": "#CFC4B2", "inox": "#C4C4C0",

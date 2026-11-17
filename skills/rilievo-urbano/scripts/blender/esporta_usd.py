@@ -70,8 +70,15 @@ try:
             pts = np.asarray(m.GetPointsAttr().Get() or [], dtype=np.float64)
             mw = np.asarray(UsdGeom.Xformable(pr).ComputeLocalToWorldTransform(Usd.TimeCode.Default()), dtype=np.float64)
             mb, _ = UsdShade.MaterialBindingAPI(pr).ComputeBoundMaterial()
-            h = hashlib.sha256(np.round(pts * 1000).astype(np.int64).tobytes() + np.round(mw * 1000).astype(np.int64).tobytes()
-                               + str(mb.GetPath() if mb else "").encode()).hexdigest()[:12]
+            # firma robusta (2026-11-17): numero di punti, ingombro e baricentro al mm, scarto medio al decimo di mm. L'hash di
+            # tutti i vertici al mm cambiava a ogni giro per un rumore di 1e-6 sui tessili suddivisi (un vertice a cavallo del
+            # mezzo millimetro bastava); così il rumore numerico non conta e una modifica vera sì
+            if len(pts):
+                firma = np.concatenate([[len(pts)], np.round(pts.min(0) * 1000), np.round(pts.max(0) * 1000), np.round(pts.mean(0) * 1000),
+                                        np.round(np.abs(pts - pts.mean(0)).mean(0) * 10000)])
+            else: firma = np.zeros(1)
+            h = hashlib.sha256(firma.astype(np.int64).tobytes() + np.round(mw * 1000).astype(np.int64).tobytes()
+                               + str(len(m.GetFaceVertexCountsAttr().Get() or [])).encode() + str(mb.GetPath() if mb else "").encode()).hexdigest()[:12]
             per_mesh[str(pr.GetPath())] = h
             rif["triangoli"] += sum(max(n - 2, 0) for n in (m.GetFaceVertexCountsAttr().Get() or []))
             if not UsdGeom.PrimvarsAPI(pr).HasPrimvar("st"): rif["mesh_senza_uv"] += 1

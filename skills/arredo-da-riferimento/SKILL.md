@@ -65,6 +65,11 @@ Riferimenti di Andrea: `rilievi/<zona>/modello/riferimenti_arredo/` (solo locali
   (`trapunta`), con una piccola irregolarità iniziale perché cadendo non resti piatto.
 - **Mai rigenerare l'USD mentre Unreal importa o confronta**: il confronto con `riferimento.json` risulterebbe falsato.
 - **Rovere**: `oak_veneer_03` (fibra dritta, fiamme leggere), contrasto 1,3; `washed_grey_oak_veneer` aveva la fibra ondulata.
+- **Simulazioni non ripetibili** (2026-11-17): piumone e plaid uscivano un po' diversi a ogni giro e l'impronta della geometria
+  cambiava sempre. Ora `tessili.py` salva ogni risultato in `uscita_blender/cache_tessili/` con una chiave (forma di partenza,
+  parametri, ostacoli): a parità di ingressi si riusa (e `arredi` passa da 4 minuti a 11 secondi). In più la firma di ogni mesh
+  in `esporta_usd.py` è robusta (ingombro, baricentro, scarto medio): un rumore di 1e-6 nella suddivisione non la cambia più.
+  Per rifare una simulazione da capo basta cancellare la cartella della cache.
 - **Ville ferme**: ogni stile nuovo vale solo per le ville arredate (`VILLE_ARREDATE`); B, C, D restano com'erano.
 - **Cosa non è stato fatto**: generazione 3D da immagine (TRELLIS, licenza MIT): su questo PC servono il toolkit CUDA e la
   compilazione di nvdiffrast/spconv; rimandata. Hunyuan3D è escluso: licenza non valida nell'Unione Europea.

@@ -34,11 +34,43 @@ def _ostacolo(scn, scatole, nome="ostacolo tessili"):
     return ob
 
 
+CACHE = None      # cartella della cache delle simulazioni (arredi_interni.py: uscita_blender/cache_tessili); None = sempre simulare
+
+
+def _chiave(scn, ob, fotogrammi):
+    """impronta di ciò che decide il risultato: forma di partenza, impostazioni del tessuto, ostacoli presenti in scena."""
+    import hashlib
+    h = hashlib.sha1()
+    for v in ob.data.vertices: h.update(("%.5f %.5f %.5f;" % tuple(ob.matrix_world @ v.co)).encode())
+    st = ob.modifiers["Tessuto"].settings
+    for k in ("quality", "mass", "air_damping", "tension_stiffness", "compression_stiffness", "shear_stiffness", "bending_stiffness",
+              "use_pressure", "uniform_pressure_force"):
+        h.update(f"{k}={getattr(st, k)};".encode())
+    h.update(f"g={st.effector_weights.gravity};f={fotogrammi};".encode())
+    for o in sorted((o for o in scn.objects if any(m.type == "COLLISION" for m in o.modifiers)), key=lambda o: o.name):
+        for v in o.data.vertices: h.update(("%.4f %.4f %.4f;" % tuple(o.matrix_world @ v.co)).encode())
+    return h.hexdigest()[:20]
+
+
 def _simula(scn, ob, fotogrammi):
+    """simulazione dei tessuti, con la cache: la simulazione non dà due volte esattamente lo stesso risultato (piumone e plaid
+    cambiavano a ogni giro, 2026-11-17) e l'impronta della geometria non serviva più; con la cache, a parità di ingressi, il
+    risultato è identico (e più veloce)."""
+    import os
+    import numpy as np
+    f_c = None
+    if CACHE:
+        os.makedirs(CACHE, exist_ok=True); f_c = os.path.join(CACHE, _chiave(scn, ob, fotogrammi) + ".npy")
+        if os.path.isfile(f_c):
+            co = np.load(f_c)
+            if len(co) == len(ob.data.vertices):
+                ob.modifiers.remove(ob.modifiers["Tessuto"]); ob.data.vertices.foreach_set("co", co.ravel()); ob.data.update(); return
     scn.frame_start, scn.frame_end = 1, fotogrammi
     cl = ob.modifiers["Tessuto"]; cl.point_cache.frame_start = 1; cl.point_cache.frame_end = fotogrammi
     for f in range(1, fotogrammi + 1): scn.frame_set(f)
     _applica(ob, "Tessuto"); scn.frame_set(1)
+    if f_c:
+        co = np.empty(len(ob.data.vertices) * 3, np.float32); ob.data.vertices.foreach_get("co", co); np.save(f_c, co.reshape(-1, 3))
 
 
 def _uv_metri(me, lato):
