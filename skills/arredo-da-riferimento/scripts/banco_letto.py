@@ -27,7 +27,7 @@ t0 = time.time()
 mater = (Vector((-0.04, 0)), u, v, 1.86, 1.52, 0.25, 0.45); piatta = (Vector((0.025, 0)), u, v, 2.05, 1.8, 0.12, 0.24); pav = (Vector((0, 0)), u, v, 5, 5, -0.05, 0)
 a0, a1 = -0.97 + 0.42, 1.02
 pium = tessili.trapunta(scn, "piumone", ((a0 + a1) / 2, 0), u, v, a1 - a0, W - 0.04, 0.50, [mater, piatta, pav], bianco, 0.27,
-                        spessore=f("sp", 0.035), pressione=f("pr", 1.5), passo=f("passo", 0.03), piega=f("piega", 0.05), grinze=f("gr", 0.004), fotogrammi=int(f("fot", 110)))
+                        spessore=f("sp", 0.035), pressione=f("pr", 1.5), passo=f("passo", 0.03), piega=f("piega", 0.05), grinze=f("gr", 0.004), fotogrammi=int(f("fot", 110)), tensione=f("te", 8.0))
 print("PIUMONE", round(time.time() - t0, 1))
 grigio = mat("cuscino", (0.50, 0.48, 0.45))
 for k, sb in enumerate((-0.37, 0.37)):

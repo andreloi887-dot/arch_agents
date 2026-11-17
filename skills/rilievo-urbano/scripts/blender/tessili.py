@@ -95,7 +95,7 @@ def telo(scn, nome, centro, u, v, lu, lv, z, ostacoli, materiale, lato_tex, spes
 
 
 def trapunta(scn, nome, centro, u, v, lu, lv, z, ostacoli, materiale, lato_tex, spessore=0.035, pressione=1.5, passo=0.03,
-             fotogrammi=110, peso=0.6, piega=0.05, grinze=0.004, seme=1):
+             fotogrammi=110, peso=0.6, piega=0.05, grinze=0.004, seme=1, tensione=8.0):
     """piumone vero: involucro chiuso lu × lv alto spessore, gonfiato con la pressione, che cade sugli ostacoli con la
     gravità (2026-11-17, Andrea: "i tessuti sono durissimi"). Bordi tondi e gonfi, pieghe dove si curva sul materasso; una
     piccola irregolarità iniziale (grinze, in m) perché cadendo non resti perfettamente piatto."""
@@ -118,7 +118,7 @@ def trapunta(scn, nome, centro, u, v, lu, lv, z, ostacoli, materiale, lato_tex, 
     ob = bpy.data.objects.new(nome, me); scn.collection.objects.link(ob)
     cl = ob.modifiers.new("Tessuto", "CLOTH"); st = cl.settings
     st.quality = 10; st.mass = peso; st.air_damping = 1.0
-    st.tension_stiffness = st.compression_stiffness = 8.0; st.shear_stiffness = 2.0; st.bending_stiffness = piega
+    st.tension_stiffness = st.compression_stiffness = tensione; st.shear_stiffness = 2.0; st.bending_stiffness = piega
     st.use_pressure = True; st.uniform_pressure_force = pressione
     cl.collision_settings.distance_min = 0.006; cl.collision_settings.collision_quality = 4; cl.collision_settings.use_self_collision = False
     obs = _ostacolo(scn, [o for o in ostacoli if not isinstance(o, bpy.types.Object)])

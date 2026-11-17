@@ -46,7 +46,10 @@ ST = {"legno": "#C8A47A", "laccato": "#EDE7DA", "tessuto": "#D9D0C1", "tessuto_a
       "vetro_fume": "#3B2E24", "boucle": "#E9E4DA", "lenzuolo": "#F1EEE8", "plaid": "#8A8076", "cuscino": "#A39A90", "intonaco": "#E6E1D8",
       "lume_dentro": "#B8702E", "gesso": "#E3DED5", **A.get("stile", {})}
 
-NORMALE = {"gesso": 2.5, "boucle": 1.2, "tappeto": 1.2}          # forza del rilievo delle normali (predefinita 0.8)
+# forza del rilievo delle normali (predefinita 0.8). 0 = niente mappa: l'USD non porta la forza e Unreal la usa piena, sul
+# rovere faceva un legno "martellato" (2026-11-17); la venatura del colore basta
+NORMALE = {"gesso": 2.5, "boucle": 1.2, "tappeto": 1.2, "rovere": 0.0, "legno": 0.0, "marmo": 0.0, "pietra": 0.0,
+           "sabbia": 0.0, "lenzuolo": 0.3, "cuscino": 0.4}                # stoffe lisce: in Unreal la trama piena faceva bolle
 RUV = {"legno": 0.45, "laccato": 0.35, "tessuto": 0.95, "tessuto_accento": 0.95, "piano_cucina": 0.3, "metallo": 0.4, "nero": 0.25, "tappeto": 1.0, "inox": 0.3,
        "rovere": 0.5, "laccato_pensili": 0.6, "pietra": 0.35, "marmo": 0.22, "sabbia": 0.95, "led": 0.5,
        "vetro_fume": 0.05, "gesso": 0.95, "boucle": 1.0, "lenzuolo": 0.9, "plaid": 1.0, "cuscino": 0.95, "intonaco": 0.95, "lume_dentro": 0.8}
@@ -83,6 +86,21 @@ def ritinta(tid, hexc, contrasto):
     nu = bpy.data.images.new("tinta " + os.path.basename(out), w, h); nu.pixels.foreach_set(np.concatenate([o, px[:, 3:]], 1).ravel())
     nu.filepath_raw = out; nu.file_format = "JPEG"; nu.save(); bpy.data.images.remove(nu); bpy.data.images.remove(im)
     return out
+def normali_attenuate(tid, forza):
+    """mappa delle normali attenuata nel file (mescolata con la normale piatta 0.5, 0.5, 1): l'USD non porta la forza del nodo
+    e Unreal la usa piena; così Blender e Unreal vedono lo stesso rilievo."""
+    src = mappa(tid, "normali")
+    if not src or forza >= 0.999: return src
+    out = os.path.join(LIBMAT, tid, "tinte", f"normali_{forza:g}.jpg")
+    if os.path.isfile(out): return out
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    im = bpy.data.images.load(src); im.colorspace_settings.name = "Non-Color"; w, h = im.size
+    px = np.empty(w * h * 4, np.float32); im.pixels.foreach_get(px); px = px.reshape(-1, 4)
+    piatta = np.array([0.5, 0.5, 1.0], np.float32); px[:, :3] = piatta + (px[:, :3] - piatta) * forza
+    nu = bpy.data.images.new("normali " + os.path.basename(out), w, h); nu.colorspace_settings.name = "Non-Color"
+    nu.pixels.foreach_set(px.ravel()); nu.filepath_raw = out; nu.file_format = "JPEG"; nu.save()
+    bpy.data.images.remove(nu); bpy.data.images.remove(im)
+    return out
 def mat_texture(k):
     tid, lato, contrasto, _ = TEX[k]; col = ritinta(tid, ST[TINTA_DI.get(k, k)], contrasto)
     if not col: return None
@@ -94,10 +112,10 @@ def mat_texture(k):
         tr = nt.nodes.new("ShaderNodeTexImage"); tr.image = bpy.data.images.load(r_, check_existing=True); tr.image.colorspace_settings.name = "Non-Color"
         nt.links.new(tr.outputs["Color"], b.inputs["Roughness"])
     else: b.inputs["Roughness"].default_value = RUV[k]
-    n_ = mappa(tid, "normali")
+    n_ = normali_attenuate(tid, min(1.0, NORMALE.get(k, 0.8))) if NORMALE.get(k, 0.8) > 0 else None
     if n_:
         tn = nt.nodes.new("ShaderNodeTexImage"); tn.image = bpy.data.images.load(n_, check_existing=True); tn.image.colorspace_settings.name = "Non-Color"
-        nm = nt.nodes.new("ShaderNodeNormalMap"); nm.inputs["Strength"].default_value = NORMALE.get(k, 0.8)
+        nm = nt.nodes.new("ShaderNodeNormalMap"); nm.inputs["Strength"].default_value = max(1.0, NORMALE.get(k, 0.8))   # sotto 1 è già nel file
         nt.links.new(tn.outputs["Color"], nm.inputs["Color"]); nt.links.new(nm.outputs["Normal"], b.inputs["Normal"])
     return m
 def mat(k):
@@ -434,14 +452,15 @@ def tessili_letto(p, v, villa, nome):
     # piattaforma, bordi tondi e pieghe sui fianchi
     a0, a1 = m0 + 0.42, L / 2 - 0.03
     pium = tessili.trapunta(scn, f"{nome} piumone (tessili)", P_((a0 + a1) / 2, 0), us, vv_, a1 - a0, W - 0.04, z0 + 0.50,
-                            [materasso, piatta, pavimento], mat("lenzuolo"), TEX["lenzuolo"][1], spessore=0.06, pressione=2.5, piega=0.05)
+                            [materasso, piatta, pavimento], mat("lenzuolo"), TEX["lenzuolo"][1], spessore=0.06, pressione=2.5, piega=0.05,
+                            grinze=0.007, tensione=6.0)                  # pieghe morbide (banco di prova del 2026-11-17)
     fatti.append(pium)
     # plaid: cade sul piumone stesso (collisore), che copre materasso e bordo della piattaforma; più spesso e pesante, largo
     # quanto basta per ricadere sui fianchi
     col = tessili.collisore(scn, pium)
     b0, b1 = L / 2 - 0.62, L / 2 - 0.08
     fatti.append(tessili.telo(scn, f"{nome} plaid (tessili)", P_((b0 + b1) / 2, 0), us, vv_, b1 - b0, 2 * mw + 0.78, z0 + 0.80,
-                              [pavimento], mat("plaid"), TEX["plaid"][1], spessore=0.015, peso=0.8, piega=0.3, fotogrammi=120, passo=0.025, grinze=0.003))
+                              [pavimento], mat("plaid"), TEX["plaid"][1], spessore=0.015, peso=0.8, piega=0.3, fotogrammi=120, passo=0.025, grinze=0.0))
     bpy.data.objects.remove(col, do_unlink=True)
     zz = [q.co.z - z0 for q in fatti[-1].data.vertices]
     log(f"{nome}: plaid da {min(zz):.2f} a {max(zz):.2f} m sul pavimento" + ("" if min(zz) > 0.1 else " — AVVISO: è caduto oltre il letto"))
@@ -480,7 +499,7 @@ def scrivania(p, L, W):
     p.scat(-L / 2 + 0.10, -L / 2 + 0.50, -W / 2 + 0.05, W / 2 - 0.05, 0.60, 0.72, "legno")      # cassetto
     p.cil(L / 2 - 0.22, -W / 2 + 0.2, 0.07, 0.07, 0.75, 0.765, "metallo"); p.cil(L / 2 - 0.22, -W / 2 + 0.2, 0.008, 0.008, 0.765, 1.12, "metallo")
     p.cil(L / 2 - 0.22, -W / 2 + 0.2, 0.10, 0.07, 1.05, 1.20, "metallo")
-    sedia(p, (0.0, W / 2 + 0.12), (0, -1))
+    sedia_pranzo(p, (0.0, W / 2 + 0.20), (0, -1))                       # stessa sedia del tavolo (stile dei riferimenti)
 
 def parete_tv(p, L, W):
     p.scat(-L / 2, L / 2, -W / 2, -W / 2 + 0.02, 0, 2.30, "legno")
